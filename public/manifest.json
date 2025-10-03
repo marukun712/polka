@@ -1,0 +1,11 @@
+{
+	"manifest_version": 2,
+	"name": "polka",
+	"version": "0.1",
+	"description": "polka is a platform that enables anyone to self-host any data.",
+	"permissions": ["storage"],
+	"background": {
+		"scripts": ["background.js"],
+		"persistent": true
+	}
+}
