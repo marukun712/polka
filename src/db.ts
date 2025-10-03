@@ -1,5 +1,5 @@
 import PouchDB from "pouchdb-browser";
-import type { PolkaEvent } from "../@types";
+import type { PolkaEvent } from "../@types/index.js";
 
 const db = new PouchDB("polka_db");
 
