@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Polka</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🔗 Polka</h1>
+      <p class="subtitle">Decentralized P2P Data Hosting</p>
+    </header>
+
+    <!-- Key Management Section -->
+    <section id="key-section">
+      <h2>Key Management</h2>
+
+      <!-- No key state -->
+      <div id="no-key-state" class="state-panel" style="display: none;">
+        <p>No keypair found. Generate a new one or import existing.</p>
+        <div class="password-input">
+          <input type="password" id="new-password" placeholder="Enter password">
+          <button id="generate-key-btn" class="btn primary">Generate Keypair</button>
+        </div>
+      </div>
+
+      <!-- Locked state -->
+      <div id="locked-state" class="state-panel" style="display: none;">
+        <p>Keypair locked. Enter password to unlock.</p>
+        <div class="public-key">
+          <label>Public Key:</label>
+          <code id="locked-public-key"></code>
+        </div>
+        <div class="password-input">
+          <input type="password" id="unlock-password" placeholder="Enter password">
+          <button id="unlock-btn" class="btn primary">Unlock</button>
+        </div>
+      </div>
+
+      <!-- Unlocked state -->
+      <div id="unlocked-state" class="state-panel" style="display: none;">
+        <div class="status-badge success">🔓 Unlocked</div>
+        <div class="public-key">
+          <label>Public Key:</label>
+          <code id="unlocked-public-key"></code>
+        </div>
+        <button id="lock-btn" class="btn secondary">Lock</button>
+      </div>
+
+      <div id="key-error" class="error-message" style="display: none;"></div>
+    </section>
+
+    <!-- P2P Status Section -->
+    <section id="status-section">
+      <h2>Network Status</h2>
+      <div class="status-grid">
+        <div class="status-item">
+          <label>Status:</label>
+          <span id="p2p-status" class="status-badge">Disconnected</span>
+        </div>
+        <div class="status-item">
+          <label>Peer ID:</label>
+          <code id="peer-id">-</code>
+        </div>
+        <div class="status-item">
+          <label>Connections:</label>
+          <span id="connections">0</span>
+        </div>
+      </div>
+      <button id="refresh-status-btn" class="btn secondary">Refresh Status</button>
+    </section>
+
+    <!-- Event Management Section -->
+    <section id="events-section">
+      <h2>Events</h2>
+
+      <div class="create-event-form">
+        <h3>Create Event</h3>
+        <select id="event-type">
+          <option value="polka.post">polka.post</option>
+          <option value="polka.profile">polka.profile</option>
+        </select>
+        <textarea id="event-message" placeholder='Enter message as JSON, e.g. {"text": "Hello World"}'></textarea>
+        <button id="create-event-btn" class="btn primary">Create Event</button>
+      </div>
+
+      <div class="events-list">
+        <h3>My Events</h3>
+        <div id="events-container">
+          <p class="empty-state">No events yet</p>
+        </div>
+        <button id="refresh-events-btn" class="btn secondary">Refresh Events</button>
+      </div>
+    </section>
+
+    <!-- Whitelist Section -->
+    <section id="whitelist-section">
+      <h2>Access Whitelist</h2>
+      <p class="info">Only whitelisted domains can access your data</p>
+
+      <div class="whitelist-form">
+        <input type="text" id="whitelist-domain" placeholder="example.com">
+        <button id="add-whitelist-btn" class="btn primary">Add Domain</button>
+      </div>
+
+      <ul id="whitelist-list" class="whitelist-list">
+        <li class="empty-state">No domains whitelisted</li>
+      </ul>
+    </section>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

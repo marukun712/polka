@@ -1,22 +1,41 @@
 {
-  "name": "app",
+  "name": "polka-extension",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Decentralized P2P data hosting Firefox extension",
   "scripts": {
+    "build": "webpack --mode production",
+    "dev": "webpack --mode development --watch",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
+  "keywords": ["p2p", "libp2p", "firefox", "extension"],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.14.0",
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "@types/node": "^22.10.5",
+    "@types/pouchdb-browser": "^6.1.8",
+    "copy-webpack-plugin": "^12.0.2",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.9.3",
+    "webpack": "^5.99.0",
+    "webpack-cli": "^6.0.1"
   },
   "dependencies": {
+    "@chainsafe/libp2p-noise": "^16.0.0",
+    "@chainsafe/libp2p-yamux": "^7.0.1",
+    "@libp2p/autonat": "^2.0.12",
+    "@libp2p/bootstrap": "^11.0.12",
+    "@libp2p/circuit-relay-v2": "^2.1.12",
+    "@libp2p/dcutr": "^2.0.12",
+    "@libp2p/identify": "^3.1.12",
+    "@libp2p/kad-dht": "^14.0.12",
+    "@libp2p/mdns": "^11.0.12",
+    "@libp2p/webrtc": "^5.0.23",
+    "@libp2p/websockets": "^9.0.12",
     "@noble/curves": "^2.0.1",
-    "hono": "^4.9.9",
+    "@noble/hashes": "^1.6.2",
     "libp2p": "^3.0.3",
-    "pouchdb-browser": "^9.0.0"
+    "pouchdb-browser": "^9.0.0",
+    "uint8arrays": "^5.1.0"
   }
 }
