@@ -4,13 +4,6 @@
 	"version": "0.1",
 	"description": "polka is a platform that enables anyone to self-host any data.",
 	"permissions": ["storage"],
-	"protocol_handlers": [
-		{
-			"protocol": "web+polka",
-			"name": "polka Protocol",
-			"uriTemplate": "/polka.html?url=%s"
-		}
-	],
 	"background": {
 		"scripts": ["background.js"],
 		"type": "module",

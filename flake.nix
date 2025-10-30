@@ -22,6 +22,7 @@
           buildInputs = [
             pkgs.pnpm
             pkgs.nodejs_24
+            pkgs.go
           ];
         };
       }

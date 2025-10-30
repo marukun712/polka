@@ -4,35 +4,21 @@
 	"type": "module",
 	"scripts": {
 		"build": "npx tsup --publicDir",
-		"format": "biome format ./",
-		"format:fix": "biome format --write ./",
-		"lint": "biome lint ./",
-		"lint:fix": "biome lint --write ./",
-		"check": "biome check ./",
-		"check:fix": "biome check --write ./"
+		"format": "biome format ./src ./public",
+		"format:fix": "biome format --write ./src ./public",
+		"lint": "biome lint ./src ./public",
+		"lint:fix": "biome lint --write ./src ./public",
+		"check": "biome check ./src ./public",
+		"check:fix": "biome check --write ./src ./public"
 	},
-	"keywords": [],
-	"author": "",
-	"license": "ISC",
-	"packageManager": "pnpm@10.14.0",
 	"devDependencies": {
 		"@biomejs/biome": "2.2.5",
-		"events": "^3.3.0",
 		"tsup": "^8.5.0",
 		"typescript": "latest"
 	},
 	"dependencies": {
-		"@chainsafe/libp2p-noise": "^17.0.0",
-		"@chainsafe/libp2p-yamux": "^8.0.0",
-		"@libp2p/dcutr": "^3.0.4",
-		"@libp2p/identify": "^4.0.4",
-		"@libp2p/interface": "^3.0.2",
-		"@libp2p/webrtc": "^6.0.5",
-		"@libp2p/webtransport": "^6.0.6",
-		"@multiformats/multiaddr": "^13.0.1",
-		"@types/pouchdb-browser": "^6.1.5",
-		"it-pipe": "^3.0.1",
-		"libp2p": "^3.0.5",
-		"pouchdb-browser": "^9.0.0"
+		"@noble/curves": "jsr:^2.0.1",
+		"helia": "^6.0.8",
+		"zod": "^4.1.12"
 	}
 }
