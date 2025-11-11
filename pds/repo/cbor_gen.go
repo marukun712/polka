@@ -18,7 +18,7 @@ var _ = cid.Undef
 var _ = math.E
 var _ = sort.Sort
 
-var lengthBufSignedCommit = []byte{132}
+var lengthBufSignedCommit = []byte{131}
 
 func (t *SignedCommit) MarshalCBOR(w io.Writer) error {
 	if t == nil {
@@ -42,18 +42,6 @@ func (t *SignedCommit) MarshalCBOR(w io.Writer) error {
 	}
 	if _, err := cw.WriteString(string(t.Pk)); err != nil {
 		return err
-	}
-
-	// t.Prev (cid.Cid) (struct)
-
-	if t.Prev == nil {
-		if _, err := cw.Write(cbg.CborNull); err != nil {
-			return err
-		}
-	} else {
-		if err := cbg.WriteCid(cw, *t.Prev); err != nil {
-			return xerrors.Errorf("failed to write cid field t.Prev: %w", err)
-		}
 	}
 
 	// t.Data (cid.Cid) (struct)
@@ -97,7 +85,7 @@ func (t *SignedCommit) UnmarshalCBOR(r io.Reader) (err error) {
 		return fmt.Errorf("cbor input should be of type array")
 	}
 
-	if extra != 4 {
+	if extra != 3 {
 		return fmt.Errorf("cbor input had wrong number of fields")
 	}
 
@@ -110,28 +98,6 @@ func (t *SignedCommit) UnmarshalCBOR(r io.Reader) (err error) {
 		}
 
 		t.Pk = string(sval)
-	}
-	// t.Prev (cid.Cid) (struct)
-
-	{
-
-		b, err := cr.ReadByte()
-		if err != nil {
-			return err
-		}
-		if b != cbg.CborNull[0] {
-			if err := cr.UnreadByte(); err != nil {
-				return err
-			}
-
-			c, err := cbg.ReadCid(cr)
-			if err != nil {
-				return xerrors.Errorf("failed to read cid field t.Prev: %w", err)
-			}
-
-			t.Prev = &c
-		}
-
 	}
 	// t.Data (cid.Cid) (struct)
 
@@ -170,7 +136,7 @@ func (t *SignedCommit) UnmarshalCBOR(r io.Reader) (err error) {
 	return nil
 }
 
-var lengthBufUnsignedCommit = []byte{131}
+var lengthBufUnsignedCommit = []byte{130}
 
 func (t *UnsignedCommit) MarshalCBOR(w io.Writer) error {
 	if t == nil {
@@ -194,18 +160,6 @@ func (t *UnsignedCommit) MarshalCBOR(w io.Writer) error {
 	}
 	if _, err := cw.WriteString(string(t.Pk)); err != nil {
 		return err
-	}
-
-	// t.Prev (cid.Cid) (struct)
-
-	if t.Prev == nil {
-		if _, err := cw.Write(cbg.CborNull); err != nil {
-			return err
-		}
-	} else {
-		if err := cbg.WriteCid(cw, *t.Prev); err != nil {
-			return xerrors.Errorf("failed to write cid field t.Prev: %w", err)
-		}
 	}
 
 	// t.Data (cid.Cid) (struct)
@@ -236,7 +190,7 @@ func (t *UnsignedCommit) UnmarshalCBOR(r io.Reader) (err error) {
 		return fmt.Errorf("cbor input should be of type array")
 	}
 
-	if extra != 3 {
+	if extra != 2 {
 		return fmt.Errorf("cbor input had wrong number of fields")
 	}
 
@@ -249,28 +203,6 @@ func (t *UnsignedCommit) UnmarshalCBOR(r io.Reader) (err error) {
 		}
 
 		t.Pk = string(sval)
-	}
-	// t.Prev (cid.Cid) (struct)
-
-	{
-
-		b, err := cr.ReadByte()
-		if err != nil {
-			return err
-		}
-		if b != cbg.CborNull[0] {
-			if err := cr.UnreadByte(); err != nil {
-				return err
-			}
-
-			c, err := cbg.ReadCid(cr)
-			if err != nil {
-				return xerrors.Errorf("failed to read cid field t.Prev: %w", err)
-			}
-
-			t.Prev = &c
-		}
-
 	}
 	// t.Data (cid.Cid) (struct)
 
