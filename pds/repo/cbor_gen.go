@@ -18,7 +18,7 @@ var _ = cid.Undef
 var _ = math.E
 var _ = sort.Sort
 
-var lengthBufSignedCommit = []byte{131}
+var lengthBufSignedCommit = []byte{130}
 
 func (t *SignedCommit) MarshalCBOR(w io.Writer) error {
 	if t == nil {
@@ -29,18 +29,6 @@ func (t *SignedCommit) MarshalCBOR(w io.Writer) error {
 	cw := cbg.NewCborWriter(w)
 
 	if _, err := cw.Write(lengthBufSignedCommit); err != nil {
-		return err
-	}
-
-	// t.Pk (string) (string)
-	if len(t.Pk) > 8192 {
-		return xerrors.Errorf("Value in field t.Pk was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.Pk))); err != nil {
-		return err
-	}
-	if _, err := cw.WriteString(string(t.Pk)); err != nil {
 		return err
 	}
 
@@ -85,20 +73,10 @@ func (t *SignedCommit) UnmarshalCBOR(r io.Reader) (err error) {
 		return fmt.Errorf("cbor input should be of type array")
 	}
 
-	if extra != 3 {
+	if extra != 2 {
 		return fmt.Errorf("cbor input had wrong number of fields")
 	}
 
-	// t.Pk (string) (string)
-
-	{
-		sval, err := cbg.ReadStringWithMax(cr, 8192)
-		if err != nil {
-			return err
-		}
-
-		t.Pk = string(sval)
-	}
 	// t.Data (cid.Cid) (struct)
 
 	{
@@ -136,7 +114,7 @@ func (t *SignedCommit) UnmarshalCBOR(r io.Reader) (err error) {
 	return nil
 }
 
-var lengthBufUnsignedCommit = []byte{130}
+var lengthBufUnsignedCommit = []byte{129}
 
 func (t *UnsignedCommit) MarshalCBOR(w io.Writer) error {
 	if t == nil {
@@ -147,18 +125,6 @@ func (t *UnsignedCommit) MarshalCBOR(w io.Writer) error {
 	cw := cbg.NewCborWriter(w)
 
 	if _, err := cw.Write(lengthBufUnsignedCommit); err != nil {
-		return err
-	}
-
-	// t.Pk (string) (string)
-	if len(t.Pk) > 8192 {
-		return xerrors.Errorf("Value in field t.Pk was too long")
-	}
-
-	if err := cw.WriteMajorTypeHeader(cbg.MajTextString, uint64(len(t.Pk))); err != nil {
-		return err
-	}
-	if _, err := cw.WriteString(string(t.Pk)); err != nil {
 		return err
 	}
 
@@ -190,20 +156,10 @@ func (t *UnsignedCommit) UnmarshalCBOR(r io.Reader) (err error) {
 		return fmt.Errorf("cbor input should be of type array")
 	}
 
-	if extra != 2 {
+	if extra != 1 {
 		return fmt.Errorf("cbor input had wrong number of fields")
 	}
 
-	// t.Pk (string) (string)
-
-	{
-		sval, err := cbg.ReadStringWithMax(cr, 8192)
-		if err != nil {
-			return err
-		}
-
-		t.Pk = string(sval)
-	}
 	// t.Data (cid.Cid) (struct)
 
 	{

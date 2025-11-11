@@ -3,8 +3,8 @@ package repo
 import (
 	"bytes"
 	"context"
+	"crypto/ed25519"
 	"fmt"
-	"io"
 
 	lexutil "github.com/bluesky-social/indigo/lex/util"
 	"github.com/bluesky-social/indigo/mst"
@@ -17,17 +17,16 @@ import (
 )
 
 type SignedCommit struct {
-	Pk   string  `json:"pk" cborgen:"pk"`
 	Data cid.Cid `json:"data" cborgen:"data"`
 	Sig  []byte  `json:"sig" cborgen:"sig"`
 }
 
 type UnsignedCommit struct {
-	Pk   string  `cborgen:"pk"`
 	Data cid.Cid `cborgen:"data"`
 }
 
 type Repo struct {
+	pk  ed25519.PublicKey
 	sc  SignedCommit
 	cst cbor.IpldStore
 	bs  cbor.IpldBlockstore
@@ -45,13 +44,14 @@ func (uc *UnsignedCommit) BytesForSigning() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func NewRepo(ctx context.Context, bs cbor.IpldBlockstore) *Repo {
+func NewRepo(ctx context.Context, pk ed25519.PublicKey, bs cbor.IpldBlockstore) *Repo {
 	cst := util.CborStore(bs)
 
 	t := mst.NewEmptyMST(cst)
 	sc := SignedCommit{}
 
 	return &Repo{
+		pk:  pk,
 		cst: cst,
 		bs:  bs,
 		mst: t,
@@ -59,7 +59,7 @@ func NewRepo(ctx context.Context, bs cbor.IpldBlockstore) *Repo {
 	}
 }
 
-func OpenRepo(ctx context.Context, bs cbor.IpldBlockstore, root cid.Cid) (*Repo, error) {
+func OpenRepo(ctx context.Context, pk ed25519.PublicKey, bs cbor.IpldBlockstore, root cid.Cid) (*Repo, error) {
 	cst := util.CborStore(bs)
 
 	var sc SignedCommit
@@ -68,15 +68,12 @@ func OpenRepo(ctx context.Context, bs cbor.IpldBlockstore, root cid.Cid) (*Repo,
 	}
 
 	return &Repo{
+		pk:      pk,
 		sc:      sc,
 		bs:      bs,
 		cst:     cst,
 		repoCid: root,
 	}, nil
-}
-
-type CborMarshaler interface {
-	MarshalCBOR(w io.Writer) error
 }
 
 func (r *Repo) DataCid() cid.Cid {
