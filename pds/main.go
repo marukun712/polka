@@ -12,6 +12,8 @@ import (
 	blockstore "github.com/ipfs/boxo/blockstore"
 	"github.com/ipfs/go-cid"
 	leveldb "github.com/ipfs/go-ds-leveldb"
+	gostream "github.com/libp2p/go-libp2p-gostream"
+	p2phttp "github.com/libp2p/go-libp2p-http"
 	"github.com/marukun712/polka/pds/peer"
 	"github.com/marukun712/polka/pds/repo"
 	"github.com/marukun712/polka/pds/utils"
@@ -38,6 +40,12 @@ func main() {
 
 	// repoを作成
 	r := repo.NewRepo(ctx, did, bs)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// libp2pピアを取得
+	h, t, err := peer.GetPeer(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -153,6 +161,20 @@ func main() {
 			return
 		}
 
+		cid, err := r.GetCID(ctx)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		a := &Announce{
+			Did:  did,
+			NSID: post.NSID,
+			Rkey: tid,
+			Root: cid.String(),
+		}
+		aBytes, err := json.Marshal(a)
+		t.Publish(ctx, aBytes)
+
 		c.JSON(http.StatusOK, gin.H{"cid": recordCid.String(), "tid": tid})
 	})
 
@@ -191,6 +213,7 @@ func main() {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
 		c.JSON(http.StatusOK, gin.H{"cid": cid.String()})
 	})
 
@@ -293,8 +316,16 @@ func main() {
 	})
 
 	// サーバーを起動
-	_, err = peer.StartPeer(router)
+	listener, err := gostream.Listen(h, p2phttp.DefaultP2PProtocol)
 	if err != nil {
 		log.Fatal(err)
 	}
+	go func() {
+		server := &http.Server{
+			Handler: router,
+		}
+		if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
+			log.Println("Server error:", err)
+		}
+	}()
 }

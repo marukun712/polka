@@ -45,3 +45,11 @@ type DeleteRequest struct {
 type DeleteRequestUnSigned struct {
 	Rkey string `json:"rkey"`
 }
+
+type Announce struct {
+	Did  string `json:"did"`
+	NSID string `json:"nsid"`
+	Rkey string `json:"rkey"`
+	Root string `json:"root"`
+	Sig  string `json:"sig"`
+}
