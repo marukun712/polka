@@ -17,35 +17,11 @@ import (
 	"github.com/marukun712/polka/pds/utils"
 )
 
-type CommitRequest struct {
-	Did     string `json:"did"`
-	Version int64  `json:"version"`
-	Prev    string `json:"prev"`
-	Data    string `json:"data"`
-	Sig     string `json:"sig"`
-	Rev     string `json:"rev"`
-}
-
-type CreateRequest struct {
-	NSID string                 `json:"nsid"`
-	Body map[string]interface{} `json:"body"`
-	Sig  string                 `json:"sig"`
-}
-
-type PutRequest struct {
-	Body map[string]interface{} `json:"body"`
-	Sig  string                 `json:"sig"`
-}
-
-type DeleteRequest struct {
-	Rkey string `json:"rkey"`
-	Sig  string `json:"sig"`
-}
-
 func main() {
 	ctx := context.Background()
-	dir := "./store"
 
+	// BlockStoreの設定
+	dir := "./store"
 	ds, err := leveldb.NewDatastore(dir, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -53,17 +29,20 @@ func main() {
 	defer ds.Close()
 	bs := blockstore.NewBlockstore(ds)
 
+	// リポジトリ所有者didの設定
 	did := "did:key:z6Mkqh5AD5V3GY6A8G7o7yD1Mjwp7RmpsRwidFTEsTPb5ow1"
 	pk, err := utils.GetPk(did)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// repoを作成
 	r := repo.NewRepo(ctx, did, bs)
 	if err != nil {
 		log.Fatal(err)
 	}
 
+	// routerを作成
 	router := gin.Default()
 
 	// 認証なしのroute
@@ -141,16 +120,23 @@ func main() {
 			return
 		}
 
-		bytes, err := json.Marshal(post)
+		unSigned := CreateRequestUnSigned{
+			NSID: post.NSID,
+			Body: post.Body,
+		}
+
+		bytes, err := json.Marshal(unSigned)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
 		sigBytes, err := hex.DecodeString(post.Sig)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
 		if !ed25519.Verify(pk, bytes, sigBytes) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid signature"})
 			return
@@ -179,16 +165,22 @@ func main() {
 			return
 		}
 
-		bytes, err := json.Marshal(post)
+		unSigned := PutRequestUnSigned{
+			Body: post.Body,
+		}
+
+		bytes, err := json.Marshal(unSigned)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
 		sigBytes, err := hex.DecodeString(post.Sig)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
 		if !ed25519.Verify(pk, bytes, sigBytes) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid signature"})
 			return
@@ -205,23 +197,28 @@ func main() {
 	// レコードを削除
 	router.DELETE("/record/:rpath", func(c *gin.Context) {
 		rpath := c.Param("rpath")
-
 		var post DeleteRequest
 		if err := c.ShouldBindJSON(&post); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		bytes, err := json.Marshal(post)
+		unSigned := DeleteRequestUnSigned{
+			Rkey: post.Rkey,
+		}
+
+		bytes, err := json.Marshal(unSigned)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
 		sigBytes, err := hex.DecodeString(post.Sig)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
 		if !ed25519.Verify(pk, bytes, sigBytes) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid signature"})
 			return
@@ -242,16 +239,26 @@ func main() {
 			return
 		}
 
-		bytes, err := json.Marshal(post)
+		unSigned := CommitRequestUnSigned{
+			Did:     post.Did,
+			Version: post.Version,
+			Prev:    post.Prev,
+			Data:    post.Data,
+			Rev:     post.Rev,
+		}
+
+		bytes, err := json.Marshal(unSigned)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
 		sigBytes, err := hex.DecodeString(post.Sig)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
 		if !ed25519.Verify(pk, bytes, sigBytes) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid signature"})
 			return
