@@ -51,7 +51,7 @@ type Repo struct {
 
 	dirty bool
 
-	clk *syntax.TIDClock
+	Clk *syntax.TIDClock
 }
 
 // Returns a copy of commit without the Sig field. Helpful when verifying signature.
@@ -114,7 +114,7 @@ func ReadRepoFromCar(ctx context.Context, r io.Reader) (*Repo, error) {
 
 func NewRepo(ctx context.Context, did string, bs cbor.IpldBlockstore) *Repo {
 	cst := util.CborStore(bs)
-	clk := syntax.NewTIDClock(0)
+	Clk := syntax.NewTIDClock(0)
 
 	t := mst.NewEmptyMST(cst)
 	sc := SignedCommit{
@@ -128,13 +128,13 @@ func NewRepo(ctx context.Context, did string, bs cbor.IpldBlockstore) *Repo {
 		mst:   t,
 		sc:    sc,
 		dirty: true,
-		clk:   &clk,
+		Clk:   &Clk,
 	}
 }
 
 func OpenRepo(ctx context.Context, bs cbor.IpldBlockstore, root cid.Cid) (*Repo, error) {
 	cst := util.CborStore(bs)
-	clk := syntax.NewTIDClock(0)
+	Clk := syntax.NewTIDClock(0)
 
 	var sc SignedCommit
 	if err := cst.Get(ctx, root, &sc); err != nil {
@@ -150,7 +150,7 @@ func OpenRepo(ctx context.Context, bs cbor.IpldBlockstore, root cid.Cid) (*Repo,
 		bs:      bs,
 		cst:     cst,
 		repoCid: root,
-		clk:     &clk,
+		Clk:     &Clk,
 	}, nil
 }
 
@@ -203,7 +203,7 @@ func (r *Repo) CreateRecord(ctx context.Context, nsid string, rec interface{}) (
 	}
 
 	// ClockからTIDを取得(時系列ソートのため)
-	tid := r.clk.Next().String()
+	tid := r.Clk.Next().String()
 
 	// MSTに追加
 	nmst, err := t.Add(ctx, nsid+"/"+tid, k, -1)
