@@ -296,12 +296,6 @@ func (r *Repo) DeleteRecord(ctx context.Context, rpath string) error {
 	return nil
 }
 
-// 履歴を消す
-func (r *Repo) Truncate() {
-	r.sc.Prev = nil
-	r.repoCid = cid.Undef
-}
-
 // Commitする(署名済みを外部からHTTPなどで受け取る)
 func (r *Repo) Commit(ctx context.Context, signed SignedCommit) (cid.Cid, string, error) {
 	ctx, span := otel.Tracer("repo").Start(ctx, "Commit")
