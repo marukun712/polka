@@ -10,6 +10,7 @@ import (
 	blockstore "github.com/ipfs/boxo/blockstore"
 	"github.com/ipfs/go-cid"
 	leveldb "github.com/ipfs/go-ds-leveldb"
+	"github.com/marukun712/polka/pds/peer"
 	"github.com/marukun712/polka/pds/repo"
 	"github.com/marukun712/polka/pds/utils"
 )
@@ -36,6 +37,9 @@ func main() {
 	}
 
 	r := repo.NewRepo(ctx, did, bs)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	router := gin.Default()
 
@@ -174,5 +178,8 @@ func main() {
 		c.JSON(http.StatusOK, cid)
 	})
 
-	router.Run()
+	_, err = peer.StartPeer(router)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
