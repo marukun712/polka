@@ -5,8 +5,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"strings"
 
-	didkey "github.com/MetaMask/go-did-it/verifiers/did-key"
 	"github.com/multiformats/go-multibase"
 	"github.com/multiformats/go-multicodec"
 	"github.com/multiformats/go-varint"
@@ -29,14 +29,31 @@ func main() {
 }
 
 func GetPk(did string) (ed25519.PublicKey, error) {
-	d, err := didkey.Decode(did)
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode did:key: %w", err)
+	const prefix = "did:key:"
+	if !strings.HasPrefix(did, prefix) {
+		return nil, fmt.Errorf("invalid did:key prefix")
 	}
 
-	pubKeyBytes, err := hex.DecodeString(d.String())
+	encoded := strings.TrimPrefix(did, prefix)
+	_, decoded, err := multibase.Decode(encoded)
 	if err != nil {
-		return nil, fmt.Errorf("did:key does not contain ed25519 key")
+		return nil, fmt.Errorf("Error: %w", err)
+	}
+
+	code, n, err := varint.FromUvarint(decoded)
+	if err != nil {
+		return nil, fmt.Errorf("Error: %w", err)
+	}
+	if n <= 0 {
+		return nil, fmt.Errorf("failed to parse varint")
+	}
+	if multicodec.Code(code) != multicodec.Ed25519Pub {
+		return nil, fmt.Errorf("unsupported multicodec: %x", code)
+	}
+
+	pubKeyBytes := decoded[n:]
+	if len(pubKeyBytes) != ed25519.PublicKeySize {
+		return nil, fmt.Errorf("invalid pubkey length: %d", len(pubKeyBytes))
 	}
 
 	return ed25519.PublicKey(pubKeyBytes), nil

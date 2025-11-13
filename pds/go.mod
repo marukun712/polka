@@ -3,7 +3,6 @@ module github.com/marukun712/polka/pds
 go 1.25.2
 
 require (
-	github.com/MetaMask/go-did-it v1.0.0-pre1
 	github.com/bluesky-social/indigo v0.0.0-20251110215450-919084ff5b21
 	github.com/gin-gonic/gin v1.11.0
 	github.com/ipfs/boxo v0.35.2
@@ -152,7 +151,6 @@ require (
 	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
-	github.com/ucan-wg/go-varsig v1.0.0 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
 	github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1 // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect
