@@ -1,15 +1,10 @@
-import { createSignal } from "solid-js";
-import {
-	createRecord,
-	deleteRecord,
-	getRecords,
-	updateRecord,
-} from "../lib/client";
+import { type Component, createSignal } from "solid-js";
+import { Client } from "../lib/client";
 import { signMessage } from "../lib/crypto";
 
-export default function Home() {
+const App: Component = () => {
 	const [sk, setSk] = createSignal("");
-	const [addr, setAddr] = createSignal("/ip4/127.0.0.1/tcp/8080");
+	const [addr, setAddr] = createSignal("");
 	const [result, setResult] = createSignal("");
 
 	const [createNsid, setCreateNsid] = createSignal("");
@@ -23,13 +18,25 @@ export default function Home() {
 	const [deleteRpath, setDeleteRpath] = createSignal("");
 	const [deleteRkey, setDeleteRkey] = createSignal("");
 
+	const [client, setClient] = createSignal<Client | null>(null);
+
+	const initClient = async () => {
+		try {
+			const c = await Client.create(addr());
+			setClient(c);
+			setResult("Client initialized");
+		} catch (e) {
+			setResult(`Error initializing client: ${e}`);
+		}
+	};
+
 	const handleCreateRecord = async () => {
+		if (!client()) return setResult("Client not initialized");
 		try {
 			const bodyObj = JSON.parse(createBody());
 			const unsigned = { nsid: createNsid(), body: bodyObj };
 			const sig = signMessage(sk(), unsigned);
-			console.log(sig);
-			const res = await createRecord(addr(), createNsid(), createBody(), sig);
+			const res = await client()?.createRecord(createNsid(), createBody(), sig);
 			setResult(JSON.stringify(res, null, 2));
 		} catch (e) {
 			setResult(`Error: ${e}`);
@@ -37,9 +44,9 @@ export default function Home() {
 	};
 
 	const handleGetRecords = async () => {
+		if (!client()) return setResult("Client not initialized");
 		try {
-			const res = await getRecords(addr(), getNsid());
-			console.log(res);
+			const res = await client()?.getRecords(getNsid());
 			setResult(JSON.stringify(res, null, 2));
 		} catch (e) {
 			setResult(`Error: ${e}`);
@@ -47,12 +54,16 @@ export default function Home() {
 	};
 
 	const handleUpdateRecord = async () => {
+		if (!client()) return setResult("Client not initialized");
 		try {
 			const bodyObj = JSON.parse(updateBody());
 			const unsigned = { body: bodyObj };
 			const sig = signMessage(sk(), unsigned);
-			console.log(sig);
-			const res = await updateRecord(addr(), updateRpath(), updateBody(), sig);
+			const res = await client()?.updateRecord(
+				updateRpath(),
+				updateBody(),
+				sig,
+			);
 			setResult(JSON.stringify(res, null, 2));
 		} catch (e) {
 			setResult(`Error: ${e}`);
@@ -60,11 +71,15 @@ export default function Home() {
 	};
 
 	const handleDeleteRecord = async () => {
+		if (!client()) return setResult("Client not initialized");
 		try {
 			const unsigned = { rkey: deleteRkey() };
 			const sig = signMessage(sk(), unsigned);
-			console.log(sig);
-			const res = await deleteRecord(addr(), deleteRpath(), deleteRkey(), sig);
+			const res = await client()?.deleteRecord(
+				deleteRpath(),
+				deleteRkey(),
+				sig,
+			);
 			setResult(JSON.stringify(res, null, 2));
 		} catch (e) {
 			setResult(`Error: ${e}`);
@@ -78,7 +93,7 @@ export default function Home() {
 			<div class="mb-4 p-4 border">
 				<h2 class="text-xl mb-2">Configuration</h2>
 				<div class="mb-2">
-					<h1 class="block mb-1">Secret Key (sk):</h1>
+					<h1 class="block mb-1">Secret Key:</h1>
 					<input
 						type="text"
 						value={sk()}
@@ -97,6 +112,13 @@ export default function Home() {
 						placeholder="/ip4/127.0.0.1/tcp/8080"
 					/>
 				</div>
+				<button
+					type="button"
+					onClick={initClient}
+					class="px-4 py-2 bg-gray-500 text-white mt-2"
+				>
+					Initialize Client
+				</button>
 			</div>
 
 			<div class="mb-4 p-4 border">
@@ -219,4 +241,6 @@ export default function Home() {
 			</div>
 		</div>
 	);
-}
+};
+
+export default App;

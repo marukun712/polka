@@ -378,8 +378,11 @@ func main() {
 		server := &http.Server{
 			Handler: router,
 		}
+		log.Println("HTTP server started on libp2p protocol")
 		if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
 			log.Println("Server error:", err)
 		}
 	}()
+
+	select {}
 }

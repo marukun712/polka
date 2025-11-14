@@ -13,7 +13,6 @@ require (
 	github.com/libp2p/go-libp2p v0.45.0
 	github.com/libp2p/go-libp2p-gostream v0.6.0
 	github.com/libp2p/go-libp2p-http v0.5.0
-	github.com/libp2p/go-libp2p-kad-dht v0.35.1
 	github.com/libp2p/go-libp2p-pubsub v0.15.0
 	github.com/multiformats/go-multibase v0.2.0
 	github.com/multiformats/go-multicodec v0.10.0
@@ -52,7 +51,6 @@ require (
 	github.com/goccy/go-yaml v1.18.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.5-0.20231225225746-43d5d4cd4e0e // indirect
-	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20190812055157-5d271430af9f // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
@@ -88,12 +86,8 @@ require (
 	github.com/koron/go-ssdp v0.0.6 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
-	github.com/libp2p/go-cidranger v1.1.0 // indirect
 	github.com/libp2p/go-flow-metrics v0.3.0 // indirect
 	github.com/libp2p/go-libp2p-asn-util v0.4.1 // indirect
-	github.com/libp2p/go-libp2p-kbucket v0.8.0 // indirect
-	github.com/libp2p/go-libp2p-record v0.3.1 // indirect
-	github.com/libp2p/go-libp2p-routing-helpers v0.7.5 // indirect
 	github.com/libp2p/go-msgio v0.3.0 // indirect
 	github.com/libp2p/go-netroute v0.3.0 // indirect
 	github.com/libp2p/go-reuseport v0.4.0 // indirect
@@ -152,7 +146,6 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
-	github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1 // indirect
 	github.com/wlynxg/anet v0.0.5 // indirect
 	gitlab.com/yawning/secp256k1-voi v0.0.0-20230925100816-f2616030848b // indirect
 	gitlab.com/yawning/tuplehash v0.0.0-20230713102510-df83abbf9a02 // indirect
@@ -178,7 +171,6 @@ require (
 	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/time v0.12.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
-	gonum.org/v1/gonum v0.16.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect
 )
