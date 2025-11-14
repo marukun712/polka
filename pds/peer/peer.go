@@ -23,6 +23,11 @@ func GetPeer(ctx context.Context) (host.Host, *pubsub.Topic, error) {
 		return nil, nil, err
 	}
 
+	fmt.Println("Host ID:", h.ID())
+	for _, addr := range h.Addrs() {
+		fmt.Printf("Listening on: %s/p2p/%s\n", addr, h.ID())
+	}
+
 	go discoverPeers(ctx, h)
 	ps, err := pubsub.NewGossipSub(ctx, h)
 	if err != nil {

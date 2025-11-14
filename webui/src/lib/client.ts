@@ -12,6 +12,8 @@ const node = await createLibp2p({
 	services: { http: http() },
 });
 
+console.log(node.getMultiaddrs());
+
 function fetch(
 	addr: string,
 	path: string,
@@ -28,11 +30,11 @@ function fetch(
 }
 
 export async function getRecords(addr: string, nsid: string) {
-	return fetch(addr, "GET", `/records?nsid=${nsid}`);
+	return fetch(addr, `/records?nsid=${nsid}`, "GET");
 }
 
 export async function getRecord(addr: string, rpath: string) {
-	return fetch(addr, "GET", `/record/${rpath}/get`);
+	return fetch(addr, `/record/${rpath}/get`, "GET");
 }
 
 export async function createRecord(
@@ -41,7 +43,7 @@ export async function createRecord(
 	body: string,
 	sig: string,
 ) {
-	return fetch(addr, "POST", "/record", { nsid, body, sig });
+	return fetch(addr, "/record", "POST", { nsid, body, sig });
 }
 
 export async function updateRecord(
@@ -50,7 +52,7 @@ export async function updateRecord(
 	body: string,
 	sig: string,
 ) {
-	return fetch(addr, "PUT", `/record/${rpath}`, { body, sig });
+	return fetch(addr, `/record/${rpath}`, "PUT", { body, sig });
 }
 
 export async function deleteRecord(
@@ -59,5 +61,5 @@ export async function deleteRecord(
 	rkey: string,
 	sig: string,
 ) {
-	return fetch(addr, "DELETE", `/record/${rpath}`, { rkey, sig });
+	return fetch(addr, `/record/${rpath}`, "DELETE", { rkey, sig });
 }

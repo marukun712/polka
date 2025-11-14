@@ -86,7 +86,7 @@ func main() {
 	bs := blockstore.NewBlockstore(ds)
 
 	// リポジトリ所有者didの設定
-	did := "did:key:z6Mkqh5AD5V3GY6A8G7o7yD1Mjwp7RmpsRwidFTEsTPb5ow1"
+	did := "did:key:z6MkpsxQQF8sedejx1v9wYfubLiNWVVoxTFmornuJS7WCLkk"
 	pk, err := utils.GetPk(did)
 	if err != nil {
 		log.Fatal(err)
