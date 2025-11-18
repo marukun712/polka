@@ -24,6 +24,7 @@
             pkgs.go
             pkgs.tinygo
             pkgs.wkg
+            pkgs.wasm-tools
           ];
         };
       }
