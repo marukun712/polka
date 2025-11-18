@@ -22,6 +22,8 @@
           buildInputs = [
             pkgs.bun
             pkgs.go
+            pkgs.tinygo
+            pkgs.wkg
           ];
         };
       }

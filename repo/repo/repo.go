@@ -6,14 +6,12 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/bluesky-social/indigo/atproto/repo"
 	"github.com/bluesky-social/indigo/atproto/syntax"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
-	"github.com/bluesky-social/indigo/mst"
-	"github.com/bluesky-social/indigo/util"
 	"github.com/ipfs/go-cid"
 	cbor "github.com/ipfs/go-ipld-cbor"
-	"github.com/ipld/go-car"
+	"github.com/marukun712/polka/repo/mst"
+	mh "github.com/multiformats/go-multihash"
 	cbg "github.com/whyrusleeping/cbor-gen"
 	"go.opentelemetry.io/otel"
 )
@@ -76,64 +74,14 @@ func (uc *UnsignedCommit) BytesForSigning() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func IngestRepo(ctx context.Context, bs cbor.IpldBlockstore, r io.Reader) (cid.Cid, error) {
-	ctx, span := otel.Tracer("repo").Start(ctx, "Ingest")
-	defer span.End()
-
-	br, err := car.NewCarReader(r)
-	if err != nil {
-		return cid.Undef, fmt.Errorf("opening CAR block reader: %w", err)
-	}
-
-	for {
-		blk, err := br.Next()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return cid.Undef, fmt.Errorf("reading block from CAR: %w", err)
-		}
-
-		if err := bs.Put(ctx, blk); err != nil {
-			return cid.Undef, fmt.Errorf("copying block to store: %w", err)
-		}
-	}
-
-	return br.Header.Roots[0], nil
-}
-
-func ReadRepoFromCar(ctx context.Context, r io.Reader) (*Repo, error) {
-	bs := repo.NewTinyBlockstore()
-	root, err := IngestRepo(ctx, bs, r)
-	if err != nil {
-		return nil, fmt.Errorf("ReadRepoFromCar:IngestRepo: %w", err)
-	}
-
-	return OpenRepo(ctx, bs, root)
-}
-
-func NewRepo(ctx context.Context, did string, bs cbor.IpldBlockstore) *Repo {
-	cst := util.CborStore(bs)
-	Clk := syntax.NewTIDClock(0)
-
-	t := mst.NewEmptyMST(cst)
-	sc := SignedCommit{
-		Did:     did,
-		Version: 2,
-	}
-
-	return &Repo{
-		cst:   cst,
-		bs:    bs,
-		mst:   t,
-		sc:    sc,
-		dirty: true,
-		Clk:   &Clk,
-	}
+func CborStore(bs cbor.IpldBlockstore) *cbor.BasicIpldStore {
+	cst := cbor.NewCborStore(bs)
+	cst.DefaultMultihash = mh.SHA2_256
+	return cst
 }
 
 func OpenRepo(ctx context.Context, bs cbor.IpldBlockstore, root cid.Cid) (*Repo, error) {
-	cst := util.CborStore(bs)
+	cst := CborStore(bs)
 	Clk := syntax.NewTIDClock(0)
 
 	var sc SignedCommit
