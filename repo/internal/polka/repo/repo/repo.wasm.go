@@ -9,7 +9,6 @@ import (
 // This file contains wasmimport and wasmexport declarations for "polka:repo".
 
 //go:wasmexport open
-//export open
 func wasmexport_Open(did0 *uint8, did1 uint32) {
 	did := cm.LiftString[string]((*uint8)(did0), (uint32)(did1))
 	Exports.Open(did)
@@ -17,7 +16,6 @@ func wasmexport_Open(did0 *uint8, did1 uint32) {
 }
 
 //go:wasmexport create-record
-//export create-record
 func wasmexport_CreateRecord(nsid0 *uint8, nsid1 uint32, data0 *uint8, data1 uint32) (result *cm.Result[CreateResultShape, CreateResult, string]) {
 	nsid := cm.LiftString[string]((*uint8)(nsid0), (uint32)(nsid1))
 	data := cm.LiftString[string]((*uint8)(data0), (uint32)(data1))
@@ -27,7 +25,6 @@ func wasmexport_CreateRecord(nsid0 *uint8, nsid1 uint32, data0 *uint8, data1 uin
 }
 
 //go:wasmexport get-record
-//export get-record
 func wasmexport_GetRecord(rpath0 *uint8, rpath1 uint32) (result *cm.Result[GetResultShape, GetResult, string]) {
 	rpath := cm.LiftString[string]((*uint8)(rpath0), (uint32)(rpath1))
 	result_ := Exports.GetRecord(rpath)
@@ -36,7 +33,6 @@ func wasmexport_GetRecord(rpath0 *uint8, rpath1 uint32) (result *cm.Result[GetRe
 }
 
 //go:wasmexport update-record
-//export update-record
 func wasmexport_UpdateRecord(rpath0 *uint8, rpath1 uint32, data0 *uint8, data1 uint32) (result *cm.Result[string, bool, string]) {
 	rpath := cm.LiftString[string]((*uint8)(rpath0), (uint32)(rpath1))
 	data := cm.LiftString[string]((*uint8)(data0), (uint32)(data1))
@@ -46,7 +42,6 @@ func wasmexport_UpdateRecord(rpath0 *uint8, rpath1 uint32, data0 *uint8, data1 u
 }
 
 //go:wasmexport delete-record
-//export delete-record
 func wasmexport_DeleteRecord(rpath0 *uint8, rpath1 uint32) (result *cm.Result[string, bool, string]) {
 	rpath := cm.LiftString[string]((*uint8)(rpath0), (uint32)(rpath1))
 	result_ := Exports.DeleteRecord(rpath)
@@ -55,7 +50,6 @@ func wasmexport_DeleteRecord(rpath0 *uint8, rpath1 uint32) (result *cm.Result[st
 }
 
 //go:wasmexport commit
-//export commit
 func wasmexport_Commit(commit0 *uint8, commit1 uint32, commit2 uint64, commit3 *uint8, commit4 uint32, commit5 *uint8, commit6 uint32, commit7 *uint8, commit8 uint32, sig0 *uint8, sig1 uint32) (result *cm.Result[string, bool, string]) {
 	commit := lift_CommitRequest((*uint8)(commit0), (uint32)(commit1), (uint64)(commit2), (*uint8)(commit3), (uint32)(commit4), (*uint8)(commit5), (uint32)(commit6), (*uint8)(commit7), (uint32)(commit8))
 	sig := cm.LiftString[string]((*uint8)(sig0), (uint32)(sig1))

@@ -12,8 +12,8 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipld/go-car/v2"
 	"github.com/ipld/go-car/v2/blockstore"
+	"github.com/marukun712/polka/repo/core"
 	wasm "github.com/marukun712/polka/repo/internal/polka/repo/repo"
-	"github.com/marukun712/polka/repo/repo"
 	"github.com/marukun712/polka/repo/utils"
 	"go.bytecodealliance.org/cm"
 )
@@ -26,7 +26,7 @@ type CommitRequest struct {
 	Rev     string `json:"rev"`
 }
 
-var r *repo.Repo
+var r *core.Repo
 
 func openOrCreate(path string) (*os.File, error) {
 	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
@@ -65,7 +65,7 @@ func init() {
 		}
 		defer bs.Close()
 
-		r, err = repo.OpenRepo(ctx, bs, roots[0])
+		r, err = core.OpenRepo(ctx, bs, roots[0])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -147,7 +147,7 @@ func init() {
 			result.SetErr(err.Error())
 		}
 
-		signed := repo.SignedCommit{
+		signed := core.SignedCommit{
 			Did:     commit.Did,
 			Version: commit.Version,
 			Prev:    &prev,
