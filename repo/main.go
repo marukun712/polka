@@ -13,7 +13,7 @@ import (
 	"github.com/ipld/go-car/v2"
 	"github.com/ipld/go-car/v2/blockstore"
 	"github.com/marukun712/polka/repo/core"
-	wasm "github.com/marukun712/polka/repo/internal/polka/repo/repo"
+	wasm "github.com/marukun712/polka/repo/internal/polka/repository/repo"
 	"github.com/marukun712/polka/repo/utils"
 	"go.bytecodealliance.org/cm"
 )

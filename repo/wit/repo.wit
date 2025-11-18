@@ -1,8 +1,6 @@
-package polka:repo;
+package polka:repository@0.1.0;
 
-world repo {
-  include wasi:cli/imports@0.2.0;
-
+interface repo {
   record commit-request {
     did: string,
     version: s64,
@@ -21,10 +19,26 @@ world repo {
     data: string,
   }
 
-  export open: func(did: string);
-  export create-record: func(nsid: string, data: string) -> result<create-result, string>;
-  export get-record: func(rpath: string) -> result<get-result, string>;
-  export update-record: func(rpath: string, data: string) -> result<bool, string>;
-  export delete-record: func(rpath: string) -> result<bool, string>;
-  export commit: func(commit: commit-request, sig: string) -> result<bool, string>;
+  open: func(did: string);
+
+  create-record: func(nsid: string, data: string)
+  -> result<create-result, string>;
+
+  get-record: func(rpath: string)
+  -> result<get-result, string>;
+
+  update-record: func(rpath: string, data: string)
+  -> result<bool, string>;
+
+  delete-record: func(rpath: string)
+  -> result<bool, string>;
+
+  commit: func(commit: commit-request, sig: string)
+  -> result<bool, string>;
+}
+
+world repository {
+  include wasi:cli/imports@0.2.0;
+
+  export repo;
 }
