@@ -1,6 +1,5 @@
 import { type Component, createSignal } from "solid-js";
 import { Client } from "../lib/client";
-import { signMessage } from "../lib/crypto";
 
 const App: Component = () => {
 	const [sk, setSk] = createSignal("");
@@ -33,10 +32,8 @@ const App: Component = () => {
 	const handleCreateRecord = async () => {
 		if (!client()) return setResult("Client not initialized");
 		try {
-			const bodyObj = JSON.parse(createBody());
-			const unsigned = { nsid: createNsid(), body: bodyObj };
-			const sig = signMessage(sk(), unsigned);
-			const res = await client()?.createRecord(createNsid(), createBody(), sig);
+			const _bodyObj = JSON.parse(createBody());
+			const res = await client()?.createRecord(createNsid(), createBody());
 			setResult(JSON.stringify(res, null, 2));
 		} catch (e) {
 			setResult(`Error: ${e}`);
@@ -56,14 +53,8 @@ const App: Component = () => {
 	const handleUpdateRecord = async () => {
 		if (!client()) return setResult("Client not initialized");
 		try {
-			const bodyObj = JSON.parse(updateBody());
-			const unsigned = { body: bodyObj };
-			const sig = signMessage(sk(), unsigned);
-			const res = await client()?.updateRecord(
-				updateRpath(),
-				updateBody(),
-				sig,
-			);
+			const _bodyObj = JSON.parse(updateBody());
+			const res = await client()?.updateRecord(updateRpath(), updateBody());
 			setResult(JSON.stringify(res, null, 2));
 		} catch (e) {
 			setResult(`Error: ${e}`);
@@ -73,13 +64,7 @@ const App: Component = () => {
 	const handleDeleteRecord = async () => {
 		if (!client()) return setResult("Client not initialized");
 		try {
-			const unsigned = { rkey: deleteRkey() };
-			const sig = signMessage(sk(), unsigned);
-			const res = await client()?.deleteRecord(
-				deleteRpath(),
-				deleteRkey(),
-				sig,
-			);
+			const res = await client()?.deleteRecord(deleteRpath(), deleteRkey());
 			setResult(JSON.stringify(res, null, 2));
 		} catch (e) {
 			setResult(`Error: ${e}`);

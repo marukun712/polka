@@ -62,18 +62,18 @@ export class Client {
 	}
 
 	public getRecord(rpath: string) {
-		return this.fetch(this.addr, `/record/${rpath}/get`, "GET");
+		return this.fetch(this.addr, `/record?rpath=${rpath}`, "GET");
 	}
 
-	public createRecord(nsid: string, body: string, sig: string) {
-		return this.fetch(this.addr, "/record", "POST", { nsid, body, sig });
+	public createRecord(nsid: string, body: string) {
+		return this.fetch(this.addr, "/record", "POST", { nsid, body });
 	}
 
-	public updateRecord(rpath: string, body: string, sig: string) {
-		return this.fetch(this.addr, `/record/${rpath}`, "PUT", { body, sig });
+	public updateRecord(rpath: string, body: string) {
+		return this.fetch(this.addr, `/record/${rpath}`, "PUT", { body });
 	}
 
-	public deleteRecord(rpath: string, rkey: string, sig: string) {
-		return this.fetch(this.addr, `/record/${rpath}`, "DELETE", { rkey, sig });
+	public deleteRecord(rpath: string, rkey: string) {
+		return this.fetch(this.addr, `/record/${rpath}`, "DELETE", { rkey });
 	}
 }
