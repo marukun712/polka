@@ -117,7 +117,16 @@ func init() {
 		return result
 	}
 
-	wasm.Exports.Commit = func(commit wasm.CommitRequest, sig string) (result cm.Result[string, bool, string]) {
+	wasm.Exports.GetUnsigned = func() (result cm.Result[wasm.UnsignedShape, wasm.Unsigned, string]) {
+		uc, err := r.GetUnsigned(context.Background())
+		if err != nil {
+			result.SetErr(err.Error())
+		}
+		result.SetOK(uc)
+		return result
+	}
+
+	wasm.Exports.Commit = func(commit wasm.Unsigned, sig string) (result cm.Result[string, bool, string]) {
 		did := r.RepoDid()
 		pubKey, err := utils.GetPk(did)
 		if err != nil {
@@ -138,10 +147,6 @@ func init() {
 			result.SetErr("signature verification failed")
 		}
 
-		prev, err := cid.Decode(commit.Prev)
-		if err != nil {
-			result.SetErr(err.Error())
-		}
 		data, err := cid.Decode(commit.Data)
 		if err != nil {
 			result.SetErr(err.Error())
@@ -150,10 +155,9 @@ func init() {
 		signed := core.SignedCommit{
 			Did:     commit.Did,
 			Version: commit.Version,
-			Prev:    &prev,
 			Data:    data,
 			Sig:     sigBytes,
-			Rev:     r.Clk.Next().String(),
+			Rev:     r.GetClock(),
 		}
 
 		_, _, err = r.Commit(context.Background(), signed)

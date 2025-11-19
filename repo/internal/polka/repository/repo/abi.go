@@ -19,11 +19,16 @@ type GetResultShape struct {
 	shape [unsafe.Sizeof(GetResult{})]byte
 }
 
-func lift_CommitRequest(f0 *uint8, f1 uint32, f2 uint64, f3 *uint8, f4 uint32, f5 *uint8, f6 uint32, f7 *uint8, f8 uint32) (v CommitRequest) {
+// UnsignedShape is used for storage in variant or result types.
+type UnsignedShape struct {
+	_     cm.HostLayout
+	shape [unsafe.Sizeof(Unsigned{})]byte
+}
+
+func lift_Unsigned(f0 *uint8, f1 uint32, f2 uint64, f3 *uint8, f4 uint32, f5 *uint8, f6 uint32) (v Unsigned) {
 	v.Did = cm.LiftString[string](f0, f1)
 	v.Version = (int64)(f2)
-	v.Prev = cm.LiftString[string](f3, f4)
-	v.Data = cm.LiftString[string](f5, f6)
-	v.Rev = cm.LiftString[string](f7, f8)
+	v.Data = cm.LiftString[string](f3, f4)
+	v.Rev = cm.LiftString[string](f5, f6)
 	return
 }

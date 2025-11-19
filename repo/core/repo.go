@@ -10,6 +10,7 @@ import (
 	lexutil "github.com/bluesky-social/indigo/lex/util"
 	"github.com/ipfs/go-cid"
 	cbor "github.com/ipfs/go-ipld-cbor"
+	wasm "github.com/marukun712/polka/repo/internal/polka/repository/repo"
 	"github.com/marukun712/polka/repo/mst"
 	mh "github.com/multiformats/go-multihash"
 	cbg "github.com/whyrusleeping/cbor-gen"
@@ -18,24 +19,21 @@ import (
 
 // current version of repo currently implemented
 const ATP_REPO_VERSION int64 = 3
-
 const ATP_REPO_VERSION_2 int64 = 2
 
 type SignedCommit struct {
-	Did     string   `json:"did" cborgen:"did"`
-	Version int64    `json:"version" cborgen:"version"`
-	Prev    *cid.Cid `json:"prev" cborgen:"prev"`
-	Data    cid.Cid  `json:"data" cborgen:"data"`
-	Sig     []byte   `json:"sig" cborgen:"sig"`
-	Rev     string   `json:"rev" cborgen:"rev,omitempty"`
+	Did     string  `json:"did" cborgen:"did"`
+	Version int64   `json:"version" cborgen:"version"`
+	Data    cid.Cid `json:"data" cborgen:"data"`
+	Sig     []byte  `json:"sig" cborgen:"sig"`
+	Rev     string  `json:"rev" cborgen:"rev,omitempty"`
 }
 
 type UnsignedCommit struct {
-	Did     string   `cborgen:"did"`
-	Version int64    `cborgen:"version"`
-	Prev    *cid.Cid `cborgen:"prev"`
-	Data    cid.Cid  `cborgen:"data"`
-	Rev     string   `cborgen:"rev,omitempty"`
+	Did     string  `cborgen:"did"`
+	Version int64   `cborgen:"version"`
+	Data    cid.Cid `cborgen:"data"`
+	Rev     string  `cborgen:"rev,omitempty"`
 }
 
 type Repo struct {
@@ -49,7 +47,7 @@ type Repo struct {
 
 	dirty bool
 
-	Clk *syntax.TIDClock
+	clk *syntax.TIDClock
 }
 
 // Returns a copy of commit without the Sig field. Helpful when verifying signature.
@@ -57,7 +55,6 @@ func (sc *SignedCommit) Unsigned() *UnsignedCommit {
 	return &UnsignedCommit{
 		Did:     sc.Did,
 		Version: sc.Version,
-		Prev:    sc.Prev,
 		Data:    sc.Data,
 		Rev:     sc.Rev,
 	}
@@ -82,7 +79,7 @@ func CborStore(bs cbor.IpldBlockstore) *cbor.BasicIpldStore {
 
 func OpenRepo(ctx context.Context, bs cbor.IpldBlockstore, root cid.Cid) (*Repo, error) {
 	cst := CborStore(bs)
-	Clk := syntax.NewTIDClock(0)
+	clk := syntax.NewTIDClock(0)
 
 	var sc SignedCommit
 	if err := cst.Get(ctx, root, &sc); err != nil {
@@ -98,7 +95,7 @@ func OpenRepo(ctx context.Context, bs cbor.IpldBlockstore, root cid.Cid) (*Repo,
 		bs:      bs,
 		cst:     cst,
 		repoCid: root,
-		Clk:     &Clk,
+		clk:     &clk,
 	}, nil
 }
 
@@ -114,17 +111,16 @@ func (r *Repo) RepoDid() string {
 	return r.sc.Did
 }
 
-// TODO(bnewbold): this could return just *cid.Cid
-func (r *Repo) PrevCommit(ctx context.Context) (*cid.Cid, error) {
-	return r.sc.Prev, nil
-}
-
 func (r *Repo) DataCid() cid.Cid {
 	return r.sc.Data
 }
 
 func (r *Repo) SignedCommit() SignedCommit {
 	return r.sc
+}
+
+func (r *Repo) GetClock() string {
+	return r.clk.Next().String()
 }
 
 func (r *Repo) Blockstore() cbor.IpldBlockstore {
@@ -151,7 +147,7 @@ func (r *Repo) CreateRecord(ctx context.Context, nsid string, rec interface{}) (
 	}
 
 	// ClockからTIDを取得(時系列ソートのため)
-	tid := r.Clk.Next().String()
+	tid := r.clk.Next().String()
 
 	// MSTに追加
 	nmst, err := t.Add(ctx, nsid+"/"+tid, k, -1)
@@ -242,6 +238,27 @@ func (r *Repo) DeleteRecord(ctx context.Context, rpath string) error {
 	r.mst = nmst
 
 	return nil
+}
+
+func (r *Repo) GetUnsigned(ctx context.Context) (wasm.Unsigned, error) {
+	t, err := r.getMst(ctx)
+	if err != nil {
+		return wasm.Unsigned{}, err
+	}
+
+	rcid, err := t.GetPointer(ctx)
+	if err != nil {
+		return wasm.Unsigned{}, err
+	}
+
+	uc := wasm.Unsigned{
+		Did:     r.RepoDid(),
+		Version: ATP_REPO_VERSION,
+		Data:    rcid.String(),
+		Rev:     r.clk.Next().String(),
+	}
+
+	return uc, nil
 }
 
 // Commitする(署名済みを外部からHTTPなどで受け取る)

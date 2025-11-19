@@ -7,20 +7,18 @@ import (
 	"go.bytecodealliance.org/cm"
 )
 
-// CommitRequest represents the record "polka:repository/repo@0.1.0#commit-request".
+// Unsigned represents the record "polka:repository/repo@0.1.0#unsigned".
 //
-//	record commit-request {
+//	record unsigned {
 //		did: string,
 //		version: s64,
-//		prev: string,
 //		data: string,
 //		rev: string,
 //	}
-type CommitRequest struct {
+type Unsigned struct {
 	_       cm.HostLayout `json:"-"`
 	Did     string        `json:"did"`
 	Version int64         `json:"version"`
-	Prev    string        `json:"prev"`
 	Data    string        `json:"data"`
 	Rev     string        `json:"rev"`
 }

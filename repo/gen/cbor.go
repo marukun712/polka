@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	if err := cbg.WriteTupleEncodersToFile("repo/cbor_gen.go", "repo",
+	if err := cbg.WriteTupleEncodersToFile("core/cbor_gen.go", "core",
 		core.SignedCommit{},
 		core.UnsignedCommit{},
 	); err != nil {

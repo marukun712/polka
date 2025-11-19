@@ -33,8 +33,13 @@ var Exports struct {
 	//	delete-record: func(rpath: string) -> result<bool, string>
 	DeleteRecord func(rpath string) (result cm.Result[string, bool, string])
 
+	// GetUnsigned represents the caller-defined, exported function "get-unsigned".
+	//
+	//	get-unsigned: func() -> result<unsigned, string>
+	GetUnsigned func() (result cm.Result[UnsignedShape, Unsigned, string])
+
 	// Commit represents the caller-defined, exported function "commit".
 	//
-	//	commit: func(commit: commit-request, sig: string) -> result<bool, string>
-	Commit func(commit CommitRequest, sig string) (result cm.Result[string, bool, string])
+	//	commit: func(commit: unsigned, sig: string) -> result<bool, string>
+	Commit func(commit Unsigned, sig string) (result cm.Result[string, bool, string])
 }

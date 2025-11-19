@@ -54,10 +54,18 @@ func wasmexport_DeleteRecord(rpath0 *uint8, rpath1 uint32) (result *cm.Result[st
 	return
 }
 
+//go:wasmexport polka:repository/repo@0.1.0#get-unsigned
+//export polka:repository/repo@0.1.0#get-unsigned
+func wasmexport_GetUnsigned() (result *cm.Result[UnsignedShape, Unsigned, string]) {
+	result_ := Exports.GetUnsigned()
+	result = &result_
+	return
+}
+
 //go:wasmexport polka:repository/repo@0.1.0#commit
 //export polka:repository/repo@0.1.0#commit
-func wasmexport_Commit(commit0 *uint8, commit1 uint32, commit2 uint64, commit3 *uint8, commit4 uint32, commit5 *uint8, commit6 uint32, commit7 *uint8, commit8 uint32, sig0 *uint8, sig1 uint32) (result *cm.Result[string, bool, string]) {
-	commit := lift_CommitRequest((*uint8)(commit0), (uint32)(commit1), (uint64)(commit2), (*uint8)(commit3), (uint32)(commit4), (*uint8)(commit5), (uint32)(commit6), (*uint8)(commit7), (uint32)(commit8))
+func wasmexport_Commit(commit0 *uint8, commit1 uint32, commit2 uint64, commit3 *uint8, commit4 uint32, commit5 *uint8, commit6 uint32, sig0 *uint8, sig1 uint32) (result *cm.Result[string, bool, string]) {
+	commit := lift_Unsigned((*uint8)(commit0), (uint32)(commit1), (uint64)(commit2), (*uint8)(commit3), (uint32)(commit4), (*uint8)(commit5), (uint32)(commit6))
 	sig := cm.LiftString[string]((*uint8)(sig0), (uint32)(sig1))
 	result_ := Exports.Commit(commit, sig)
 	result = &result_
