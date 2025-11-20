@@ -5,7 +5,6 @@ import (
 	"crypto/ed25519"
 	"encoding/hex"
 	"encoding/json"
-	"log"
 
 	"github.com/ipfs/go-cid"
 	"github.com/marukun712/polka/repo/blockstore"
@@ -26,22 +25,37 @@ type CommitRequest struct {
 var r *core.Repo
 
 func init() {
-	wasm.Exports.Open = func(did string, bs cm.Rep, rootCid string) {
+	wasm.Exports.New = func(did string, bs cm.Rep) (result cm.Result[string, bool, string]) {
+		ctx := context.Background()
+
+		bsHandle := cm.Reinterpret[wasm.Blockstore](bs)
+		bsAdapter := blockstore.NewWitBlockstore(bsHandle)
+
+		r = core.NewRepo(ctx, did, bsAdapter)
+
+		result.SetOK(true)
+		return result
+	}
+
+	wasm.Exports.Open = func(did string, bs cm.Rep, rootCid string) (result cm.Result[string, bool, string]) {
 		ctx := context.Background()
 
 		bsHandle := cm.Reinterpret[wasm.Blockstore](bs)
 
 		rootCidParsed, err := cid.Decode(rootCid)
 		if err != nil {
-			log.Fatalf("failed to parse root CID: %v", err)
+			result.SetErr(err.Error())
 		}
 
 		bsAdapter := blockstore.NewWitBlockstore(bsHandle)
 
 		r, err = core.OpenRepo(ctx, bsAdapter, rootCidParsed)
 		if err != nil {
-			log.Fatalf("failed to open repository: %v", err)
+			result.SetErr(err.Error())
 		}
+
+		result.SetOK(true)
+		return result
 	}
 
 	wasm.Exports.CreateRecord = func(nsid string, data string) (result cm.Result[wasm.CreateResultShape, wasm.CreateResult, string]) {
@@ -138,7 +152,6 @@ func init() {
 			result.SetErr(err.Error())
 		}
 		result.SetOK(true)
-
 		return result
 	}
 }

@@ -24,6 +24,7 @@
 		"@bytecodealliance/preview2-shim": "^0.17.5",
 		"@chainsafe/libp2p-noise": "^17.0.0",
 		"@chainsafe/libp2p-yamux": "^8.0.1",
+		"@ipld/car": "^5.4.2",
 		"@ipshipyard/libp2p-auto-tls": "^2.0.1",
 		"@libp2p/http": "^2.0.1",
 		"@libp2p/http-server": "^2.0.1",
@@ -31,6 +32,7 @@
 		"@libp2p/websockets": "^10.1.2",
 		"hono": "^4.10.6",
 		"libp2p": "^3.1.2",
+		"multiformats": "^13.4.1",
 		"zod": "^4.1.12"
 	}
 }

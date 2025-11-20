@@ -34,6 +34,7 @@
             pkgs.go
             pkgs.tinygo
             pkgs.wkg
+            pkgs.wasm-tools
             pkgs.rust-bin.stable.latest.default
             pkgs.rust-bin.stable.latest.rust-src
             pkgs.rust-bin.stable.latest.rustfmt

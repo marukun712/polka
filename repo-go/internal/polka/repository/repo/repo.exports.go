@@ -8,10 +8,15 @@ import (
 
 // Exports represents the caller-defined exports from "polka:repository/repo@0.1.0".
 var Exports struct {
+	// New represents the caller-defined, exported function "new".
+	//
+	//	new: func(did: string, bs: borrow<blockstore>) -> result<bool, string>
+	New func(did string, bs cm.Rep) (result cm.Result[string, bool, string])
+
 	// Open represents the caller-defined, exported function "open".
 	//
-	//	open: func(did: string, bs: borrow<blockstore>, root-cid: string)
-	Open func(did string, bs cm.Rep, rootCid string)
+	//	open: func(did: string, bs: borrow<blockstore>, cid: string) -> result<bool, string>
+	Open func(did string, bs cm.Rep, cid string) (result cm.Result[string, bool, string])
 
 	// CreateRecord represents the caller-defined, exported function "create-record".
 	//

@@ -12,9 +12,19 @@ import {
 	getRecordSchema,
 } from "./@types/schema.ts";
 import { repo } from "./dist/transpiled/repo.js";
+import { BlockStore } from "./lib/blockstore.ts";
+
+const bs = new BlockStore("./store/data.car");
+await bs.initialize();
+const root = bs.getRoot();
 
 const did = "did:key:z6MkvPRJTeguSbG1cNKn1S3zgYKnu5asvwWgceHLvxZbZakf";
-repo.open(did);
+
+if (root) {
+	repo.open(did, bs, root);
+} else {
+	repo.new(did, bs);
+}
 
 const app = new Hono();
 app.get("/", (c) => {

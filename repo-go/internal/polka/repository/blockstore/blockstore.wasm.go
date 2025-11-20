@@ -12,17 +12,9 @@ import (
 //go:noescape
 func wasmimport_BlockstoreResourceDrop(self0 uint32)
 
-//go:wasmimport polka:repository/blockstore@0.1.0 [method]blockstore.delete
-//go:noescape
-func wasmimport_BlockstoreDelete(self0 uint32, cid0 *uint8, cid1 uint32, result *cm.Result[string, bool, string])
-
 //go:wasmimport polka:repository/blockstore@0.1.0 [method]blockstore.get
 //go:noescape
 func wasmimport_BlockstoreGet(self0 uint32, cid0 *uint8, cid1 uint32, result *cm.Result[cm.List[uint8], cm.List[uint8], string])
-
-//go:wasmimport polka:repository/blockstore@0.1.0 [method]blockstore.has
-//go:noescape
-func wasmimport_BlockstoreHas(self0 uint32, cid0 *uint8, cid1 uint32, result *cm.Result[string, bool, string])
 
 //go:wasmimport polka:repository/blockstore@0.1.0 [method]blockstore.put
 //go:noescape

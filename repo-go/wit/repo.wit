@@ -20,7 +20,9 @@ interface repo {
     data: string,
   }
 
-  open: func(did: string, bs: borrow<blockstore>, root-cid: string);
+  new: func(did: string, bs: borrow<blockstore>) -> result<bool, string>;
+
+  open: func(did: string, bs: borrow<blockstore>, cid: string) -> result<bool, string>;
 
   create-record: func(nsid: string, data: string)
   -> result<create-result, string>;
