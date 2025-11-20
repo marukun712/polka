@@ -27,6 +27,8 @@
             pkgs.tinygo
             pkgs.wkg
             pkgs.wasm-tools
+            pkgs.cargo
+            pkgs.rustc
           ];
         };
       }

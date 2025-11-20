@@ -8,11 +8,11 @@ import (
 
 	"github.com/bluesky-social/indigo/atproto/syntax"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
-	"github.com/bluesky-social/indigo/mst"
-	"github.com/bluesky-social/indigo/util"
 	"github.com/ipfs/go-cid"
 	cbor "github.com/ipfs/go-ipld-cbor"
 	wasm "github.com/marukun712/polka/repo/internal/polka/repository/repo"
+	"github.com/marukun712/polka/repo/mst"
+	mh "github.com/multiformats/go-multihash"
 	cbg "github.com/whyrusleeping/cbor-gen"
 	"go.opentelemetry.io/otel"
 )
@@ -37,13 +37,17 @@ type UnsignedCommit struct {
 }
 
 type Repo struct {
-	sc      SignedCommit
-	cst     cbor.IpldStore
-	bs      cbor.IpldBlockstore
+	sc  SignedCommit
+	cst cbor.IpldStore
+	bs  cbor.IpldBlockstore
+
 	repoCid cid.Cid
-	mst     *mst.MerkleSearchTree
-	dirty   bool
-	clk     *syntax.TIDClock
+
+	mst *mst.MerkleSearchTree
+
+	dirty bool
+
+	clk *syntax.TIDClock
 }
 
 // Returns a copy of commit without the Sig field. Helpful when verifying signature.
@@ -67,8 +71,14 @@ func (uc *UnsignedCommit) BytesForSigning() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
+func CborStore(bs cbor.IpldBlockstore) *cbor.BasicIpldStore {
+	cst := cbor.NewCborStore(bs)
+	cst.DefaultMultihash = mh.SHA2_256
+	return cst
+}
+
 func OpenRepo(ctx context.Context, bs cbor.IpldBlockstore, root cid.Cid) (*Repo, error) {
-	cst := util.CborStore(bs)
+	cst := CborStore(bs)
 	clk := syntax.NewTIDClock(0)
 
 	var sc SignedCommit
@@ -230,7 +240,6 @@ func (r *Repo) DeleteRecord(ctx context.Context, rpath string) error {
 	return nil
 }
 
-// 署名されていないCommitを取得する
 func (r *Repo) GetUnsigned(ctx context.Context) (wasm.Unsigned, error) {
 	t, err := r.getMst(ctx)
 	if err != nil {
@@ -276,6 +285,20 @@ func (r *Repo) getMst(ctx context.Context) (*mst.MerkleSearchTree, error) {
 	t := mst.LoadMST(r.cst, r.sc.Data)
 	r.mst = t
 	return t, nil
+}
+
+func (r *Repo) GetCID(ctx context.Context) (cid.Cid, error) {
+	t, err := r.getMst(ctx)
+	if err != nil {
+		return cid.Undef, err
+	}
+
+	rcid, err := t.GetPointer(ctx)
+	if err != nil {
+		return cid.Undef, err
+	}
+
+	return rcid, nil
 }
 
 var ErrDoneIterating = fmt.Errorf("done iterating")
