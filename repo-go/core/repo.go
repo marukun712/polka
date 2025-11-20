@@ -9,10 +9,10 @@ import (
 	"github.com/bluesky-social/indigo/atproto/syntax"
 	lexutil "github.com/bluesky-social/indigo/lex/util"
 	"github.com/bluesky-social/indigo/mst"
-	"github.com/bluesky-social/indigo/util"
 	"github.com/ipfs/go-cid"
 	cbor "github.com/ipfs/go-ipld-cbor"
 	wasm "github.com/marukun712/polka/repo/internal/polka/repository/repo"
+	"github.com/marukun712/polka/repo/utils"
 	cbg "github.com/whyrusleeping/cbor-gen"
 	"go.opentelemetry.io/otel"
 )
@@ -68,7 +68,7 @@ func (uc *UnsignedCommit) BytesForSigning() ([]byte, error) {
 }
 
 func OpenRepo(ctx context.Context, bs cbor.IpldBlockstore, root cid.Cid) (*Repo, error) {
-	cst := util.CborStore(bs)
+	cst := utils.CborStore(bs)
 	clk := syntax.NewTIDClock(0)
 
 	var sc SignedCommit

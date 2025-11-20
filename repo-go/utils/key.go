@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"strings"
 
+	cbor "github.com/ipfs/go-ipld-cbor"
 	"github.com/multiformats/go-multibase"
 	"github.com/multiformats/go-multicodec"
+	mh "github.com/multiformats/go-multihash"
 	"github.com/multiformats/go-varint"
 )
 
@@ -39,4 +41,10 @@ func GetPk(did string) (ed25519.PublicKey, error) {
 	}
 
 	return ed25519.PublicKey(pubKeyBytes), nil
+}
+
+func CborStore(bs cbor.IpldBlockstore) *cbor.BasicIpldStore {
+	cst := cbor.NewCborStore(bs)
+	cst.DefaultMultihash = mh.SHA2_256
+	return cst
 }
