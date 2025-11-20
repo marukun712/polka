@@ -10,8 +10,8 @@ import (
 var Exports struct {
 	// Open represents the caller-defined, exported function "open".
 	//
-	//	open: func(did: string)
-	Open func(did string)
+	//	open: func(did: string, bs: borrow<blockstore>, root-cid: string)
+	Open func(did string, bs cm.Rep, rootCid string)
 
 	// CreateRecord represents the caller-defined, exported function "create-record".
 	//

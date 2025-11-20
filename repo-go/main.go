@@ -5,13 +5,10 @@ import (
 	"crypto/ed25519"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"log"
-	"os"
 
 	"github.com/ipfs/go-cid"
-	"github.com/ipld/go-car/v2"
-	"github.com/ipld/go-car/v2/blockstore"
+	"github.com/marukun712/polka/repo/blockstore"
 	"github.com/marukun712/polka/repo/core"
 	wasm "github.com/marukun712/polka/repo/internal/polka/repository/repo"
 	"github.com/marukun712/polka/repo/utils"
@@ -28,46 +25,22 @@ type CommitRequest struct {
 
 var r *core.Repo
 
-func openOrCreate(path string) (*os.File, error) {
-	file, err := os.OpenFile(path, os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open or create file: %w", err)
-	}
-	return file, nil
-}
-
 func init() {
-	wasm.Exports.Open = func(did string) {
+	wasm.Exports.Open = func(did string, bs cm.Rep, rootCid string) {
 		ctx := context.Background()
 
-		path := "./store/" + did + ".car"
+		bsHandle := cm.Reinterpret[wasm.Blockstore](bs)
 
-		file, err := openOrCreate(path)
+		rootCidParsed, err := cid.Decode(rootCid)
 		if err != nil {
-			log.Fatal(err)
-		}
-		defer file.Close()
-
-		reader, err := car.OpenReader(path)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer reader.Close()
-
-		roots, err := reader.Roots()
-		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("failed to parse root CID: %v", err)
 		}
 
-		bs, err := blockstore.OpenReadWrite(path, roots)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer bs.Close()
+		bsAdapter := blockstore.NewWitBlockstore(bsHandle)
 
-		r, err = core.OpenRepo(ctx, bs, roots[0])
+		r, err = core.OpenRepo(ctx, bsAdapter, rootCidParsed)
 		if err != nil {
-			log.Fatal(err)
+			log.Fatalf("failed to open repository: %v", err)
 		}
 	}
 

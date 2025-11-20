@@ -4,8 +4,14 @@
 package repo
 
 import (
+	"github.com/marukun712/polka/repo/internal/polka/repository/blockstore"
 	"go.bytecodealliance.org/cm"
 )
+
+// Blockstore represents the exported type alias "polka:repository/repo@0.1.0#blockstore".
+//
+// See [blockstore.Blockstore] for more information.
+type Blockstore = blockstore.Blockstore
 
 // Unsigned represents the record "polka:repository/repo@0.1.0#unsigned".
 //

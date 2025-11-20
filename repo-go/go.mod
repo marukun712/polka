@@ -4,9 +4,9 @@ go 1.25.2
 
 require (
 	github.com/bluesky-social/indigo v0.0.0-20251110215450-919084ff5b21
+	github.com/ipfs/go-block-format v0.2.3
 	github.com/ipfs/go-cid v0.5.0
 	github.com/ipfs/go-ipld-cbor v0.2.1
-	github.com/ipld/go-car/v2 v2.16.0
 	github.com/multiformats/go-multibase v0.2.0
 	github.com/multiformats/go-multicodec v0.10.0
 	github.com/multiformats/go-multihash v0.2.3
@@ -32,7 +32,6 @@ require (
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/boxo v0.35.2 // indirect
-	github.com/ipfs/go-block-format v0.2.3 // indirect
 	github.com/ipfs/go-datastore v0.9.0 // indirect
 	github.com/ipfs/go-ipfs-blockstore v1.3.1 // indirect
 	github.com/ipfs/go-ipfs-ds-help v1.1.1 // indirect
@@ -40,7 +39,6 @@ require (
 	github.com/ipfs/go-log v1.0.5 // indirect
 	github.com/ipfs/go-log/v2 v2.9.0 // indirect
 	github.com/ipfs/go-metrics-interface v0.3.0 // indirect
-	github.com/ipld/go-ipld-prime v0.21.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -50,7 +48,6 @@ require (
 	github.com/multiformats/go-base36 v0.2.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
-	github.com/petar/GoLLRB v0.0.0-20210522233825-ae3b015fd3e9 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/polydawn/refmt v0.89.1-0.20221221234430-40501e09de1f // indirect
 	github.com/regclient/regclient v0.8.3 // indirect
@@ -59,7 +56,6 @@ require (
 	github.com/tetratelabs/wazero v1.9.0 // indirect
 	github.com/ulikunitz/xz v0.5.12 // indirect
 	github.com/urfave/cli/v3 v3.4.1 // indirect
-	github.com/whyrusleeping/cbor v0.0.0-20171005072247-63513f603b11 // indirect
 	go.bytecodealliance.org v0.7.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.63.0 // indirect
@@ -69,7 +65,6 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.43.0 // indirect
-	golang.org/x/exp v0.0.0-20251023183803-a4bb9ffd2546 // indirect
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/sys v0.38.0 // indirect
 	lukechampine.com/blake3 v1.4.1 // indirect

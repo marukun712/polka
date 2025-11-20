@@ -1,0 +1,22 @@
+package polka:repository@0.1.0;
+
+interface blockstore {
+  // A content-addressed block storage interface
+  // This allows external implementations to provide storage backends
+  resource blockstore {
+    // Get a block by its CID
+    // Returns the raw block data or an error if not found
+    get: func(cid: string) -> result<list<u8>, string>;
+
+    // Put a block into the store
+    // Returns the CID of the stored block or an error
+    put: func(data: list<u8>) -> result<string, string>;
+
+    // Check if a block exists in the store
+    has: func(cid: string) -> result<bool, string>;
+
+    // Delete a block from the store
+    // Returns true if deleted, false if not found, or an error
+    delete: func(cid: string) -> result<bool, string>;
+  }
+}

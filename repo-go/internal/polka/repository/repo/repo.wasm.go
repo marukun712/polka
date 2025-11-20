@@ -10,9 +10,11 @@ import (
 
 //go:wasmexport polka:repository/repo@0.1.0#open
 //export polka:repository/repo@0.1.0#open
-func wasmexport_Open(did0 *uint8, did1 uint32) {
+func wasmexport_Open(did0 *uint8, did1 uint32, bs0 uint32, rootCid0 *uint8, rootCid1 uint32) {
 	did := cm.LiftString[string]((*uint8)(did0), (uint32)(did1))
-	Exports.Open(did)
+	bs := cm.Reinterpret[cm.Rep]((uint32)(bs0))
+	rootCid := cm.LiftString[string]((*uint8)(rootCid0), (uint32)(rootCid1))
+	Exports.Open(did, bs, rootCid)
 	return
 }
 
