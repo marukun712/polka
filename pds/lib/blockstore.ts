@@ -7,7 +7,7 @@ import * as Digest from "multiformats/hashes/digest";
 import { sha256 } from "multiformats/hashes/sha2";
 import type { repo } from "../dist/transpiled/repo";
 
-export class BlockStore implements repo.Blockstore {
+export class Blockstore implements repo.Blockstore {
 	private path: string;
 	private blocks = new Map<string, Uint8Array>();
 	private root: CID | null = null;
