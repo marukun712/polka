@@ -44,6 +44,6 @@ world repository {
   include wasi:cli/imports@0.2.0;
 
   import blockstore;
-  import repo;
+  export repo;
   export crud;
 }
