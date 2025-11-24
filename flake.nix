@@ -24,6 +24,13 @@
           inherit system;
           overlays = [ rust-overlay.overlays.default ];
         };
+        rust = pkgs.rust-bin.stable.latest.default.override {
+          extensions = [
+            "rust-src"
+            "rustfmt"
+          ];
+          targets = [ "wasm32-wasip2" ];
+        };
       in
       {
         devShell = pkgs.mkShell {
@@ -35,9 +42,8 @@
             pkgs.tinygo
             pkgs.wkg
             pkgs.wasm-tools
-            pkgs.rust-bin.stable.latest.default
-            pkgs.rust-bin.stable.latest.rust-src
-            pkgs.rust-bin.stable.latest.rustfmt
+            pkgs.wit-bindgen
+            rust
           ];
         };
       }
