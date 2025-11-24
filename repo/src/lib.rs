@@ -1,39 +1,58 @@
 mod repository;
 use atrium_api::types::string::Did;
 use atrium_repo::{Repository, blockstore::MemoryBlockStore};
-use once_cell::sync::Lazy;
 use repository::exports::polka::repository::{crud, repo};
+use std::cell::RefCell;
 
-static RUNTIME: Lazy<tokio::runtime::Runtime> =
-    Lazy::new(|| tokio::runtime::Runtime::new().expect("Failed to create runtime"));
-
-struct Repo;
+struct Repo {
+    repository: RefCell<Repository<&'static mut MemoryBlockStore>>,
+    did: Did,
+}
 
 impl repo::GuestRepo for Repo {
-    fn new(&self, did: String, bs: &repo::Blockstore) -> Result<repo::Repo, String> {
+    fn new(&self, did: String, _bs: &repo::Blockstore) -> Result<repo::Repo, String> {
         let _ = self;
-        RUNTIME.block_on(async {
-            let mut blockstore = MemoryBlockStore::new();
+        let rt: tokio::runtime::Runtime = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let blockstore: &mut MemoryBlockStore = Box::leak(Box::new(MemoryBlockStore::new()));
 
-            let did = Did::new(did).map_err(|e| format!("{}", e))?;
+            let did: Did = Did::new(did).map_err(|e: &'static str| format!("{}", e))?;
 
-            let builder = Repository::create(&mut blockstore, did)
+            let builder: atrium_repo::repo::RepoBuilder<&mut MemoryBlockStore> =
+                Repository::create(blockstore, did.clone())
+                    .await
+                    .map_err(|e: atrium_repo::repo::Error| format!("{}", e))?;
+
+            let repository: Repository<&mut MemoryBlockStore> = builder
+                .finalize(vec![])
                 .await
-                .map_err(|e| format!("{}", e))?;
+                .map_err(|e: atrium_repo::repo::Error| format!("{}", e))?;
 
-            Ok(repo::Repo::new(builder))
+            Ok(repo::Repo::new(Repo {
+                repository: RefCell::new(repository),
+                did,
+            }))
         })
     }
 
-    fn open(&self, did: String, bs: &repo::Blockstore, cid: String) -> Result<repo::Repo, String> {
+    fn open(&self, did: String, _bs: &repo::Blockstore, cid: String) -> Result<repo::Repo, String> {
         let _ = self;
-        RUNTIME.block_on(async {
-            let mut blockstore = MemoryBlockStore::new();
+        let rt: tokio::runtime::Runtime = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let blockstore: &mut MemoryBlockStore = Box::leak(Box::new(MemoryBlockStore::new()));
+
+            let parsed_did: Did = Did::new(did).map_err(|e| format!("{}", e))?;
+
             let cid = cid.parse().map_err(|e| format!("{:?}", e))?;
-            let repo_instance = Repository::open(&mut blockstore, cid)
+
+            let repository: Repository<&mut MemoryBlockStore> = Repository::open(blockstore, cid)
                 .await
-                .map_err(|e| format!("{}", e))?;
-            Ok(repo::Repo::new(repo_instance))
+                .map_err(|e: atrium_repo::repo::Error| format!("{}", e))?;
+
+            Ok(repo::Repo::new(Repo {
+                repository: RefCell::new(repository),
+                did: parsed_did,
+            }))
         })
     }
 }
@@ -46,20 +65,26 @@ impl repo::Guest for Component {
 
 impl crud::Guest for Component {
     fn create_record(
-        repo: &crud::Repo,
+        repo: repo::RepoBorrow<'_>,
         nsid: String,
         data: String,
     ) -> Result<crud::CreateResult, String> {
-        let repo_impl = repo.get::<Repo>();
-        RUNTIME.block_on(async {
-            let mut repo_mut = repo_impl.borrow_mut();
+        let repo_impl: &Repo = repo.get::<Repo>();
+        let rt: tokio::runtime::Runtime = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let mut repo_mut: std::cell::RefMut<'_, Repository<&'static mut MemoryBlockStore>> =
+                repo_impl.repository.borrow_mut();
+
             let record_data: serde_json::Value =
-                serde_json::from_str(&data).map_err(|e| format!("{}", e))?;
+                serde_json::from_str(&data).map_err(|e: serde_json::Error| format!("{}", e))?;
+
             let (_, record_cid) = repo_mut
                 .add_raw(&nsid, record_data)
                 .await
-                .map_err(|e| format!("{}", e))?;
-            let tid = nsid.split('/').last().unwrap_or("").to_string();
+                .map_err(|e: atrium_repo::repo::Error| format!("{}", e))?;
+
+            let tid: String = nsid.split('/').last().unwrap_or("").to_string();
+
             Ok(crud::CreateResult {
                 cid: record_cid.to_string(),
                 tid,
@@ -67,14 +92,17 @@ impl crud::Guest for Component {
         })
     }
 
-    fn get_record(repo: &crud::Repo, rpath: String) -> Result<crud::GetResult, String> {
-        let repo_impl = repo.get::<Repo>();
-        RUNTIME.block_on(async {
-            let repo_ref = repo_impl.borrow();
+    fn get_record(repo: repo::RepoBorrow<'_>, rpath: String) -> Result<crud::GetResult, String> {
+        let repo_impl: &Repo = repo.get::<Repo>();
+
+        let rt: tokio::runtime::Runtime = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let mut repo_ref: std::cell::RefMut<'_, Repository<&'static mut MemoryBlockStore>> =
+                repo_impl.repository.borrow_mut();
             let record: serde_json::Value = repo_ref
                 .get_raw(&rpath)
                 .await
-                .map_err(|e| format!("{}", e))?
+                .map_err(|e: atrium_repo::repo::Error| format!("{}", e))?
                 .ok_or_else(|| "Record not found".to_string())?;
             Ok(crud::GetResult {
                 cid: "".to_string(),
@@ -83,48 +111,67 @@ impl crud::Guest for Component {
         })
     }
 
-    fn update_record(repo: &crud::Repo, rpath: String, data: String) -> Result<bool, String> {
-        let repo_impl = repo.get::<Repo>();
-        RUNTIME.block_on(async {
-            let mut repo_mut = repo_impl.borrow_mut();
+    fn update_record(
+        repo: repo::RepoBorrow<'_>,
+        rpath: String,
+        data: String,
+    ) -> Result<bool, String> {
+        let repo_impl: &Repo = repo.get::<Repo>();
+
+        let rt: tokio::runtime::Runtime = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let mut repo_mut: std::cell::RefMut<'_, Repository<&'static mut MemoryBlockStore>> =
+                repo_impl.repository.borrow_mut();
             let record_data: serde_json::Value =
                 serde_json::from_str(&data).map_err(|e| format!("{}", e))?;
             let _ = repo_mut
                 .add_raw(&rpath, record_data)
                 .await
-                .map_err(|e| format!("{}", e))?;
+                .map_err(|e: atrium_repo::repo::Error| format!("{}", e))?;
             Ok(true)
         })
     }
 
-    fn delete_record(repo: &crud::Repo, rpath: String) -> Result<bool, String> {
+    fn delete_record(repo: repo::RepoBorrow<'_>, rpath: String) -> Result<bool, String> {
         let repo_impl = repo.get::<Repo>();
-        RUNTIME.block_on(async {
-            let mut repo_mut = repo_impl.borrow_mut();
+
+        let rt: tokio::runtime::Runtime = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let mut repo_mut: std::cell::RefMut<'_, Repository<&'static mut MemoryBlockStore>> =
+                repo_impl.repository.borrow_mut();
             let _ = repo_mut
-                .delete(&rpath)
+                .delete_raw(&rpath)
                 .await
-                .map_err(|e| format!("{}", e))?;
+                .map_err(|e: atrium_repo::repo::Error| format!("{}", e))?;
             Ok(true)
         })
     }
 
-    fn get_unsigned(repo: &crud::Repo) -> Result<crud::Unsigned, String> {
+    fn get_unsigned(repo: repo::RepoBorrow<'_>) -> Result<crud::Unsigned, String> {
         let repo_impl = repo.get::<Repo>();
-        let repo_ref = repo_impl.borrow();
+
+        let repo_ref: std::cell::Ref<'_, Repository<&mut MemoryBlockStore>> =
+            repo_impl.repository.borrow();
+
         Ok(crud::Unsigned {
-            did: repo_ref.did().to_string(),
+            did: repo_impl.did.to_string(),
             version: 3,
             data: "".to_string(),
             rev: repo_ref.root().to_string(),
         })
     }
 
-    fn commit(repo: &crud::Repo, _commit: crud::Unsigned, sig: String) -> Result<bool, String> {
+    fn commit(
+        repo: repo::RepoBorrow<'_>,
+        _commit: crud::Unsigned,
+        sig: String,
+    ) -> Result<bool, String> {
         let repo_impl = repo.get::<Repo>();
-        RUNTIME.block_on(async {
+
+        let rt: tokio::runtime::Runtime = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
             let signature = sig.as_bytes().to_vec();
-            let repo_ref = repo_impl.borrow();
+            let repo_ref = repo_impl.repository.borrow();
             let _ = repo_ref.root();
             Ok(true)
         })
