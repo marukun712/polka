@@ -1,0 +1,49 @@
+package polka:repository@0.1.0;
+
+interface crud {
+  use blockstore.{blockstore};
+  use repo.{repo};
+
+  record unsigned {
+    did: string,
+    version: s64,
+    data: string,
+    rev: string,
+  }
+
+  record create-result {
+    cid: string,
+    tid: string,
+  }
+
+  record get-result {
+    cid: string,
+    data: string,
+  }
+
+  create-record: func(repo: borrow<repo>, nsid: string, data: string)
+  -> result<create-result, string>;
+
+  get-record: func(repo: borrow<repo>, rpath: string)
+  -> result<get-result, string>;
+
+  update-record: func(repo: borrow<repo>, rpath: string, data: string)
+  -> result<bool, string>;
+
+  delete-record: func(repo: borrow<repo>, rpath: string)
+  -> result<bool, string>;
+
+  get-unsigned: func(repo: borrow<repo>)
+  -> result<unsigned, string>;
+
+  commit: func(repo: borrow<repo>, commit: unsigned, sig: string)
+  -> result<bool, string>;
+}
+
+world repository {
+  include wasi:cli/imports@0.2.0;
+
+  import blockstore;
+  import repo;
+  export crud;
+}
