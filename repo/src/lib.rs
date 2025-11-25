@@ -1,8 +1,8 @@
 mod repository;
 mod wrapper;
 
-use crate::repository::exports::polka::repository::repo::{self, GetResult};
-use atrium_api::types::string::{Did, RecordKey};
+use crate::repository::exports::polka::repository::repo::{self};
+use atrium_api::types::string::Did;
 use cid::Cid;
 use hex::{decode, encode};
 use std::{cell::RefCell, str::FromStr};
@@ -10,6 +10,7 @@ use std::{cell::RefCell, str::FromStr};
 struct Repo {
     repo: RefCell<Option<atrium_repo::Repository<wrapper::BlockstoreWrapper>>>,
     builder: RefCell<Option<atrium_repo::repo::RepoBuilder<wrapper::BlockstoreWrapper>>>,
+    rt: RefCell<Option<tokio::runtime::Runtime>>,
 }
 
 impl repo::GuestRepo for Repo {
@@ -23,8 +24,14 @@ impl repo::GuestRepo for Repo {
             Ok(rt) => rt,
             Err(e) => return Err(format!("Failed to create tokio runtime: {}", e)),
         };
-        let builder_res = rt.block_on(async { atrium_repo::Repository::create(store, did).await });
-        let builder = match builder_res {
+        *self.rt.borrow_mut() = Some(rt);
+        let rt = self.rt.borrow();
+        let rt = match rt.as_ref() {
+            Some(b) => b,
+            None => return Err("Error creating tokio runtime".into()),
+        };
+        let builder = rt.block_on(async { atrium_repo::Repository::create(store, did).await });
+        let builder = match builder {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
@@ -36,21 +43,22 @@ impl repo::GuestRepo for Repo {
     }
 
     fn finalize(&self, sig: String) -> Result<bool, String> {
+        let rt = self.rt.borrow();
+        let rt = match rt.as_ref() {
+            Some(b) => b,
+            None => return Err("Error creating tokio runtime".into()),
+        };
         let sig_bytes = match decode(sig) {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(rt) => rt,
-            Err(e) => return Err(format!("Failed to create tokio runtime: {}", e)),
-        };
-        let builder_opt = self.builder.borrow_mut().take();
-        let builder = match builder_opt {
+        let builder = self.builder.borrow_mut().take();
+        let builder = match builder {
             Some(b) => b,
             None => return Err("RepoBuilder not initialized. Call new() first.".into()),
         };
-        let repo_res = rt.block_on(async { builder.finalize(sig_bytes).await });
-        let repo = match repo_res {
+        let repo = rt.block_on(async { builder.finalize(sig_bytes).await });
+        let repo = match repo {
             Ok(r) => r,
             Err(e) => return Err(e.to_string()),
         };
@@ -59,17 +67,18 @@ impl repo::GuestRepo for Repo {
     }
 
     fn open(&self, bs: &repo::Blockstore, cid: String) -> Result<bool, String> {
+        let rt = self.rt.borrow();
+        let rt = match rt.as_ref() {
+            Some(b) => b,
+            None => return Err("Error creating tokio runtime".into()),
+        };
         let cid = match Cid::from_str(&cid) {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
         let store = wrapper::BlockstoreWrapper::new(bs);
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(rt) => rt,
-            Err(e) => return Err(format!("Failed to create tokio runtime: {}", e)),
-        };
-        let repo_res = rt.block_on(async { atrium_repo::Repository::open(store, cid).await });
-        let repo = match repo_res {
+        let repo = rt.block_on(async { atrium_repo::Repository::open(store, cid).await });
+        let repo = match repo {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
@@ -78,17 +87,18 @@ impl repo::GuestRepo for Repo {
     }
 
     fn create_record(&self, nsid: String, data: String) -> Result<String, String> {
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(rt) => rt,
-            Err(e) => return Err(format!("Failed to create tokio runtime: {}", e)),
+        let rt = self.rt.borrow();
+        let rt = match rt.as_ref() {
+            Some(b) => b,
+            None => return Err("Error creating tokio runtime".into()),
         };
-        let repo_opt = self.repo.borrow_mut().take();
-        let mut repo = match repo_opt {
+        let repo = self.repo.borrow_mut().take();
+        let mut repo = match repo {
             Some(r) => r,
             None => return Err("Repo not initialized. Call open() first.".into()),
         };
-        let record_res = rt.block_on(async { repo.add_raw(&nsid, data).await });
-        let record = match record_res {
+        let record = rt.block_on(async { repo.add_raw(&nsid, data).await });
+        let record = match record {
             Ok(r) => r,
             Err(e) => return Err(e.to_string()),
         };
@@ -96,17 +106,18 @@ impl repo::GuestRepo for Repo {
     }
 
     fn update_record(&self, rpath: String, data: String) -> Result<String, String> {
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(rt) => rt,
-            Err(e) => return Err(format!("Failed to create tokio runtime: {}", e)),
+        let rt = self.rt.borrow();
+        let rt = match rt.as_ref() {
+            Some(b) => b,
+            None => return Err("Error creating tokio runtime".into()),
         };
-        let repo_opt = self.repo.borrow_mut().take();
-        let mut repo = match repo_opt {
+        let repo = self.repo.borrow_mut().take();
+        let mut repo = match repo {
             Some(r) => r,
             None => return Err("Repo not initialized. Call open() first.".into()),
         };
-        let record_res = rt.block_on(async { repo.update_raw(&rpath, data).await });
-        let record = match record_res {
+        let record = rt.block_on(async { repo.update_raw(&rpath, data).await });
+        let record = match record {
             Ok(r) => r,
             Err(e) => return Err(e.to_string()),
         };
@@ -114,54 +125,21 @@ impl repo::GuestRepo for Repo {
     }
 
     fn delete_record(&self, rpath: String) -> Result<String, String> {
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(rt) => rt,
-            Err(e) => return Err(format!("Failed to create tokio runtime: {}", e)),
+        let rt = self.rt.borrow();
+        let rt = match rt.as_ref() {
+            Some(b) => b,
+            None => return Err("Error creating tokio runtime".into()),
         };
-        let repo_opt = self.repo.borrow_mut().take();
-        let mut repo = match repo_opt {
+        let repo = self.repo.borrow_mut().take();
+        let mut repo = match repo {
             Some(r) => r,
             None => return Err("Repo not initialized. Call open() first.".into()),
         };
-        let record_res = rt.block_on(async { repo.delete_raw(&rpath).await });
-        let record = match record_res {
+        let record = rt.block_on(async { repo.delete_raw(&rpath).await });
+        let record = match record {
             Ok(r) => r,
             Err(e) => return Err(e.to_string()),
         };
         Ok(encode(record.bytes()))
-    }
-
-    fn get_record(&self, rpath: String) -> Result<repo::GetResult, String> {
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(rt) => rt,
-            Err(e) => return Err(format!("Failed to create tokio runtime: {}", e)),
-        };
-        let repo_opt = self.repo.borrow_mut().take();
-        let mut repo = match repo_opt {
-            Some(r) => r,
-            None => return Err("Repo not initialized. Call open() first.".into()),
-        };
-        let rkey = match RecordKey::from_str(&rpath) {
-            Ok(r) => r,
-            Err(e) => return Err(e.to_string()),
-        };
-        let record_res = rt.block_on(async { repo.get(rkey).await });
-        let record = match record_res {
-            Ok(r) => r,
-            Err(e) => return Err(e.to_string()),
-        };
-        Ok(GetResult {
-            data: encode(record.unwrap().bytes()),
-            cid: record.unwrap().cid().to_string(),
-        })
-    }
-
-    fn commit(&self, sig: String) -> Result<bool, String> {
-        let repo_opt = self.repo.borrow_mut().take();
-        let mut repo = match repo_opt {
-            Some(r) => r,
-            None => return Err("Repo not initialized. Call open() first.".into()),
-        };
-        let commit = repo.commit();
     }
 }

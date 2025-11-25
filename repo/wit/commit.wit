@@ -1,0 +1,9 @@
+package polka:repository@0.1.0;
+
+interface commit {
+  resource commit {
+    finalize: func(sig: string) -> result<bool, string>;
+  }
+}
+
+
