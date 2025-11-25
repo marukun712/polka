@@ -3,13 +3,33 @@ package polka:repository@0.1.0;
 interface repo {
   use blockstore.{blockstore};
 
-  resource repo-builder {
-    constructor(did: string, bs: borrow<blockstore>);
-    get-unsigned-bytes: func() -> string;
-    finalize: func(sig: string) -> result<repo, string>;
+  record get-result {
+    cid: string,
+    data: string,
   }
 
   resource repo {
-    open: func(did: string, bs: borrow<blockstore>, cid: string) -> result<repo, string>;
+    new: func(did: string, bs: borrow<blockstore>) -> result<string, string>;
+
+    finalize: func(sig: string) -> result<bool, string>;
+
+    open: func(bs: borrow<blockstore>, cid: string) -> result<bool, string>;
+
+    create-record: func(nsid: string, data: string) -> result<string, string>;
+
+    get-record: func(rpath: string) -> result<get-result, string>;
+
+    update-record: func(rpath: string, data: string) -> result<string, string>;
+
+    delete-record: func(rpath: string) -> result<string, string>;
+
+    commit: func(sig: string) -> result<bool, string>;
   }
+}
+
+world repository {
+  include wasi:cli/imports@0.2.0;
+
+  import blockstore;
+  export repo;
 }

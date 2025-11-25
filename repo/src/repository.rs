@@ -7247,147 +7247,16 @@ pub mod wasi {
           
           use super::super::super::super::_rt;
           pub type Blockstore = super::super::super::super::polka::repository::blockstore::Blockstore;
-
-          #[derive(Debug)]
-          #[repr(transparent)]
-          pub struct RepoBuilder{
-            handle: _rt::Resource<RepoBuilder>,
+          #[derive(Clone)]
+          pub struct GetResult {
+            pub cid: _rt::String,
+            pub data: _rt::String,
           }
-
-          type _RepoBuilderRep<T> = Option<T>;
-
-          impl RepoBuilder{
-            /// Creates a new resource from the specified representation.
-            ///
-            /// This function will create a new resource handle by moving `val` onto
-            /// the heap and then passing that heap pointer to the component model to
-            /// create a handle. The owned handle is then returned as `RepoBuilder`.
-            pub fn new<T: GuestRepoBuilder>(val: T) -> Self {
-              Self::type_guard::<T>();
-              let val: _RepoBuilderRep<T> = Some(val);
-              let ptr: *mut _RepoBuilderRep<T> =
-              _rt::Box::into_raw(_rt::Box::new(val));
-              unsafe {
-                Self::from_handle(T::_resource_new(ptr.cast()))
-              }
-            }
-
-            /// Gets access to the underlying `T` which represents this resource.
-            pub fn get<T: GuestRepoBuilder>(&self) -> &T {
-              let ptr = unsafe { &*self.as_ptr::<T>() };
-              ptr.as_ref().unwrap()
-            }
-
-            /// Gets mutable access to the underlying `T` which represents this
-            /// resource.
-            pub fn get_mut<T: GuestRepoBuilder>(&mut self) -> &mut T {
-              let ptr = unsafe { &mut *self.as_ptr::<T>() };
-              ptr.as_mut().unwrap()
-            }
-
-            /// Consumes this resource and returns the underlying `T`.
-            pub fn into_inner<T: GuestRepoBuilder>(self) -> T {
-              let ptr = unsafe { &mut *self.as_ptr::<T>() };
-              ptr.take().unwrap()
-            }
-
-            #[doc(hidden)]
-            pub unsafe fn from_handle(handle: u32) -> Self {
-              Self {
-                handle: unsafe { _rt::Resource::from_handle(handle) },
-              }
-            }
-
-            #[doc(hidden)]
-            pub fn take_handle(&self) -> u32 {
-              _rt::Resource::take_handle(&self.handle)
-            }
-
-            #[doc(hidden)]
-            pub fn handle(&self) -> u32 {
-              _rt::Resource::handle(&self.handle)
-            }
-
-            // It's theoretically possible to implement the `GuestRepoBuilder` trait twice
-            // so guard against using it with two different types here.
-            #[doc(hidden)]
-            fn type_guard<T: 'static>() {
-              use core::any::TypeId;
-              static mut LAST_TYPE: Option<TypeId> = None;
-              unsafe {
-                assert!(!cfg!(target_feature = "atomics"));
-                let id = TypeId::of::<T>();
-                match LAST_TYPE {
-                  Some(ty) => assert!(ty == id, "cannot use two types with this resource type"),
-                  None => LAST_TYPE = Some(id),
-                }
-              }
-            }
-
-            #[doc(hidden)]
-            pub unsafe fn dtor<T: 'static>(handle: *mut u8) {
-              Self::type_guard::<T>();
-              let _ = unsafe { _rt::Box::from_raw(handle as *mut _RepoBuilderRep<T>) };
-            }
-
-            fn as_ptr<T: GuestRepoBuilder>(&self) -> *mut _RepoBuilderRep<T> {
-              RepoBuilder::type_guard::<T>();
-              T::_resource_rep(self.handle()).cast()
+          impl ::core::fmt::Debug for GetResult {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
+              f.debug_struct("GetResult").field("cid", &self.cid).field("data", &self.data).finish()
             }
           }
-
-          /// A borrowed version of [`RepoBuilder`] which represents a borrowed value
-          /// with the lifetime `'a`.
-          #[derive(Debug)]
-          #[repr(transparent)]
-          pub struct RepoBuilderBorrow<'a> {
-            rep: *mut u8,
-            _marker: core::marker::PhantomData<&'a RepoBuilder>,
-          }
-
-          impl<'a> RepoBuilderBorrow<'a>{
-            #[doc(hidden)]
-            pub unsafe fn lift(rep: usize) -> Self {
-              Self {
-                rep: rep as *mut u8,
-                _marker: core::marker::PhantomData,
-              }
-            }
-
-            /// Gets access to the underlying `T` in this resource.
-            pub fn get<T: GuestRepoBuilder>(&self) -> &T {
-              let ptr = unsafe { &mut *self.as_ptr::<T>() };
-              ptr.as_ref().unwrap()
-            }
-
-            // NB: mutable access is not allowed due to the component model allowing
-            // multiple borrows of the same resource.
-
-            fn as_ptr<T: 'static>(&self) -> *mut _RepoBuilderRep<T> {
-              RepoBuilder::type_guard::<T>();
-              self.rep.cast()
-            }
-          }
-          
-
-          unsafe impl _rt::WasmResource for RepoBuilder{
-            #[inline]
-            unsafe fn drop(_handle: u32) {
-              
-              #[cfg(target_arch = "wasm32")]
-              #[link(wasm_import_module = "[export]polka:repository/repo@0.1.0")]
-              unsafe extern "C" {
-                #[link_name = "[resource-drop]repo-builder"]
-                fn drop(_: i32, );
-              }
-
-              #[cfg(not(target_arch = "wasm32"))]
-              unsafe extern "C" fn drop(_: i32, ) { unreachable!() }
-              
-              unsafe { drop(_handle as i32); }
-            }
-          }
-          
 
           #[derive(Debug)]
           #[repr(transparent)]
@@ -7531,68 +7400,125 @@ pub mod wasi {
           
           #[doc(hidden)]
           #[allow(non_snake_case, unused_unsafe)]
-          pub unsafe fn _export_constructor_repo_builder_cabi<T: GuestRepoBuilder>(arg0: *mut u8,arg1: usize,arg2: i32,) -> i32 { unsafe {#[cfg(target_arch="wasm32")]
+          pub unsafe fn _export_method_repo_new_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: i32,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
           _rt::run_ctors_once();let result2 = {
-            let handle1;let len0 = arg1;
-            let bytes0 = _rt::Vec::from_raw_parts(arg0.cast(), len0, len0);
-            RepoBuilder::new(T::new(_rt::string_lift(bytes0), {
+            let handle1;let len0 = arg2;
+            let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
+            T::new(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), {
 
-              handle1 = super::super::super::super::polka::repository::blockstore::Blockstore::from_handle(arg2 as u32);
+              handle1 = super::super::super::super::polka::repository::blockstore::Blockstore::from_handle(arg3 as u32);
               &handle1
-            }))
+            })
           };
-          (result2).take_handle() as i32
+          let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
+          match result2 {
+            Ok(e) => { {
+              *ptr3.add(0).cast::<u8>() = (0i32) as u8;
+              let vec4 = (e.into_bytes()).into_boxed_slice();
+              let ptr4 = vec4.as_ptr().cast::<u8>();
+              let len4 = vec4.len();
+              ::core::mem::forget(vec4);
+              *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
+              *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
+            } },
+            Err(e) => { {
+              *ptr3.add(0).cast::<u8>() = (1i32) as u8;
+              let vec5 = (e.into_bytes()).into_boxed_slice();
+              let ptr5 = vec5.as_ptr().cast::<u8>();
+              let len5 = vec5.len();
+              ::core::mem::forget(vec5);
+              *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
+              *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
+            } },
+          };ptr3
+        } }
+        #[doc(hidden)]
+        #[allow(non_snake_case)]
+        pub unsafe fn __post_return_method_repo_new<T: GuestRepo>(arg0: *mut u8,) { unsafe {
+          let l0 = i32::from(*arg0.add(0).cast::<u8>());
+          match l0 {
+            0 => {
+              let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
+              let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
+              _rt::cabi_dealloc(l1, l2, 1);
+            },
+            _ => {
+              let l3 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
+              let l4 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
+              _rt::cabi_dealloc(l3, l4, 1);
+            },
+          }
         } }
         #[doc(hidden)]
         #[allow(non_snake_case, unused_unsafe)]
-        pub unsafe fn _export_method_repo_builder_get_unsigned_bytes_cabi<T: GuestRepoBuilder>(arg0: *mut u8,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-        _rt::run_ctors_once();let result0 = {
-          T::get_unsigned_bytes(RepoBuilderBorrow::lift(arg0 as u32 as usize).get())
+        pub unsafe fn _export_method_repo_finalize_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+        _rt::run_ctors_once();let result1 = {
+          let len0 = arg2;
+          let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
+          T::finalize(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0))
         };
-        let ptr1 = (&raw mut _RET_AREA.0).cast::<u8>();
-        let vec2 = (result0.into_bytes()).into_boxed_slice();
-        let ptr2 = vec2.as_ptr().cast::<u8>();
-        let len2 = vec2.len();
-        ::core::mem::forget(vec2);
-        *ptr1.add(::core::mem::size_of::<*const u8>()).cast::<usize>() = len2;
-        *ptr1.add(0).cast::<*mut u8>() = ptr2.cast_mut();
-        ptr1
+        let ptr2 = (&raw mut _RET_AREA.0).cast::<u8>();
+        match result1 {
+          Ok(e) => { {
+            *ptr2.add(0).cast::<u8>() = (0i32) as u8;
+            *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<u8>() = (match e { true => 1, false => 0 }) as u8;
+          } },
+          Err(e) => { {
+            *ptr2.add(0).cast::<u8>() = (1i32) as u8;
+            let vec3 = (e.into_bytes()).into_boxed_slice();
+            let ptr3 = vec3.as_ptr().cast::<u8>();
+            let len3 = vec3.len();
+            ::core::mem::forget(vec3);
+            *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len3;
+            *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr3.cast_mut();
+          } },
+        };ptr2
       } }
       #[doc(hidden)]
       #[allow(non_snake_case)]
-      pub unsafe fn __post_return_method_repo_builder_get_unsigned_bytes<T: GuestRepoBuilder>(arg0: *mut u8,) { unsafe {
-        let l0 = *arg0.add(0).cast::<*mut u8>();
-        let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<usize>();
-        _rt::cabi_dealloc(l0, l1, 1);
+      pub unsafe fn __post_return_method_repo_finalize<T: GuestRepo>(arg0: *mut u8,) { unsafe {
+        let l0 = i32::from(*arg0.add(0).cast::<u8>());
+        match l0 {
+          0 => (),
+          _ => {
+            let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
+            let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
+            _rt::cabi_dealloc(l1, l2, 1);
+          },
+        }
       } }
       #[doc(hidden)]
       #[allow(non_snake_case, unused_unsafe)]
-      pub unsafe fn _export_method_repo_builder_finalize_cabi<T: GuestRepoBuilder>(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-      _rt::run_ctors_once();let result1 = {
-        let len0 = arg2;
-        let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-        T::finalize(RepoBuilderBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0))
+      pub unsafe fn _export_method_repo_open_cabi<T: GuestRepo>(arg0: *mut u8,arg1: i32,arg2: *mut u8,arg3: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+      _rt::run_ctors_once();let result2 = {
+        let handle0;let len1 = arg3;
+        let bytes1 = _rt::Vec::from_raw_parts(arg2.cast(), len1, len1);
+        T::open(RepoBorrow::lift(arg0 as u32 as usize).get(), {
+
+          handle0 = super::super::super::super::polka::repository::blockstore::Blockstore::from_handle(arg1 as u32);
+          &handle0
+        }, _rt::string_lift(bytes1))
       };
-      let ptr2 = (&raw mut _RET_AREA.0).cast::<u8>();
-      match result1 {
+      let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
+      match result2 {
         Ok(e) => { {
-          *ptr2.add(0).cast::<u8>() = (0i32) as u8;
-          *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<i32>() = (e).take_handle() as i32;
+          *ptr3.add(0).cast::<u8>() = (0i32) as u8;
+          *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<u8>() = (match e { true => 1, false => 0 }) as u8;
         } },
         Err(e) => { {
-          *ptr2.add(0).cast::<u8>() = (1i32) as u8;
-          let vec3 = (e.into_bytes()).into_boxed_slice();
-          let ptr3 = vec3.as_ptr().cast::<u8>();
-          let len3 = vec3.len();
-          ::core::mem::forget(vec3);
-          *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len3;
-          *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr3.cast_mut();
+          *ptr3.add(0).cast::<u8>() = (1i32) as u8;
+          let vec4 = (e.into_bytes()).into_boxed_slice();
+          let ptr4 = vec4.as_ptr().cast::<u8>();
+          let len4 = vec4.len();
+          ::core::mem::forget(vec4);
+          *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
+          *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
         } },
-      };ptr2
+      };ptr3
     } }
     #[doc(hidden)]
     #[allow(non_snake_case)]
-    pub unsafe fn __post_return_method_repo_builder_finalize<T: GuestRepoBuilder>(arg0: *mut u8,) { unsafe {
+    pub unsafe fn __post_return_method_repo_open<T: GuestRepo>(arg0: *mut u8,) { unsafe {
       let l0 = i32::from(*arg0.add(0).cast::<u8>());
       match l0 {
         0 => (),
@@ -7605,298 +7531,93 @@ pub mod wasi {
     } }
     #[doc(hidden)]
     #[allow(non_snake_case, unused_unsafe)]
-    pub unsafe fn _export_method_repo_open_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: i32,arg4: *mut u8,arg5: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-    _rt::run_ctors_once();let result3 = {
-      let handle1;let len0 = arg2;
+    pub unsafe fn _export_method_repo_create_record_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+    _rt::run_ctors_once();let result2 = {
+      let len0 = arg2;
       let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-      let len2 = arg5;
-      let bytes2 = _rt::Vec::from_raw_parts(arg4.cast(), len2, len2);
-      T::open(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), {
-
-        handle1 = super::super::super::super::polka::repository::blockstore::Blockstore::from_handle(arg3 as u32);
-        &handle1
-      }, _rt::string_lift(bytes2))
+      let len1 = arg4;
+      let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
+      T::create_record(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1))
     };
-    let ptr4 = (&raw mut _RET_AREA.0).cast::<u8>();
-    match result3 {
+    let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
+    match result2 {
       Ok(e) => { {
-        *ptr4.add(0).cast::<u8>() = (0i32) as u8;
-        *ptr4.add(::core::mem::size_of::<*const u8>()).cast::<i32>() = (e).take_handle() as i32;
+        *ptr3.add(0).cast::<u8>() = (0i32) as u8;
+        let vec4 = (e.into_bytes()).into_boxed_slice();
+        let ptr4 = vec4.as_ptr().cast::<u8>();
+        let len4 = vec4.len();
+        ::core::mem::forget(vec4);
+        *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
+        *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
       } },
       Err(e) => { {
-        *ptr4.add(0).cast::<u8>() = (1i32) as u8;
+        *ptr3.add(0).cast::<u8>() = (1i32) as u8;
         let vec5 = (e.into_bytes()).into_boxed_slice();
         let ptr5 = vec5.as_ptr().cast::<u8>();
         let len5 = vec5.len();
         ::core::mem::forget(vec5);
-        *ptr4.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
-        *ptr4.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
+        *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
+        *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
       } },
-    };ptr4
+    };ptr3
   } }
   #[doc(hidden)]
   #[allow(non_snake_case)]
-  pub unsafe fn __post_return_method_repo_open<T: GuestRepo>(arg0: *mut u8,) { unsafe {
+  pub unsafe fn __post_return_method_repo_create_record<T: GuestRepo>(arg0: *mut u8,) { unsafe {
     let l0 = i32::from(*arg0.add(0).cast::<u8>());
     match l0 {
-      0 => (),
-      _ => {
+      0 => {
         let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
         let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
         _rt::cabi_dealloc(l1, l2, 1);
       },
+      _ => {
+        let l3 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
+        let l4 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
+        _rt::cabi_dealloc(l3, l4, 1);
+      },
     }
   } }
-  pub trait Guest {
-    type RepoBuilder: GuestRepoBuilder;
-    type Repo: GuestRepo;
-  }
-  pub trait GuestRepoBuilder: 'static {
-
-    #[doc(hidden)]
-    unsafe fn _resource_new(val: *mut u8) -> u32
-    where Self: Sized
-    {
-      
-      #[cfg(target_arch = "wasm32")]
-      #[link(wasm_import_module = "[export]polka:repository/repo@0.1.0")]
-      unsafe extern "C" {
-        #[link_name = "[resource-new]repo-builder"]
-        fn new(_: *mut u8, ) -> i32;
-      }
-
-      #[cfg(not(target_arch = "wasm32"))]
-      unsafe extern "C" fn new(_: *mut u8, ) -> i32 { unreachable!() }
-      
-      unsafe { new(val) as u32 }
-    }
-
-    #[doc(hidden)]
-    fn _resource_rep(handle: u32) -> *mut u8
-    where Self: Sized
-    {
-      
-      #[cfg(target_arch = "wasm32")]
-      #[link(wasm_import_module = "[export]polka:repository/repo@0.1.0")]
-      unsafe extern "C" {
-        #[link_name = "[resource-rep]repo-builder"]
-        fn rep(_: i32, ) -> *mut u8;
-      }
-
-      #[cfg(not(target_arch = "wasm32"))]
-      unsafe extern "C" fn rep(_: i32, ) -> *mut u8 { unreachable!() }
-      
-      unsafe { rep(handle as i32) }
-    }
-
-    
-    #[allow(async_fn_in_trait)]
-    fn new(did: _rt::String,bs: &Blockstore,) -> Self;
-    #[allow(async_fn_in_trait)]
-    fn get_unsigned_bytes(&self,) -> _rt::String;
-    #[allow(async_fn_in_trait)]
-    fn finalize(&self,sig: _rt::String,) -> Result<Repo,_rt::String>;
-  }
-  pub trait GuestRepo: 'static {
-
-    #[doc(hidden)]
-    unsafe fn _resource_new(val: *mut u8) -> u32
-    where Self: Sized
-    {
-      
-      #[cfg(target_arch = "wasm32")]
-      #[link(wasm_import_module = "[export]polka:repository/repo@0.1.0")]
-      unsafe extern "C" {
-        #[link_name = "[resource-new]repo"]
-        fn new(_: *mut u8, ) -> i32;
-      }
-
-      #[cfg(not(target_arch = "wasm32"))]
-      unsafe extern "C" fn new(_: *mut u8, ) -> i32 { unreachable!() }
-      
-      unsafe { new(val) as u32 }
-    }
-
-    #[doc(hidden)]
-    fn _resource_rep(handle: u32) -> *mut u8
-    where Self: Sized
-    {
-      
-      #[cfg(target_arch = "wasm32")]
-      #[link(wasm_import_module = "[export]polka:repository/repo@0.1.0")]
-      unsafe extern "C" {
-        #[link_name = "[resource-rep]repo"]
-        fn rep(_: i32, ) -> *mut u8;
-      }
-
-      #[cfg(not(target_arch = "wasm32"))]
-      unsafe extern "C" fn rep(_: i32, ) -> *mut u8 { unreachable!() }
-      
-      unsafe { rep(handle as i32) }
-    }
-
-    
-    #[allow(async_fn_in_trait)]
-    fn open(&self,did: _rt::String,bs: &Blockstore,cid: _rt::String,) -> Result<Repo,_rt::String>;
-  }
-  #[doc(hidden)]
-
-  macro_rules! __export_polka_repository_repo_0_1_0_cabi{
-    ($ty:ident with_types_in $($path_to_types:tt)*) => (const _: () = {
-
-      #[unsafe(export_name = "polka:repository/repo@0.1.0#[constructor]repo-builder")]
-      unsafe extern "C" fn export_constructor_repo_builder(arg0: *mut u8,arg1: usize,arg2: i32,) -> i32 {
-        unsafe { $($path_to_types)*::_export_constructor_repo_builder_cabi::<<$ty as $($path_to_types)*::Guest>::RepoBuilder>(arg0, arg1, arg2) }
-      }
-      #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo-builder.get-unsigned-bytes")]
-      unsafe extern "C" fn export_method_repo_builder_get_unsigned_bytes(arg0: *mut u8,) -> *mut u8 {
-        unsafe { $($path_to_types)*::_export_method_repo_builder_get_unsigned_bytes_cabi::<<$ty as $($path_to_types)*::Guest>::RepoBuilder>(arg0) }
-      }
-      #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo-builder.get-unsigned-bytes")]
-      unsafe extern "C" fn _post_return_method_repo_builder_get_unsigned_bytes(arg0: *mut u8,) {
-        unsafe { $($path_to_types)*::__post_return_method_repo_builder_get_unsigned_bytes::<<$ty as $($path_to_types)*::Guest>::RepoBuilder>(arg0) }
-      }
-      #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo-builder.finalize")]
-      unsafe extern "C" fn export_method_repo_builder_finalize(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 {
-        unsafe { $($path_to_types)*::_export_method_repo_builder_finalize_cabi::<<$ty as $($path_to_types)*::Guest>::RepoBuilder>(arg0, arg1, arg2) }
-      }
-      #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo-builder.finalize")]
-      unsafe extern "C" fn _post_return_method_repo_builder_finalize(arg0: *mut u8,) {
-        unsafe { $($path_to_types)*::__post_return_method_repo_builder_finalize::<<$ty as $($path_to_types)*::Guest>::RepoBuilder>(arg0) }
-      }
-      #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.open")]
-      unsafe extern "C" fn export_method_repo_open(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: i32,arg4: *mut u8,arg5: usize,) -> *mut u8 {
-        unsafe { $($path_to_types)*::_export_method_repo_open_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2, arg3, arg4, arg5) }
-      }
-      #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.open")]
-      unsafe extern "C" fn _post_return_method_repo_open(arg0: *mut u8,) {
-        unsafe { $($path_to_types)*::__post_return_method_repo_open::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
-      }
-
-      const _: () = {
-        #[doc(hidden)]
-        #[unsafe(export_name = "polka:repository/repo@0.1.0#[dtor]repo-builder")]
-        #[allow(non_snake_case)]
-        unsafe extern "C" fn dtor(rep: *mut u8) {
-          unsafe {
-            $($path_to_types)*::RepoBuilder::dtor::<
-            <$ty as $($path_to_types)*::Guest>::RepoBuilder
-            >(rep)
-          }
-        }
-      };
-      
-
-      const _: () = {
-        #[doc(hidden)]
-        #[unsafe(export_name = "polka:repository/repo@0.1.0#[dtor]repo")]
-        #[allow(non_snake_case)]
-        unsafe extern "C" fn dtor(rep: *mut u8) {
-          unsafe {
-            $($path_to_types)*::Repo::dtor::<
-            <$ty as $($path_to_types)*::Guest>::Repo
-            >(rep)
-          }
-        }
-      };
-      
-    };);
-  }
-  #[doc(hidden)]
-  pub(crate) use __export_polka_repository_repo_0_1_0_cabi;
-
-  #[cfg_attr(target_pointer_width="64", repr(align(8)))]
-  #[cfg_attr(target_pointer_width="32", repr(align(4)))]
-  struct _RetArea([::core::mem::MaybeUninit::<u8>; 3*::core::mem::size_of::<*const u8>()]);
-  static mut _RET_AREA: _RetArea = _RetArea([::core::mem::MaybeUninit::uninit(); 3*::core::mem::size_of::<*const u8>()]);
-
-}
-
-
-#[allow(dead_code, async_fn_in_trait, unused_imports, clippy::all)]
-pub mod crud {
-  #[used]
-  #[doc(hidden)]
-  static __FORCE_SECTION_REF: fn() =
-  super::super::super::super::__link_custom_section_describing_imports;
-  
-  use super::super::super::super::_rt;
-  pub type Repo = super::super::super::super::exports::polka::repository::repo::Repo;
-  pub type RepoBorrow<'a> = super::super::super::super::exports::polka::repository::repo::RepoBorrow<'a>;
-  #[derive(Clone)]
-  pub struct Unsigned {
-    pub did: _rt::String,
-    pub version: i64,
-    pub data: _rt::String,
-    pub rev: _rt::String,
-  }
-  impl ::core::fmt::Debug for Unsigned {
-    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-      f.debug_struct("Unsigned").field("did", &self.did).field("version", &self.version).field("data", &self.data).field("rev", &self.rev).finish()
-    }
-  }
-  #[derive(Clone)]
-  pub struct CreateResult {
-    pub cid: _rt::String,
-    pub tid: _rt::String,
-  }
-  impl ::core::fmt::Debug for CreateResult {
-    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-      f.debug_struct("CreateResult").field("cid", &self.cid).field("tid", &self.tid).finish()
-    }
-  }
-  #[derive(Clone)]
-  pub struct GetResult {
-    pub cid: _rt::String,
-    pub data: _rt::String,
-  }
-  impl ::core::fmt::Debug for GetResult {
-    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-      f.debug_struct("GetResult").field("cid", &self.cid).field("data", &self.data).finish()
-    }
-  }
   #[doc(hidden)]
   #[allow(non_snake_case, unused_unsafe)]
-  pub unsafe fn _export_create_record_cabi<T: Guest>(arg0: i32,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-  _rt::run_ctors_once();let result2 = {
+  pub unsafe fn _export_method_repo_get_record_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+  _rt::run_ctors_once();let result1 = {
     let len0 = arg2;
     let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-    let len1 = arg4;
-    let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
-    T::create_record(RepoBorrow::lift(arg0 as u32 as usize), _rt::string_lift(bytes0), _rt::string_lift(bytes1))
+    T::get_record(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0))
   };
-  let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
-  match result2 {
+  let ptr2 = (&raw mut _RET_AREA.0).cast::<u8>();
+  match result1 {
     Ok(e) => { {
-      *ptr3.add(0).cast::<u8>() = (0i32) as u8;
-      let CreateResult{ cid:cid4, tid:tid4, } = e;
-      let vec5 = (cid4.into_bytes()).into_boxed_slice();
+      *ptr2.add(0).cast::<u8>() = (0i32) as u8;
+      let GetResult{ cid:cid3, data:data3, } = e;
+      let vec4 = (cid3.into_bytes()).into_boxed_slice();
+      let ptr4 = vec4.as_ptr().cast::<u8>();
+      let len4 = vec4.len();
+      ::core::mem::forget(vec4);
+      *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
+      *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
+      let vec5 = (data3.into_bytes()).into_boxed_slice();
       let ptr5 = vec5.as_ptr().cast::<u8>();
       let len5 = vec5.len();
       ::core::mem::forget(vec5);
-      *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
-      *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
-      let vec6 = (tid4.into_bytes()).into_boxed_slice();
+      *ptr2.add(4*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
+      *ptr2.add(3*::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
+    } },
+    Err(e) => { {
+      *ptr2.add(0).cast::<u8>() = (1i32) as u8;
+      let vec6 = (e.into_bytes()).into_boxed_slice();
       let ptr6 = vec6.as_ptr().cast::<u8>();
       let len6 = vec6.len();
       ::core::mem::forget(vec6);
-      *ptr3.add(4*::core::mem::size_of::<*const u8>()).cast::<usize>() = len6;
-      *ptr3.add(3*::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr6.cast_mut();
+      *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len6;
+      *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr6.cast_mut();
     } },
-    Err(e) => { {
-      *ptr3.add(0).cast::<u8>() = (1i32) as u8;
-      let vec7 = (e.into_bytes()).into_boxed_slice();
-      let ptr7 = vec7.as_ptr().cast::<u8>();
-      let len7 = vec7.len();
-      ::core::mem::forget(vec7);
-      *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len7;
-      *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr7.cast_mut();
-    } },
-  };ptr3
+  };ptr2
 } }
 #[doc(hidden)]
 #[allow(non_snake_case)]
-pub unsafe fn __post_return_create_record<T: Guest>(arg0: *mut u8,) { unsafe {
+pub unsafe fn __post_return_method_repo_get_record<T: GuestRepo>(arg0: *mut u8,) { unsafe {
   let l0 = i32::from(*arg0.add(0).cast::<u8>());
   match l0 {
     0 => {
@@ -7916,79 +7637,18 @@ pub unsafe fn __post_return_create_record<T: Guest>(arg0: *mut u8,) { unsafe {
 } }
 #[doc(hidden)]
 #[allow(non_snake_case, unused_unsafe)]
-pub unsafe fn _export_get_record_cabi<T: Guest>(arg0: i32,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-_rt::run_ctors_once();let result1 = {
-  let len0 = arg2;
-  let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-  T::get_record(RepoBorrow::lift(arg0 as u32 as usize), _rt::string_lift(bytes0))
-};
-let ptr2 = (&raw mut _RET_AREA.0).cast::<u8>();
-match result1 {
-  Ok(e) => { {
-    *ptr2.add(0).cast::<u8>() = (0i32) as u8;
-    let GetResult{ cid:cid3, data:data3, } = e;
-    let vec4 = (cid3.into_bytes()).into_boxed_slice();
-    let ptr4 = vec4.as_ptr().cast::<u8>();
-    let len4 = vec4.len();
-    ::core::mem::forget(vec4);
-    *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
-    *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
-    let vec5 = (data3.into_bytes()).into_boxed_slice();
-    let ptr5 = vec5.as_ptr().cast::<u8>();
-    let len5 = vec5.len();
-    ::core::mem::forget(vec5);
-    *ptr2.add(4*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
-    *ptr2.add(3*::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
-  } },
-  Err(e) => { {
-    *ptr2.add(0).cast::<u8>() = (1i32) as u8;
-    let vec6 = (e.into_bytes()).into_boxed_slice();
-    let ptr6 = vec6.as_ptr().cast::<u8>();
-    let len6 = vec6.len();
-    ::core::mem::forget(vec6);
-    *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len6;
-    *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr6.cast_mut();
-  } },
-};ptr2
-} }
-#[doc(hidden)]
-#[allow(non_snake_case)]
-pub unsafe fn __post_return_get_record<T: Guest>(arg0: *mut u8,) { unsafe {
-  let l0 = i32::from(*arg0.add(0).cast::<u8>());
-  match l0 {
-    0 => {
-      let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-      let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
-      _rt::cabi_dealloc(l1, l2, 1);
-      let l3 = *arg0.add(3*::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-      let l4 = *arg0.add(4*::core::mem::size_of::<*const u8>()).cast::<usize>();
-      _rt::cabi_dealloc(l3, l4, 1);
-    },
-    _ => {
-      let l5 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-      let l6 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
-      _rt::cabi_dealloc(l5, l6, 1);
-    },
-  }
-} }
-#[doc(hidden)]
-#[allow(non_snake_case, unused_unsafe)]
-pub unsafe fn _export_update_record_cabi<T: Guest>(arg0: i32,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+pub unsafe fn _export_method_repo_update_record_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
 _rt::run_ctors_once();let result2 = {
   let len0 = arg2;
   let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
   let len1 = arg4;
   let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
-  T::update_record(RepoBorrow::lift(arg0 as u32 as usize), _rt::string_lift(bytes0), _rt::string_lift(bytes1))
+  T::update_record(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1))
 };
 let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
 match result2 {
   Ok(e) => { {
     *ptr3.add(0).cast::<u8>() = (0i32) as u8;
-    *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<u8>() = (match e { true => 1, false => 0 }) as u8;
-  } },
-  Err(e) => { {
-    *ptr3.add(0).cast::<u8>() = (1i32) as u8;
     let vec4 = (e.into_bytes()).into_boxed_slice();
     let ptr4 = vec4.as_ptr().cast::<u8>();
     let len4 = vec4.len();
@@ -7996,28 +7656,88 @@ match result2 {
     *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
     *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
   } },
+  Err(e) => { {
+    *ptr3.add(0).cast::<u8>() = (1i32) as u8;
+    let vec5 = (e.into_bytes()).into_boxed_slice();
+    let ptr5 = vec5.as_ptr().cast::<u8>();
+    let len5 = vec5.len();
+    ::core::mem::forget(vec5);
+    *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
+    *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
+  } },
 };ptr3
 } }
 #[doc(hidden)]
 #[allow(non_snake_case)]
-pub unsafe fn __post_return_update_record<T: Guest>(arg0: *mut u8,) { unsafe {
+pub unsafe fn __post_return_method_repo_update_record<T: GuestRepo>(arg0: *mut u8,) { unsafe {
   let l0 = i32::from(*arg0.add(0).cast::<u8>());
   match l0 {
-    0 => (),
-    _ => {
+    0 => {
       let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
       let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
       _rt::cabi_dealloc(l1, l2, 1);
+    },
+    _ => {
+      let l3 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
+      let l4 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
+      _rt::cabi_dealloc(l3, l4, 1);
     },
   }
 } }
 #[doc(hidden)]
 #[allow(non_snake_case, unused_unsafe)]
-pub unsafe fn _export_delete_record_cabi<T: Guest>(arg0: i32,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+pub unsafe fn _export_method_repo_delete_record_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
 _rt::run_ctors_once();let result1 = {
   let len0 = arg2;
   let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-  T::delete_record(RepoBorrow::lift(arg0 as u32 as usize), _rt::string_lift(bytes0))
+  T::delete_record(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0))
+};
+let ptr2 = (&raw mut _RET_AREA.0).cast::<u8>();
+match result1 {
+  Ok(e) => { {
+    *ptr2.add(0).cast::<u8>() = (0i32) as u8;
+    let vec3 = (e.into_bytes()).into_boxed_slice();
+    let ptr3 = vec3.as_ptr().cast::<u8>();
+    let len3 = vec3.len();
+    ::core::mem::forget(vec3);
+    *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len3;
+    *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr3.cast_mut();
+  } },
+  Err(e) => { {
+    *ptr2.add(0).cast::<u8>() = (1i32) as u8;
+    let vec4 = (e.into_bytes()).into_boxed_slice();
+    let ptr4 = vec4.as_ptr().cast::<u8>();
+    let len4 = vec4.len();
+    ::core::mem::forget(vec4);
+    *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
+    *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
+  } },
+};ptr2
+} }
+#[doc(hidden)]
+#[allow(non_snake_case)]
+pub unsafe fn __post_return_method_repo_delete_record<T: GuestRepo>(arg0: *mut u8,) { unsafe {
+  let l0 = i32::from(*arg0.add(0).cast::<u8>());
+  match l0 {
+    0 => {
+      let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
+      let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
+      _rt::cabi_dealloc(l1, l2, 1);
+    },
+    _ => {
+      let l3 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
+      let l4 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
+      _rt::cabi_dealloc(l3, l4, 1);
+    },
+  }
+} }
+#[doc(hidden)]
+#[allow(non_snake_case, unused_unsafe)]
+pub unsafe fn _export_method_repo_commit_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+_rt::run_ctors_once();let result1 = {
+  let len0 = arg2;
+  let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
+  T::commit(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0))
 };
 let ptr2 = (&raw mut _RET_AREA.0).cast::<u8>();
 match result1 {
@@ -8038,121 +7758,7 @@ match result1 {
 } }
 #[doc(hidden)]
 #[allow(non_snake_case)]
-pub unsafe fn __post_return_delete_record<T: Guest>(arg0: *mut u8,) { unsafe {
-  let l0 = i32::from(*arg0.add(0).cast::<u8>());
-  match l0 {
-    0 => (),
-    _ => {
-      let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-      let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
-      _rt::cabi_dealloc(l1, l2, 1);
-    },
-  }
-} }
-#[doc(hidden)]
-#[allow(non_snake_case, unused_unsafe)]
-pub unsafe fn _export_get_unsigned_cabi<T: Guest>(arg0: i32,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-_rt::run_ctors_once();let result0 = {
-  T::get_unsigned(RepoBorrow::lift(arg0 as u32 as usize))
-};
-let ptr1 = (&raw mut _RET_AREA.0).cast::<u8>();
-match result0 {
-  Ok(e) => { {
-    *ptr1.add(0).cast::<u8>() = (0i32) as u8;
-    let Unsigned{ did:did2, version:version2, data:data2, rev:rev2, } = e;
-    let vec3 = (did2.into_bytes()).into_boxed_slice();
-    let ptr3 = vec3.as_ptr().cast::<u8>();
-    let len3 = vec3.len();
-    ::core::mem::forget(vec3);
-    *ptr1.add(8+1*::core::mem::size_of::<*const u8>()).cast::<usize>() = len3;
-    *ptr1.add(8).cast::<*mut u8>() = ptr3.cast_mut();
-    *ptr1.add(8+2*::core::mem::size_of::<*const u8>()).cast::<i64>() = _rt::as_i64(version2);
-    let vec4 = (data2.into_bytes()).into_boxed_slice();
-    let ptr4 = vec4.as_ptr().cast::<u8>();
-    let len4 = vec4.len();
-    ::core::mem::forget(vec4);
-    *ptr1.add(16+3*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
-    *ptr1.add(16+2*::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
-    let vec5 = (rev2.into_bytes()).into_boxed_slice();
-    let ptr5 = vec5.as_ptr().cast::<u8>();
-    let len5 = vec5.len();
-    ::core::mem::forget(vec5);
-    *ptr1.add(16+5*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
-    *ptr1.add(16+4*::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
-  } },
-  Err(e) => { {
-    *ptr1.add(0).cast::<u8>() = (1i32) as u8;
-    let vec6 = (e.into_bytes()).into_boxed_slice();
-    let ptr6 = vec6.as_ptr().cast::<u8>();
-    let len6 = vec6.len();
-    ::core::mem::forget(vec6);
-    *ptr1.add(8+1*::core::mem::size_of::<*const u8>()).cast::<usize>() = len6;
-    *ptr1.add(8).cast::<*mut u8>() = ptr6.cast_mut();
-  } },
-};ptr1
-} }
-#[doc(hidden)]
-#[allow(non_snake_case)]
-pub unsafe fn __post_return_get_unsigned<T: Guest>(arg0: *mut u8,) { unsafe {
-  let l0 = i32::from(*arg0.add(0).cast::<u8>());
-  match l0 {
-    0 => {
-      let l1 = *arg0.add(8).cast::<*mut u8>();
-      let l2 = *arg0.add(8+1*::core::mem::size_of::<*const u8>()).cast::<usize>();
-      _rt::cabi_dealloc(l1, l2, 1);
-      let l3 = *arg0.add(16+2*::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-      let l4 = *arg0.add(16+3*::core::mem::size_of::<*const u8>()).cast::<usize>();
-      _rt::cabi_dealloc(l3, l4, 1);
-      let l5 = *arg0.add(16+4*::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-      let l6 = *arg0.add(16+5*::core::mem::size_of::<*const u8>()).cast::<usize>();
-      _rt::cabi_dealloc(l5, l6, 1);
-    },
-    _ => {
-      let l7 = *arg0.add(8).cast::<*mut u8>();
-      let l8 = *arg0.add(8+1*::core::mem::size_of::<*const u8>()).cast::<usize>();
-      _rt::cabi_dealloc(l7, l8, 1);
-    },
-  }
-} }
-#[doc(hidden)]
-#[allow(non_snake_case, unused_unsafe)]
-pub unsafe fn _export_commit_cabi<T: Guest>(arg0: i32,arg1: *mut u8,arg2: usize,arg3: i64,arg4: *mut u8,arg5: usize,arg6: *mut u8,arg7: usize,arg8: *mut u8,arg9: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-_rt::run_ctors_once();let result4 = {
-  let len0 = arg2;
-  let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-  let len1 = arg5;
-  let bytes1 = _rt::Vec::from_raw_parts(arg4.cast(), len1, len1);
-  let len2 = arg7;
-  let bytes2 = _rt::Vec::from_raw_parts(arg6.cast(), len2, len2);
-  let len3 = arg9;
-  let bytes3 = _rt::Vec::from_raw_parts(arg8.cast(), len3, len3);
-  T::commit(RepoBorrow::lift(arg0 as u32 as usize), Unsigned{
-    did: _rt::string_lift(bytes0),
-    version: arg3,
-    data: _rt::string_lift(bytes1),
-    rev: _rt::string_lift(bytes2),
-  }, _rt::string_lift(bytes3))
-};
-let ptr5 = (&raw mut _RET_AREA.0).cast::<u8>();
-match result4 {
-  Ok(e) => { {
-    *ptr5.add(0).cast::<u8>() = (0i32) as u8;
-    *ptr5.add(::core::mem::size_of::<*const u8>()).cast::<u8>() = (match e { true => 1, false => 0 }) as u8;
-  } },
-  Err(e) => { {
-    *ptr5.add(0).cast::<u8>() = (1i32) as u8;
-    let vec6 = (e.into_bytes()).into_boxed_slice();
-    let ptr6 = vec6.as_ptr().cast::<u8>();
-    let len6 = vec6.len();
-    ::core::mem::forget(vec6);
-    *ptr5.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len6;
-    *ptr5.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr6.cast_mut();
-  } },
-};ptr5
-} }
-#[doc(hidden)]
-#[allow(non_snake_case)]
-pub unsafe fn __post_return_commit<T: Guest>(arg0: *mut u8,) { unsafe {
+pub unsafe fn __post_return_method_repo_commit<T: GuestRepo>(arg0: *mut u8,) { unsafe {
   let l0 = i32::from(*arg0.add(0).cast::<u8>());
   match l0 {
     0 => (),
@@ -8164,80 +7770,156 @@ pub unsafe fn __post_return_commit<T: Guest>(arg0: *mut u8,) { unsafe {
   }
 } }
 pub trait Guest {
+  type Repo: GuestRepo;
+}
+pub trait GuestRepo: 'static {
+
+  #[doc(hidden)]
+  unsafe fn _resource_new(val: *mut u8) -> u32
+  where Self: Sized
+  {
+    
+    #[cfg(target_arch = "wasm32")]
+    #[link(wasm_import_module = "[export]polka:repository/repo@0.1.0")]
+    unsafe extern "C" {
+      #[link_name = "[resource-new]repo"]
+      fn new(_: *mut u8, ) -> i32;
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    unsafe extern "C" fn new(_: *mut u8, ) -> i32 { unreachable!() }
+    
+    unsafe { new(val) as u32 }
+  }
+
+  #[doc(hidden)]
+  fn _resource_rep(handle: u32) -> *mut u8
+  where Self: Sized
+  {
+    
+    #[cfg(target_arch = "wasm32")]
+    #[link(wasm_import_module = "[export]polka:repository/repo@0.1.0")]
+    unsafe extern "C" {
+      #[link_name = "[resource-rep]repo"]
+      fn rep(_: i32, ) -> *mut u8;
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    unsafe extern "C" fn rep(_: i32, ) -> *mut u8 { unreachable!() }
+    
+    unsafe { rep(handle as i32) }
+  }
+
+  
   #[allow(async_fn_in_trait)]
-  fn create_record(repo: RepoBorrow<'_>,nsid: _rt::String,data: _rt::String,) -> Result<CreateResult,_rt::String>;
+  fn new(&self,did: _rt::String,bs: &Blockstore,) -> Result<_rt::String,_rt::String>;
   #[allow(async_fn_in_trait)]
-  fn get_record(repo: RepoBorrow<'_>,rpath: _rt::String,) -> Result<GetResult,_rt::String>;
+  fn finalize(&self,sig: _rt::String,) -> Result<bool,_rt::String>;
   #[allow(async_fn_in_trait)]
-  fn update_record(repo: RepoBorrow<'_>,rpath: _rt::String,data: _rt::String,) -> Result<bool,_rt::String>;
+  fn open(&self,bs: &Blockstore,cid: _rt::String,) -> Result<bool,_rt::String>;
   #[allow(async_fn_in_trait)]
-  fn delete_record(repo: RepoBorrow<'_>,rpath: _rt::String,) -> Result<bool,_rt::String>;
+  fn create_record(&self,nsid: _rt::String,data: _rt::String,) -> Result<_rt::String,_rt::String>;
   #[allow(async_fn_in_trait)]
-  fn get_unsigned(repo: RepoBorrow<'_>,) -> Result<Unsigned,_rt::String>;
+  fn get_record(&self,rpath: _rt::String,) -> Result<GetResult,_rt::String>;
   #[allow(async_fn_in_trait)]
-  fn commit(repo: RepoBorrow<'_>,commit: Unsigned,sig: _rt::String,) -> Result<bool,_rt::String>;
+  fn update_record(&self,rpath: _rt::String,data: _rt::String,) -> Result<_rt::String,_rt::String>;
+  #[allow(async_fn_in_trait)]
+  fn delete_record(&self,rpath: _rt::String,) -> Result<_rt::String,_rt::String>;
+  #[allow(async_fn_in_trait)]
+  fn commit(&self,sig: _rt::String,) -> Result<bool,_rt::String>;
 }
 #[doc(hidden)]
 
-macro_rules! __export_polka_repository_crud_0_1_0_cabi{
+macro_rules! __export_polka_repository_repo_0_1_0_cabi{
   ($ty:ident with_types_in $($path_to_types:tt)*) => (const _: () = {
 
-    #[unsafe(export_name = "polka:repository/crud@0.1.0#create-record")]
-    unsafe extern "C" fn export_create_record(arg0: i32,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_create_record_cabi::<$ty>(arg0, arg1, arg2, arg3, arg4) }
+    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.new")]
+    unsafe extern "C" fn export_method_repo_new(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: i32,) -> *mut u8 {
+      unsafe { $($path_to_types)*::_export_method_repo_new_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2, arg3) }
     }
-    #[unsafe(export_name = "cabi_post_polka:repository/crud@0.1.0#create-record")]
-    unsafe extern "C" fn _post_return_create_record(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_create_record::<$ty>(arg0) }
+    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.new")]
+    unsafe extern "C" fn _post_return_method_repo_new(arg0: *mut u8,) {
+      unsafe { $($path_to_types)*::__post_return_method_repo_new::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
     }
-    #[unsafe(export_name = "polka:repository/crud@0.1.0#get-record")]
-    unsafe extern "C" fn export_get_record(arg0: i32,arg1: *mut u8,arg2: usize,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_get_record_cabi::<$ty>(arg0, arg1, arg2) }
+    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.finalize")]
+    unsafe extern "C" fn export_method_repo_finalize(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 {
+      unsafe { $($path_to_types)*::_export_method_repo_finalize_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2) }
     }
-    #[unsafe(export_name = "cabi_post_polka:repository/crud@0.1.0#get-record")]
-    unsafe extern "C" fn _post_return_get_record(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_get_record::<$ty>(arg0) }
+    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.finalize")]
+    unsafe extern "C" fn _post_return_method_repo_finalize(arg0: *mut u8,) {
+      unsafe { $($path_to_types)*::__post_return_method_repo_finalize::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
     }
-    #[unsafe(export_name = "polka:repository/crud@0.1.0#update-record")]
-    unsafe extern "C" fn export_update_record(arg0: i32,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_update_record_cabi::<$ty>(arg0, arg1, arg2, arg3, arg4) }
+    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.open")]
+    unsafe extern "C" fn export_method_repo_open(arg0: *mut u8,arg1: i32,arg2: *mut u8,arg3: usize,) -> *mut u8 {
+      unsafe { $($path_to_types)*::_export_method_repo_open_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2, arg3) }
     }
-    #[unsafe(export_name = "cabi_post_polka:repository/crud@0.1.0#update-record")]
-    unsafe extern "C" fn _post_return_update_record(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_update_record::<$ty>(arg0) }
+    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.open")]
+    unsafe extern "C" fn _post_return_method_repo_open(arg0: *mut u8,) {
+      unsafe { $($path_to_types)*::__post_return_method_repo_open::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
     }
-    #[unsafe(export_name = "polka:repository/crud@0.1.0#delete-record")]
-    unsafe extern "C" fn export_delete_record(arg0: i32,arg1: *mut u8,arg2: usize,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_delete_record_cabi::<$ty>(arg0, arg1, arg2) }
+    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.create-record")]
+    unsafe extern "C" fn export_method_repo_create_record(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 {
+      unsafe { $($path_to_types)*::_export_method_repo_create_record_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2, arg3, arg4) }
     }
-    #[unsafe(export_name = "cabi_post_polka:repository/crud@0.1.0#delete-record")]
-    unsafe extern "C" fn _post_return_delete_record(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_delete_record::<$ty>(arg0) }
+    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.create-record")]
+    unsafe extern "C" fn _post_return_method_repo_create_record(arg0: *mut u8,) {
+      unsafe { $($path_to_types)*::__post_return_method_repo_create_record::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
     }
-    #[unsafe(export_name = "polka:repository/crud@0.1.0#get-unsigned")]
-    unsafe extern "C" fn export_get_unsigned(arg0: i32,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_get_unsigned_cabi::<$ty>(arg0) }
+    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.get-record")]
+    unsafe extern "C" fn export_method_repo_get_record(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 {
+      unsafe { $($path_to_types)*::_export_method_repo_get_record_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2) }
     }
-    #[unsafe(export_name = "cabi_post_polka:repository/crud@0.1.0#get-unsigned")]
-    unsafe extern "C" fn _post_return_get_unsigned(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_get_unsigned::<$ty>(arg0) }
+    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.get-record")]
+    unsafe extern "C" fn _post_return_method_repo_get_record(arg0: *mut u8,) {
+      unsafe { $($path_to_types)*::__post_return_method_repo_get_record::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
     }
-    #[unsafe(export_name = "polka:repository/crud@0.1.0#commit")]
-    unsafe extern "C" fn export_commit(arg0: i32,arg1: *mut u8,arg2: usize,arg3: i64,arg4: *mut u8,arg5: usize,arg6: *mut u8,arg7: usize,arg8: *mut u8,arg9: usize,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_commit_cabi::<$ty>(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9) }
+    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.update-record")]
+    unsafe extern "C" fn export_method_repo_update_record(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 {
+      unsafe { $($path_to_types)*::_export_method_repo_update_record_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2, arg3, arg4) }
     }
-    #[unsafe(export_name = "cabi_post_polka:repository/crud@0.1.0#commit")]
-    unsafe extern "C" fn _post_return_commit(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_commit::<$ty>(arg0) }
+    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.update-record")]
+    unsafe extern "C" fn _post_return_method_repo_update_record(arg0: *mut u8,) {
+      unsafe { $($path_to_types)*::__post_return_method_repo_update_record::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
     }
+    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.delete-record")]
+    unsafe extern "C" fn export_method_repo_delete_record(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 {
+      unsafe { $($path_to_types)*::_export_method_repo_delete_record_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2) }
+    }
+    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.delete-record")]
+    unsafe extern "C" fn _post_return_method_repo_delete_record(arg0: *mut u8,) {
+      unsafe { $($path_to_types)*::__post_return_method_repo_delete_record::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
+    }
+    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.commit")]
+    unsafe extern "C" fn export_method_repo_commit(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 {
+      unsafe { $($path_to_types)*::_export_method_repo_commit_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2) }
+    }
+    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.commit")]
+    unsafe extern "C" fn _post_return_method_repo_commit(arg0: *mut u8,) {
+      unsafe { $($path_to_types)*::__post_return_method_repo_commit::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
+    }
+
+    const _: () = {
+      #[doc(hidden)]
+      #[unsafe(export_name = "polka:repository/repo@0.1.0#[dtor]repo")]
+      #[allow(non_snake_case)]
+      unsafe extern "C" fn dtor(rep: *mut u8) {
+        unsafe {
+          $($path_to_types)*::Repo::dtor::<
+          <$ty as $($path_to_types)*::Guest>::Repo
+          >(rep)
+        }
+      }
+    };
+    
   };);
 }
 #[doc(hidden)]
-pub(crate) use __export_polka_repository_crud_0_1_0_cabi;
+pub(crate) use __export_polka_repository_repo_0_1_0_cabi;
 
-#[repr(align(8))]
-struct _RetArea([::core::mem::MaybeUninit::<u8>; 16+6*::core::mem::size_of::<*const u8>()]);
-static mut _RET_AREA: _RetArea = _RetArea([::core::mem::MaybeUninit::uninit(); 16+6*::core::mem::size_of::<*const u8>()]);
+#[cfg_attr(target_pointer_width="64", repr(align(8)))]
+#[cfg_attr(target_pointer_width="32", repr(align(4)))]
+struct _RetArea([::core::mem::MaybeUninit::<u8>; 5*::core::mem::size_of::<*const u8>()]);
+static mut _RET_AREA: _RetArea = _RetArea([::core::mem::MaybeUninit::uninit(); 5*::core::mem::size_of::<*const u8>()]);
 
 }
 
@@ -8509,7 +8191,6 @@ macro_rules! __export_repository_impl {
   ($ty:ident) => (crate::repository::export!($ty with_types_in crate::repository););
   ($ty:ident with_types_in $($path_to_types_root:tt)*) => (
   $($path_to_types_root)*::exports::polka::repository::repo::__export_polka_repository_repo_0_1_0_cabi!($ty with_types_in $($path_to_types_root)*::exports::polka::repository::repo);
-  $($path_to_types_root)*::exports::polka::repository::crud::__export_polka_repository_crud_0_1_0_cabi!($ty with_types_in $($path_to_types_root)*::exports::polka::repository::crud);
   )
 }
 #[doc(inline)]
@@ -8519,8 +8200,8 @@ pub(crate) use __export_repository_impl as export;
 #[unsafe(link_section = "component-type:wit-bindgen:0.47.0:polka:repository@0.1.0:repository:encoded world")]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 11645] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xfcY\x01A\x02\x01AO\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 11392] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xffW\x01A\x02\x01AL\x01\
 B\x09\x04\0\x0ablockstore\x03\x01\x01h\0\x01p}\x01j\x01\x02\x01s\x01@\x02\x04sel\
 f\x01\x03cids\0\x03\x04\0\x16[method]blockstore.get\x01\x04\x01j\x01s\x01s\x01@\x02\
 \x04self\x01\x04data\x02\0\x05\x04\0\x16[method]blockstore.put\x01\x06\x03\0!pol\
@@ -8737,27 +8418,20 @@ okup@0.2.0\x05)\x01B\x05\x01p}\x01@\x01\x03lenw\0\0\x04\0\x10get-random-bytes\x0
 \x05*\x01B\x05\x01p}\x01@\x01\x03lenw\0\0\x04\0\x19get-insecure-random-bytes\x01\
 \x01\x01@\0\0w\x04\0\x17get-insecure-random-u64\x01\x02\x03\0\x1awasi:random/ins\
 ecure@0.2.0\x05+\x01B\x03\x01o\x02ww\x01@\0\0\0\x04\0\x0dinsecure-seed\x01\x01\x03\
-\0\x1fwasi:random/insecure-seed@0.2.0\x05,\x02\x03\0\0\x0ablockstore\x01B\x12\x02\
-\x03\x02\x01-\x04\0\x0ablockstore\x03\0\0\x04\0\x0crepo-builder\x03\x01\x04\0\x04\
-repo\x03\x01\x01h\x01\x01i\x02\x01@\x02\x03dids\x02bs\x04\0\x05\x04\0\x19[constr\
-uctor]repo-builder\x01\x06\x01h\x02\x01@\x01\x04self\x07\0s\x04\0'[method]repo-b\
-uilder.get-unsigned-bytes\x01\x08\x01i\x03\x01j\x01\x09\x01s\x01@\x02\x04self\x07\
-\x03sigs\0\x0a\x04\0\x1d[method]repo-builder.finalize\x01\x0b\x01h\x03\x01@\x04\x04\
-self\x0c\x03dids\x02bs\x04\x03cids\0\x0a\x04\0\x11[method]repo.open\x01\x0d\x04\0\
-\x1bpolka:repository/repo@0.1.0\x05.\x02\x03\0\x1c\x04repo\x01B\x1b\x02\x03\x02\x01\
--\x04\0\x0ablockstore\x03\0\0\x02\x03\x02\x01/\x04\0\x04repo\x03\0\x02\x01r\x04\x03\
-dids\x07versionx\x04datas\x03revs\x04\0\x08unsigned\x03\0\x04\x01r\x02\x03cids\x03\
-tids\x04\0\x0dcreate-result\x03\0\x06\x01r\x02\x03cids\x04datas\x04\0\x0aget-res\
-ult\x03\0\x08\x01h\x03\x01j\x01\x07\x01s\x01@\x03\x04repo\x0a\x04nsids\x04datas\0\
-\x0b\x04\0\x0dcreate-record\x01\x0c\x01j\x01\x09\x01s\x01@\x02\x04repo\x0a\x05rp\
-aths\0\x0d\x04\0\x0aget-record\x01\x0e\x01j\x01\x7f\x01s\x01@\x03\x04repo\x0a\x05\
-rpaths\x04datas\0\x0f\x04\0\x0dupdate-record\x01\x10\x01@\x02\x04repo\x0a\x05rpa\
-ths\0\x0f\x04\0\x0ddelete-record\x01\x11\x01j\x01\x05\x01s\x01@\x01\x04repo\x0a\0\
-\x12\x04\0\x0cget-unsigned\x01\x13\x01@\x03\x04repo\x0a\x06commit\x05\x03sigs\0\x0f\
-\x04\0\x06commit\x01\x14\x04\0\x1bpolka:repository/crud@0.1.0\x050\x04\0!polka:r\
-epository/repository@0.1.0\x04\0\x0b\x10\x01\0\x0arepository\x03\0\0\0G\x09produ\
-cers\x01\x0cprocessed-by\x02\x0dwit-component\x070.240.0\x10wit-bindgen-rust\x06\
-0.47.0";
+\0\x1fwasi:random/insecure-seed@0.2.0\x05,\x02\x03\0\0\x0ablockstore\x01B\x19\x02\
+\x03\x02\x01-\x04\0\x0ablockstore\x03\0\0\x01r\x02\x03cids\x04datas\x04\0\x0aget\
+-result\x03\0\x02\x04\0\x04repo\x03\x01\x01h\x04\x01h\x01\x01j\x01s\x01s\x01@\x03\
+\x04self\x05\x03dids\x02bs\x06\0\x07\x04\0\x10[method]repo.new\x01\x08\x01j\x01\x7f\
+\x01s\x01@\x02\x04self\x05\x03sigs\0\x09\x04\0\x15[method]repo.finalize\x01\x0a\x01\
+@\x03\x04self\x05\x02bs\x06\x03cids\0\x09\x04\0\x11[method]repo.open\x01\x0b\x01\
+@\x03\x04self\x05\x04nsids\x04datas\0\x07\x04\0\x1a[method]repo.create-record\x01\
+\x0c\x01j\x01\x03\x01s\x01@\x02\x04self\x05\x05rpaths\0\x0d\x04\0\x17[method]rep\
+o.get-record\x01\x0e\x01@\x03\x04self\x05\x05rpaths\x04datas\0\x07\x04\0\x1a[met\
+hod]repo.update-record\x01\x0f\x01@\x02\x04self\x05\x05rpaths\0\x07\x04\0\x1a[me\
+thod]repo.delete-record\x01\x10\x04\0\x13[method]repo.commit\x01\x0a\x04\0\x1bpo\
+lka:repository/repo@0.1.0\x05.\x04\0!polka:repository/repository@0.1.0\x04\0\x0b\
+\x10\x01\0\x0arepository\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-\
+component\x070.240.0\x10wit-bindgen-rust\x060.47.0";
 
 #[inline(never)]
 #[doc(hidden)]
