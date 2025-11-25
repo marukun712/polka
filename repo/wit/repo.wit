@@ -3,8 +3,13 @@ package polka:repository@0.1.0;
 interface repo {
   use blockstore.{blockstore};
 
+  resource repo-builder {
+    constructor(did: string, bs: borrow<blockstore>);
+    get-unsigned-bytes: func() -> string;
+    finalize: func(sig: string) -> result<repo, string>;
+  }
+
   resource repo {
-    new: func(did: string, bs: borrow<blockstore>) -> result<repo, string>;
     open: func(did: string, bs: borrow<blockstore>, cid: string) -> result<repo, string>;
   }
 }
