@@ -85,13 +85,14 @@ app.post(
 		return parsed.data;
 	}),
 	(c) => {
+		const did = c.req.valid("json").did;
 		const nsid = c.req.valid("json").nsid;
 		const body = c.req.valid("json").body;
 		const sig = c.req.valid("json").sig;
 
 		try {
 			if (sig) {
-				const success = instance.createCommit(nsid, body, sig);
+				const success = instance.createCommit(did, nsid, body, sig);
 				return c.json({ success });
 			} else {
 				const bytes = instance.createStage(nsid, body);
@@ -113,13 +114,14 @@ app.put(
 		return parsed.data;
 	}),
 	(c) => {
+		const did = c.req.valid("json").did;
 		const rpath = c.req.valid("json").rpath;
 		const body = c.req.valid("json").body;
 		const sig = c.req.valid("json").sig;
 
 		try {
 			if (sig) {
-				const success = instance.updateCommit(rpath, body, sig);
+				const success = instance.updateCommit(did, rpath, body, sig);
 				return c.json({ success });
 			} else {
 				const bytes = instance.updateStage(rpath, body);
@@ -141,12 +143,13 @@ app.delete(
 		return parsed.data;
 	}),
 	(c) => {
+		const did = c.req.valid("json").did;
 		const rpath = c.req.valid("json").rpath;
 		const sig = c.req.valid("json").sig;
 
 		try {
 			if (sig) {
-				const success = instance.deleteCommit(rpath, sig);
+				const success = instance.deleteCommit(did, rpath, sig);
 				return c.json({ success });
 			} else {
 				const bytes = instance.deleteStage(rpath);

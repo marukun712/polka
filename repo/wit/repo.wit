@@ -19,9 +19,9 @@ interface repo {
     update-stage: func(rpath: string, data: string) -> result<string, string>;
     delete-stage: func(rpath: string) -> result<string, string>;
 
-    create-commit: func(nsid: string, data: string, sig: string) -> result<bool, string>;
-    update-commit: func(rpath: string, data: string, sig: string) -> result<bool, string>;
-    delete-commit: func(rpath: string, sig: string) -> result<bool, string>;
+    create-commit: func(did: string, nsid: string, data: string, sig: string) -> result<bool, string>;
+    update-commit: func(did: string, rpath: string, data: string, sig: string) -> result<bool, string>;
+    delete-commit: func(did: string, rpath: string, sig: string) -> result<bool, string>;
   }
 
   create-repo: func() -> repo;

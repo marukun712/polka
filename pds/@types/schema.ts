@@ -9,18 +9,21 @@ export const getRecordSchema = z.object({
 });
 
 export const createRecordSchema = z.object({
+	did: z.string(),
 	nsid: z.string(),
 	body: z.string(),
 	sig: z.string().optional(),
 });
 
 export const updateRecordSchema = z.object({
+	did: z.string(),
 	rpath: z.string(),
 	body: z.string(),
 	sig: z.string().optional(),
 });
 
 export const deleteRecordSchema = z.object({
+	did: z.string(),
 	rpath: z.string(),
 	sig: z.string().optional(),
 });

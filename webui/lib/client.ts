@@ -74,27 +74,37 @@ export class Client {
 		return this.fetch("/init", "GET", { sig });
 	}
 
-	public createRecordStage(nsid: string, body: string) {
-		return this.fetch("/record", "POST", { nsid, body });
+	public createRecordStage(did: string, nsid: string, body: string) {
+		return this.fetch("/record", "POST", { did, nsid, body });
 	}
 
-	public createRecordCommit(nsid: string, body: string, sig: string) {
-		return this.fetch("/record", "POST", { nsid, body, sig });
+	public createRecordCommit(
+		did: string,
+		nsid: string,
+		body: string,
+		sig: string,
+	) {
+		return this.fetch("/record", "POST", { did, nsid, body, sig });
 	}
 
 	public updateRecordStage(rpath: string, body: string) {
 		return this.fetch("/record", "PUT", { rpath, body });
 	}
 
-	public updateRecordCommit(rpath: string, body: string, sig: string) {
-		return this.fetch("/record", "PUT", { rpath, body, sig });
+	public updateRecordCommit(
+		did: string,
+		rpath: string,
+		body: string,
+		sig: string,
+	) {
+		return this.fetch("/record", "PUT", { did, rpath, body, sig });
 	}
 
 	public deleteRecordStage(rpath: string) {
 		return this.fetch("/record", "DELETE", { rpath });
 	}
 
-	public deleteRecordCommit(rpath: string, sig: string) {
-		return this.fetch("/record", "DELETE", { rpath, sig });
+	public deleteRecordCommit(did: string, rpath: string, sig: string) {
+		return this.fetch("/record", "DELETE", { did, rpath, sig });
 	}
 }

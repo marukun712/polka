@@ -1,27 +1,38 @@
-import { ed25519 } from "@noble/curves/ed25519.js";
+import { P256Keypair, verifySignature } from "@atproto/crypto";
 import { bytesToHex, hexToBytes } from "@noble/curves/utils.js";
 
-export function signMessage(sk: string, message: Record<string, unknown>) {
-	const skBytes = hexToBytes(sk);
+export async function signMessage(
+	sk: string,
+	message: Record<string, unknown>,
+) {
+	const keypair = await P256Keypair.import(hexToBytes(sk));
 	const bytes = new TextEncoder().encode(JSON.stringify(message));
-	const sig = ed25519.sign(bytes, skBytes);
+	const sig = await keypair.sign(bytes);
 	return bytesToHex(sig);
 }
 
-export function signBytes(sk: string, bytesHex: string) {
-	const skBytes = hexToBytes(sk);
+export async function signBytes(sk: string, bytesHex: string) {
+	const keypair = await P256Keypair.import(hexToBytes(sk));
 	const bytes = hexToBytes(bytesHex);
-	const sig = ed25519.sign(bytes, skBytes);
+	const sig = await keypair.sign(bytes);
 	return bytesToHex(sig);
 }
 
-export function verifySignature(
-	pk: string,
+export function verify(
+	did: string,
 	message: Record<string, unknown>,
 	sig: string,
 ) {
-	const pkBytes = hexToBytes(pk);
 	const sigBytes = hexToBytes(sig);
 	const bytes = new TextEncoder().encode(JSON.stringify(message));
-	return ed25519.verify(sigBytes, bytes, pkBytes);
+	return verifySignature(did, bytes, sigBytes);
+}
+
+export async function generate() {
+	const keypair = await P256Keypair.create({ exportable: true });
+	const sk = await keypair.export();
+	return {
+		did: keypair.did,
+		sk: bytesToHex(sk),
+	};
 }

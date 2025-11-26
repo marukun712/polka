@@ -1,11 +1,12 @@
 import { type Component, createSignal } from "solid-js";
 import { Client } from "../lib/client";
-import { signBytes } from "../lib/crypto";
+import { generate, signBytes } from "../lib/crypto";
 
 const App: Component = () => {
 	const [sk, setSk] = createSignal("");
 	const [addr, setAddr] = createSignal("");
 	const [result, setResult] = createSignal("");
+	const [did, setDid] = createSignal("");
 
 	const [createNsid, setCreateNsid] = createSignal("");
 	const [createBody, setCreateBody] = createSignal("");
@@ -34,10 +35,24 @@ const App: Component = () => {
 		}
 	};
 
-	const handleInitRepoStage = async () => {
-		if (!client()) return setResult("Client not initialized");
+	const handleGenerateKey = async () => {
 		try {
-			const res = await client()?.initRepoStage();
+			const { did: generatedDid, sk: generatedSk } = await generate();
+			setDid(generatedDid);
+			setSk(generatedSk);
+			setResult(
+				`Key pair generated successfully!\nDID: ${generatedDid}\nSecret Key: ${generatedSk}`,
+			);
+		} catch (e) {
+			setResult(`Error generating key pair: ${e}`);
+		}
+	};
+
+	const handleInitRepoStage = async () => {
+		const instance = client();
+		if (!instance) return setResult("Client not initialized");
+		try {
+			const res = await instance.initRepoStage();
 			if (res?.bytes) {
 				setInitBytes(res.bytes);
 				setResult(`Bytes to sign:\n${res.bytes}`);
@@ -50,12 +65,15 @@ const App: Component = () => {
 	};
 
 	const handleInitRepoCommit = async () => {
-		if (!client()) return setResult("Client not initialized");
-		if (!sk()) return setResult("Secret key not set");
-		if (!initBytes()) return setResult("No bytes to sign. Stage first.");
+		const instance = client();
+		const skInstance = sk();
+		const bytesInstance = initBytes();
+		if (!instance) return setResult("Client not initialized");
+		if (!skInstance) return setResult("Secret key not set");
+		if (!bytesInstance) return setResult("No bytes to sign. Stage first.");
 		try {
-			const sig = signBytes(sk(), initBytes());
-			const res = await client()?.initRepoCommit(sig);
+			const sig = await signBytes(skInstance, bytesInstance);
+			const res = await instance.initRepoCommit(sig);
 			setResult(JSON.stringify(res, null, 2));
 			setInitBytes("");
 		} catch (e) {
@@ -64,9 +82,12 @@ const App: Component = () => {
 	};
 
 	const handleGetRecord = async () => {
-		if (!client()) return setResult("Client not initialized");
+		const instance = client();
+		const rpathInstance = getRpath();
+		if (!instance) return setResult("Client not initialized");
+		if (!rpathInstance) return setResult("No record path specified");
 		try {
-			const res = await client()?.getRecord(getRpath());
+			const res = await instance.getRecord(rpathInstance);
 			setResult(JSON.stringify(res, null, 2));
 		} catch (e) {
 			setResult(`Error: ${e}`);
@@ -74,9 +95,21 @@ const App: Component = () => {
 	};
 
 	const handleCreateRecordStage = async () => {
-		if (!client()) return setResult("Client not initialized");
+		const instance = client();
+		const didInstance = did();
+		const nsidInstance = createNsid();
+		const bodyInstance = createBody();
+		if (!instance) return setResult("Client not initialized");
+		if (!didInstance)
+			return setResult("DID not set. Generate a key pair first.");
+		if (!nsidInstance) return setResult("NSID not set");
+		if (!bodyInstance) return setResult("Body not set");
 		try {
-			const res = await client()?.createRecordStage(createNsid(), createBody());
+			const res = await instance.createRecordStage(
+				didInstance,
+				createNsid(),
+				createBody(),
+			);
 			if (res?.bytes) {
 				setCreateBytes(res.bytes);
 				setResult(`Bytes to sign:\n${res.bytes}`);
@@ -89,14 +122,21 @@ const App: Component = () => {
 	};
 
 	const handleCreateRecordCommit = async () => {
-		if (!client()) return setResult("Client not initialized");
-		if (!sk()) return setResult("Secret key not set");
-		if (!createBytes()) return setResult("No bytes to sign. Stage first.");
+		const instance = client();
+		const skInstance = sk();
+		const bytesInstance = createBytes();
+		const didInstance = did();
+		const nsidInstance = createNsid();
+		const bodyInstance = createBody();
+		if (!instance) return setResult("Client not initialized");
+		if (!skInstance) return setResult("Secret key not set");
+		if (!bytesInstance) return setResult("No bytes to sign. Stage first.");
 		try {
-			const sig = signBytes(sk(), createBytes());
-			const res = await client()?.createRecordCommit(
-				createNsid(),
-				createBody(),
+			const sig = await signBytes(skInstance, bytesInstance);
+			const res = await instance.createRecordCommit(
+				didInstance,
+				nsidInstance,
+				bodyInstance,
 				sig,
 			);
 			setResult(JSON.stringify(res, null, 2));
@@ -125,14 +165,21 @@ const App: Component = () => {
 	};
 
 	const handleUpdateRecordCommit = async () => {
-		if (!client()) return setResult("Client not initialized");
-		if (!sk()) return setResult("Secret key not set");
-		if (!updateBytes()) return setResult("No bytes to sign. Stage first.");
+		const instance = client();
+		const skInstance = sk();
+		const bytesInstance = updateBytes();
+		const didInstance = did();
+		const rpathInstance = updateRpath();
+		const bodyInstance = updateBody();
+		if (!instance) return setResult("Client not initialized");
+		if (!skInstance) return setResult("Secret key not set");
+		if (!bytesInstance) return setResult("No bytes to sign. Stage first.");
 		try {
-			const sig = signBytes(sk(), updateBytes());
-			const res = await client()?.updateRecordCommit(
-				updateRpath(),
-				updateBody(),
+			const sig = await signBytes(skInstance, bytesInstance);
+			const res = await instance.updateRecordCommit(
+				didInstance,
+				rpathInstance,
+				bodyInstance,
 				sig,
 			);
 			setResult(JSON.stringify(res, null, 2));
@@ -158,12 +205,21 @@ const App: Component = () => {
 	};
 
 	const handleDeleteRecordCommit = async () => {
-		if (!client()) return setResult("Client not initialized");
-		if (!sk()) return setResult("Secret key not set");
-		if (!deleteBytes()) return setResult("No bytes to sign. Stage first.");
+		const instance = client();
+		const skInstance = sk();
+		const bytesInstance = deleteBytes();
+		const didInstance = did();
+		const rpathInstance = deleteRpath();
+		if (!instance) return setResult("Client not initialized");
+		if (!skInstance) return setResult("Secret key not set");
+		if (!bytesInstance) return setResult("No bytes to sign. Stage first.");
 		try {
-			const sig = signBytes(sk(), deleteBytes());
-			const res = await client()?.deleteRecordCommit(deleteRpath(), sig);
+			const sig = await signBytes(skInstance, bytesInstance);
+			const res = await instance.deleteRecordCommit(
+				didInstance,
+				rpathInstance,
+				sig,
+			);
 			setResult(JSON.stringify(res, null, 2));
 			setDeleteBytes("");
 		} catch (e) {
@@ -176,6 +232,20 @@ const App: Component = () => {
 			<h1 class="text-2xl mb-4">PDS Client</h1>
 
 			<div class="mb-4 p-4 border">
+				<h2 class="text-xl mb-2">Key Generation</h2>
+				<p class="text-sm text-gray-600 mb-3">
+					Generate a new key pair or import an existing secret key below.
+				</p>
+				<button
+					type="button"
+					onClick={handleGenerateKey}
+					class="px-4 py-2 bg-teal-500 text-white hover:bg-teal-600"
+				>
+					Generate New Key Pair
+				</button>
+			</div>
+
+			<div class="mb-4 p-4 border">
 				<h2 class="text-xl mb-2">Configuration</h2>
 				<div class="mb-2">
 					<h1 class="block mb-1">Secret Key:</h1>
@@ -186,6 +256,21 @@ const App: Component = () => {
 						class="w-full p-2 border"
 						placeholder="Enter your secret key (hex)"
 					/>
+				</div>
+				<div class="mb-2">
+					<h1 class="block mb-1">DID (Decentralized Identifier):</h1>
+					<input
+						type="text"
+						value={did()}
+						readonly
+						class="w-full p-2 border bg-gray-50 cursor-not-allowed"
+						placeholder="Generate a key pair or it will be shown after operations"
+					/>
+					{did() && (
+						<p class="text-xs text-gray-500 mt-1">
+							This DID is derived from your secret key
+						</p>
+					)}
 				</div>
 				<div class="mb-2">
 					<h1 class="block mb-1">PDS Server Address:</h1>
