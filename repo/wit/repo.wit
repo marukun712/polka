@@ -1,35 +1,31 @@
 package polka:repository@0.1.0;
 
 interface repo {
-  use blockstore.{blockstore};
-  use commit.{commit};
-
   record get-result {
-    cid: string,
     data: string,
   }
 
-  resource repo {
-    new: func(did: string, bs: borrow<blockstore>) -> result<string, string>;
-
+  resource builder {
+    get-bytes: func() -> string;
     finalize: func(sig: string) -> result<bool, string>;
+  }
 
-    open: func(bs: borrow<blockstore>, cid: string) -> result<bool, string>;
-
+  resource repo {
+    new: func(did: string) -> result<builder, string>;
+    open: func(cid: string) -> result<bool, string>;
     get-record: func(rpath: string) -> result<get-result, string>;
 
-    create-record: func(nsid: string, data: string) -> result<commit, string>;
+    create-stage: func(nsid: string, data: string) -> result<string, string>;
+    update-stage: func(rpath: string, data: string) -> result<string, string>;
+    delete-stage: func(rpath: string) -> result<string, string>;
 
-    update-record: func(rpath: string, data: string) -> result<commit, string>;
-
-    delete-record: func(rpath: string) -> result<commit, string>;
+    create-commit: func(nsid: string, data: string, sig: string) -> result<bool, string>;
+    update-commit: func(rpath: string, data: string, sig: string) -> result<bool, string>;
+    delete-commit: func(rpath: string, sig: string) -> result<bool, string>;
   }
 }
 
 world repository {
   include wasi:cli/imports@0.2.0;
-
-  import blockstore;
-  import commit;
   export repo;
 }

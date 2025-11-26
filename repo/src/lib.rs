@@ -1,83 +1,78 @@
-mod repository;
-mod wrapper;
+mod bindings {
+    wit_bindgen::generate!({
+        path: "wit/repo.wit",
+    });
+    use super::Repo;
+    export!(Repo);
+}
 
-use crate::repository::exports::polka::repository::repo::{self};
 use atrium_api::types::string::Did;
+use bindings::exports::polka::repository::repo;
+use bindings::exports::polka::repository::repo::Guest;
 use cid::Cid;
 use hex::{decode, encode};
 use std::{cell::RefCell, str::FromStr};
 
 struct Repo {
-    repo: RefCell<Option<atrium_repo::Repository<wrapper::BlockstoreWrapper>>>,
-    builder: RefCell<Option<atrium_repo::repo::RepoBuilder<wrapper::BlockstoreWrapper>>>,
-    rt: RefCell<Option<tokio::runtime::Runtime>>,
+    repo: RefCell<Option<atrium_repo::Repository<atrium_repo::blockstore::MemoryBlockStore>>>,
 }
 
-impl repo::GuestRepo for Repo {
-    fn new(&self, did: String, bs: &repo::Blockstore) -> Result<String, String> {
-        let did = match Did::new(did) {
-            Ok(v) => v,
-            Err(e) => return Err(e.to_string()),
-        };
-        let store = wrapper::BlockstoreWrapper::new(bs);
-        let rt = match tokio::runtime::Runtime::new() {
-            Ok(rt) => rt,
-            Err(e) => return Err(format!("Failed to create tokio runtime: {}", e)),
-        };
-        *self.rt.borrow_mut() = Some(rt);
-        let rt = self.rt.borrow();
-        let rt = match rt.as_ref() {
-            Some(b) => b,
-            None => return Err("Error creating tokio runtime".into()),
-        };
-        let builder = rt.block_on(async { atrium_repo::Repository::create(store, did).await });
-        let builder = match builder {
-            Ok(v) => v,
-            Err(e) => return Err(e.to_string()),
-        };
-        *self.builder.borrow_mut() = Some(builder);
-        match self.builder.borrow().as_ref() {
-            Some(b) => Ok(encode(b.bytes())),
-            None => Err("Failed to store builder".into()),
+struct Builder {
+    builder:
+        RefCell<Option<atrium_repo::repo::RepoBuilder<atrium_repo::blockstore::MemoryBlockStore>>>,
+}
+
+impl repo::GuestBuilder for Builder {
+    fn get_bytes(&self) -> String {
+        let builder = self.builder.borrow();
+        match builder.as_ref() {
+            Some(b) => encode(b.bytes()),
+            None => String::new(),
         }
     }
 
     fn finalize(&self, sig: String) -> Result<bool, String> {
-        let rt = self.rt.borrow();
-        let rt = match rt.as_ref() {
+        let builder = self.builder.borrow_mut().take();
+        let builder = match builder {
             Some(b) => b,
-            None => return Err("Error creating tokio runtime".into()),
+            None => return Err("Commit already finalized or not initialized".to_string()),
         };
         let sig_bytes = match decode(sig) {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
-        let builder = self.builder.borrow_mut().take();
-        let builder = match builder {
-            Some(b) => b,
-            None => return Err("RepoBuilder not initialized. Call new() first.".into()),
-        };
-        let repo = rt.block_on(async { builder.finalize(sig_bytes).await });
-        let repo = match repo {
-            Ok(r) => r,
-            Err(e) => return Err(e.to_string()),
-        };
-        *self.repo.borrow_mut() = Some(repo);
+        futures::executor::block_on(async { builder.finalize(sig_bytes).await });
         Ok(true)
     }
+}
 
-    fn open(&self, bs: &repo::Blockstore, cid: String) -> Result<bool, String> {
-        let rt = self.rt.borrow();
-        let rt = match rt.as_ref() {
-            Some(b) => b,
-            None => return Err("Error creating tokio runtime".into()),
+impl repo::GuestRepo for Repo {
+    fn new(&self, did: String) -> Result<repo::Builder, String> {
+        let did = match Did::new(did) {
+            Ok(v) => v,
+            Err(e) => return Err(e.to_string()),
         };
+        let bs = atrium_repo::blockstore::MemoryBlockStore::new();
+        let builder =
+            futures::executor::block_on(async { atrium_repo::Repository::create(bs, did).await });
+        let builder = match builder {
+            Ok(v) => v,
+            Err(e) => return Err(e.to_string()),
+        };
+        let builder = Builder {
+            builder: RefCell::new(Some(builder)),
+        };
+        Ok(repo::Builder::new(builder))
+    }
+
+    fn open(&self, cid: String) -> Result<bool, String> {
         let cid = match Cid::from_str(&cid) {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
-        let store = wrapper::BlockstoreWrapper::new(bs);
-        let repo = rt.block_on(async { atrium_repo::Repository::open(store, cid).await });
+        let bs = atrium_repo::blockstore::MemoryBlockStore::new();
+        let repo =
+            futures::executor::block_on(async { atrium_repo::Repository::open(bs, cid).await });
         let repo = match repo {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
@@ -86,60 +81,110 @@ impl repo::GuestRepo for Repo {
         Ok(true)
     }
 
-    fn create_record(&self, nsid: String, data: String) -> Result<String, String> {
-        let rt = self.rt.borrow();
-        let rt = match rt.as_ref() {
-            Some(b) => b,
-            None => return Err("Error creating tokio runtime".into()),
-        };
-        let repo = self.repo.borrow_mut().take();
-        let mut repo = match repo {
+    fn create_stage(&self, nsid: String, data: String) -> Result<String, String> {
+        let mut repo = self.repo.borrow_mut();
+        let repo = match repo.as_mut() {
             Some(r) => r,
-            None => return Err("Repo not initialized. Call open() first.".into()),
+            None => {
+                return Err("Repo not initialized. Call open() or finalize() first.".to_string());
+            }
         };
-        let record = rt.block_on(async { repo.add_raw(&nsid, data).await });
-        let record = match record {
-            Ok(r) => r,
-            Err(e) => return Err(e.to_string()),
-        };
-        Ok(encode(record.0.bytes()))
+        let (builder, _) = futures::executor::block_on(async { repo.add_raw(&nsid, data).await })
+            .map_err(|e| e.to_string())?;
+        Ok(encode(builder.bytes()))
     }
 
-    fn update_record(&self, rpath: String, data: String) -> Result<String, String> {
-        let rt = self.rt.borrow();
-        let rt = match rt.as_ref() {
-            Some(b) => b,
-            None => return Err("Error creating tokio runtime".into()),
-        };
-        let repo = self.repo.borrow_mut().take();
-        let mut repo = match repo {
+    fn update_stage(&self, rpath: String, data: String) -> Result<String, String> {
+        let mut repo = self.repo.borrow_mut();
+        let repo = match repo.as_mut() {
             Some(r) => r,
-            None => return Err("Repo not initialized. Call open() first.".into()),
+            None => {
+                return Err("Repo not initialized. Call open() or finalize() first.".to_string());
+            }
         };
-        let record = rt.block_on(async { repo.update_raw(&rpath, data).await });
-        let record = match record {
-            Ok(r) => r,
-            Err(e) => return Err(e.to_string()),
-        };
-        Ok(encode(record.0.bytes()))
+        let (builder, _) =
+            futures::executor::block_on(async { repo.update_raw(&rpath, data).await })
+                .map_err(|e| e.to_string())?;
+        Ok(encode(builder.bytes()))
     }
 
-    fn delete_record(&self, rpath: String) -> Result<String, String> {
-        let rt = self.rt.borrow();
-        let rt = match rt.as_ref() {
-            Some(b) => b,
-            None => return Err("Error creating tokio runtime".into()),
-        };
-        let repo = self.repo.borrow_mut().take();
-        let mut repo = match repo {
+    fn delete_stage(&self, rpath: String) -> Result<String, String> {
+        let mut repo = self.repo.borrow_mut();
+        let repo = match repo.as_mut() {
             Some(r) => r,
-            None => return Err("Repo not initialized. Call open() first.".into()),
+            None => {
+                return Err("Repo not initialized. Call open() or finalize() first.".to_string());
+            }
         };
-        let record = rt.block_on(async { repo.delete_raw(&rpath).await });
-        let record = match record {
-            Ok(r) => r,
+        let builder = futures::executor::block_on(async { repo.delete_raw(&rpath).await })
+            .map_err(|e| e.to_string())?;
+        Ok(encode(builder.bytes()))
+    }
+
+    fn create_commit(&self, nsid: String, data: String, sig: String) -> Result<bool, String> {
+        let mut repo = self.repo.borrow_mut();
+        let repo = match repo.as_mut() {
+            Some(r) => r,
+            None => {
+                return Err("Repo not initialized. Call open() or finalize() first.".to_string());
+            }
+        };
+        let (builder, _) = futures::executor::block_on(async { repo.add_raw(&nsid, data).await })
+            .map_err(|e| e.to_string())?;
+        let sig_bytes = match decode(sig) {
+            Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
-        Ok(encode(record.bytes()))
+        futures::executor::block_on(async { builder.finalize(sig_bytes).await });
+        Ok(true)
+    }
+
+    fn update_commit(&self, rpath: String, data: String, sig: String) -> Result<bool, String> {
+        let mut repo = self.repo.borrow_mut();
+        let repo = match repo.as_mut() {
+            Some(r) => r,
+            None => {
+                return Err("Repo not initialized. Call open() or finalize() first.".to_string());
+            }
+        };
+        let (builder, _) =
+            futures::executor::block_on(async { repo.update_raw(&rpath, data).await })
+                .map_err(|e| e.to_string())?;
+        let sig_bytes = match decode(sig) {
+            Ok(v) => v,
+            Err(e) => return Err(e.to_string()),
+        };
+        futures::executor::block_on(async { builder.finalize(sig_bytes).await });
+        Ok(true)
+    }
+
+    fn delete_commit(&self, rpath: String, sig: String) -> Result<bool, String> {
+        let mut repo = self.repo.borrow_mut();
+        let repo = match repo.as_mut() {
+            Some(r) => r,
+            None => {
+                return Err("Repo not initialized. Call open() or finalize() first.".to_string());
+            }
+        };
+        let builder = futures::executor::block_on(async { repo.delete_raw(&rpath).await })
+            .map_err(|e| e.to_string())?;
+        let sig_bytes = match decode(sig) {
+            Ok(v) => v,
+            Err(e) => return Err(e.to_string()),
+        };
+        futures::executor::block_on(async { builder.finalize(sig_bytes).await });
+        Ok(true)
+    }
+
+    fn get_record(&self, rpath: String) -> Result<repo::GetResult, String> {
+        let mut repo = self.repo.borrow_mut();
+        let repo = repo
+            .as_mut()
+            .ok_or("Repo not initialized. Call open() or finalize() first.".to_string())?;
+        let record: Option<String> =
+            futures::executor::block_on(async { repo.get_raw(&rpath).await })
+                .map_err(|e| e.to_string())?;
+        let data = record.ok_or("Record not found")?;
+        Ok(repo::GetResult { data })
     }
 }
