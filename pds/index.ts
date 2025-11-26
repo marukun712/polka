@@ -2,6 +2,7 @@ import { noise } from "@chainsafe/libp2p-noise";
 import { yamux } from "@chainsafe/libp2p-yamux";
 import { http } from "@libp2p/http";
 import { fetchServer } from "@libp2p/http-server";
+import { identify } from "@libp2p/identify";
 import { webSockets } from "@libp2p/websockets";
 import { Hono } from "hono";
 import { validator } from "hono/validator";
@@ -159,12 +160,13 @@ app.delete(
 
 const server = await createLibp2p({
 	addresses: {
-		listen: ["/ip4/0.0.0.0/tcp/0/ws"],
+		listen: ["/ip4/0.0.0.0/tcp/8000/ws"],
 	},
 	transports: [webSockets()],
 	connectionEncrypters: [noise()],
 	streamMuxers: [yamux()],
 	services: {
+		identify: identify(),
 		http: http({
 			//@ts-expect-error
 			server: fetchServer(app.fetch),
@@ -173,7 +175,4 @@ const server = await createLibp2p({
 });
 
 await server.start();
-console.log(
-	"PDS server started:",
-	server.getMultiaddrs().map((addr) => addr.toString()),
-);
+console.log("PDS server started:", server.getMultiaddrs());

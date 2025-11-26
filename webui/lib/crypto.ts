@@ -8,6 +8,13 @@ export function signMessage(sk: string, message: Record<string, unknown>) {
 	return bytesToHex(sig);
 }
 
+export function signBytes(sk: string, bytesHex: string) {
+	const skBytes = hexToBytes(sk);
+	const bytes = hexToBytes(bytesHex);
+	const sig = ed25519.sign(bytes, skBytes);
+	return bytesToHex(sig);
+}
+
 export function verifySignature(
 	pk: string,
 	message: Record<string, unknown>,
