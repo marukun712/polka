@@ -1,16 +1,8 @@
-mod bindings {
-    wit_bindgen::generate!({
-        path: "wit/repo.wit",
-    });
-    use super::Repo;
-    export!(Repo);
-}
-
+mod repository;
 use atrium_api::types::string::Did;
-use bindings::exports::polka::repository::repo;
-use bindings::exports::polka::repository::repo::Guest;
 use cid::Cid;
 use hex::{decode, encode};
+use repository::exports::polka::repository::repo;
 use std::{cell::RefCell, str::FromStr};
 
 struct Repo {
@@ -41,7 +33,8 @@ impl repo::GuestBuilder for Builder {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
-        futures::executor::block_on(async { builder.finalize(sig_bytes).await });
+        futures::executor::block_on(async { builder.finalize(sig_bytes).await })
+            .map_err(|e| e.to_string())?;
         Ok(true)
     }
 }
@@ -135,7 +128,8 @@ impl repo::GuestRepo for Repo {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
-        futures::executor::block_on(async { builder.finalize(sig_bytes).await });
+        futures::executor::block_on(async { builder.finalize(sig_bytes).await })
+            .map_err(|e| e.to_string())?;
         Ok(true)
     }
 
@@ -154,7 +148,8 @@ impl repo::GuestRepo for Repo {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
-        futures::executor::block_on(async { builder.finalize(sig_bytes).await });
+        futures::executor::block_on(async { builder.finalize(sig_bytes).await })
+            .map_err(|e| e.to_string())?;
         Ok(true)
     }
 
@@ -172,7 +167,8 @@ impl repo::GuestRepo for Repo {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
-        futures::executor::block_on(async { builder.finalize(sig_bytes).await });
+        futures::executor::block_on(async { builder.finalize(sig_bytes).await })
+            .map_err(|e| e.to_string())?;
         Ok(true)
     }
 
@@ -188,3 +184,10 @@ impl repo::GuestRepo for Repo {
         Ok(repo::GetResult { data })
     }
 }
+
+impl repository::exports::polka::repository::repo::Guest for Repo {
+    type Builder = Builder;
+    type Repo = Repo;
+}
+
+repository::export!(Repo);
