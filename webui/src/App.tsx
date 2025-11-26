@@ -1,231 +1,256 @@
-import { type Component, createSignal } from "solid-js";
+import type { Component } from "solid-js";
+import { createStore } from "solid-js/store";
 import { Client } from "../lib/client";
 import { generate, signBytes } from "../lib/crypto";
 
 const App: Component = () => {
-	const [sk, setSk] = createSignal("");
-	const [addr, setAddr] = createSignal("");
-	const [result, setResult] = createSignal("");
-	const [did, setDid] = createSignal("");
+	const [config, setConfig] = createStore({
+		sk: "",
+		addr: "",
+		did: "",
+		result: "",
+		client: null as Client | null,
+	});
 
-	const [createNsid, setCreateNsid] = createSignal("");
-	const [createBody, setCreateBody] = createSignal("");
-	const [createBytes, setCreateBytes] = createSignal("");
+	const [ops, setOps] = createStore({
+		init: { bytes: "" },
+		get: { rpath: "" },
+		create: { nsid: "", body: "", bytes: "" },
+		update: { rpath: "", body: "", bytes: "" },
+		delete: { rpath: "", bytes: "" },
+	});
 
-	const [getRpath, setGetRpath] = createSignal("");
+	const validate = {
+		client: () => (config.client ? null : "Client not initialized"),
+		sk: () => (config.sk ? null : "Secret key not set"),
+		did: () => (config.did ? null : "DID not set. Generate a key pair first."),
+		bytes: (b: string) => (b ? null : "No bytes to sign. Stage first."),
+		rpath: (r: string) => (r ? null : "Record path not specified"),
+	};
 
-	const [updateRpath, setUpdateRpath] = createSignal("");
-	const [updateBody, setUpdateBody] = createSignal("");
-	const [updateBytes, setUpdateBytes] = createSignal("");
+	const checkErrors = (...validators: (() => string | null)[]) => {
+		for (const validator of validators) {
+			const error = validator();
+			if (error) {
+				setConfig("result", error);
+				return true;
+			}
+		}
+		return false;
+	};
 
-	const [deleteRpath, setDeleteRpath] = createSignal("");
-	const [deleteBytes, setDeleteBytes] = createSignal("");
+	const handleStage = async (
+		operation: keyof typeof ops,
+		apiFn: () => Promise<unknown>,
+	) => {
+		if (checkErrors(validate.client)) return;
+		try {
+			const res = await apiFn();
+			if (res && typeof res === "object" && "bytes" in res) {
+				const bytesValue = String(res.bytes);
+				if (operation === "init") setOps("init", { bytes: bytesValue });
+				else if (operation === "create")
+					setOps("create", { ...ops.create, bytes: bytesValue });
+				else if (operation === "update")
+					setOps("update", { ...ops.update, bytes: bytesValue });
+				else if (operation === "delete")
+					setOps("delete", { ...ops.delete, bytes: bytesValue });
+				setConfig("result", `Bytes to sign:\n${bytesValue}`);
+			} else {
+				setConfig("result", JSON.stringify(res, null, 2));
+			}
+		} catch (e) {
+			setConfig("result", `Error: ${e}`);
+		}
+	};
 
-	const [initBytes, setInitBytes] = createSignal("");
-
-	const [client, setClient] = createSignal<Client | null>(null);
+	const handleCommit = async (
+		operation: keyof typeof ops,
+		bytes: string,
+		apiFn: (sig: string) => Promise<unknown>,
+	) => {
+		if (
+			checkErrors(validate.client, validate.sk, validate.did, () =>
+				validate.bytes(bytes),
+			)
+		)
+			return;
+		try {
+			const sig = await signBytes(config.sk, bytes);
+			const res = await apiFn(sig);
+			setConfig("result", JSON.stringify(res, null, 2));
+			if (operation === "init") setOps("init", { bytes: "" });
+			else if (operation === "create")
+				setOps("create", { ...ops.create, bytes: "" });
+			else if (operation === "update")
+				setOps("update", { ...ops.update, bytes: "" });
+			else if (operation === "delete")
+				setOps("delete", { ...ops.delete, bytes: "" });
+		} catch (e) {
+			setConfig("result", `Error: ${e}`);
+		}
+	};
 
 	const initClient = async () => {
 		try {
-			const c = await Client.create(addr());
-			setClient(c);
-			setResult("Client initialized");
+			const c = await Client.create(config.addr);
+			setConfig("client", c);
+			setConfig("result", "Client initialized");
 		} catch (e) {
-			setResult(`Error initializing client: ${e}`);
+			setConfig("result", `Error initializing client: ${e}`);
 		}
 	};
 
 	const handleGenerateKey = async () => {
 		try {
 			const { did: generatedDid, sk: generatedSk } = await generate();
-			setDid(generatedDid);
-			setSk(generatedSk);
-			setResult(
+			setConfig("did", generatedDid);
+			setConfig("sk", generatedSk);
+			setConfig(
+				"result",
 				`Key pair generated successfully!\nDID: ${generatedDid}\nSecret Key: ${generatedSk}`,
 			);
 		} catch (e) {
-			setResult(`Error generating key pair: ${e}`);
+			setConfig("result", `Error generating key pair: ${e}`);
 		}
 	};
 
-	const handleInitRepoStage = async () => {
-		const instance = client();
-		if (!instance) return setResult("Client not initialized");
-		try {
-			const res = await instance.initRepoStage();
-			if (res?.bytes) {
-				setInitBytes(res.bytes);
-				setResult(`Bytes to sign:\n${res.bytes}`);
-			} else {
-				setResult(JSON.stringify(res, null, 2));
-			}
-		} catch (e) {
-			setResult(`Error: ${e}`);
-		}
-	};
+	const handleInitRepoStage = () =>
+		handleStage("init", () => {
+			if (!config.client) throw new Error("Client not initialized");
+			return config.client.initRepoStage();
+		});
 
-	const handleInitRepoCommit = async () => {
-		const instance = client();
-		const skInstance = sk();
-		const bytesInstance = initBytes();
-		if (!instance) return setResult("Client not initialized");
-		if (!skInstance) return setResult("Secret key not set");
-		if (!bytesInstance) return setResult("No bytes to sign. Stage first.");
-		try {
-			const sig = await signBytes(skInstance, bytesInstance);
-			const res = await instance.initRepoCommit(sig);
-			setResult(JSON.stringify(res, null, 2));
-			setInitBytes("");
-		} catch (e) {
-			setResult(`Error: ${e}`);
-		}
-	};
+	const handleInitRepoCommit = () =>
+		handleCommit("init", ops.init.bytes, (sig) => {
+			if (!config.client) throw new Error("Client not initialized");
+			return config.client.initRepoCommit(sig);
+		});
 
 	const handleGetRecord = async () => {
-		const instance = client();
-		const rpathInstance = getRpath();
-		if (!instance) return setResult("Client not initialized");
-		if (!rpathInstance) return setResult("No record path specified");
+		if (checkErrors(validate.client, () => validate.rpath(ops.get.rpath)))
+			return;
 		try {
-			const res = await instance.getRecord(rpathInstance);
-			setResult(JSON.stringify(res, null, 2));
+			if (!config.client) throw new Error("Client not initialized");
+			const res = await config.client.getRecord(ops.get.rpath);
+			setConfig("result", JSON.stringify(res, null, 2));
 		} catch (e) {
-			setResult(`Error: ${e}`);
+			setConfig("result", `Error: ${e}`);
 		}
 	};
 
-	const handleCreateRecordStage = async () => {
-		const instance = client();
-		const didInstance = did();
-		const nsidInstance = createNsid();
-		const bodyInstance = createBody();
-		if (!instance) return setResult("Client not initialized");
-		if (!didInstance)
-			return setResult("DID not set. Generate a key pair first.");
-		if (!nsidInstance) return setResult("NSID not set");
-		if (!bodyInstance) return setResult("Body not set");
-		try {
-			const res = await instance.createRecordStage(
-				didInstance,
-				createNsid(),
-				createBody(),
+	const handleCreateRecordStage = () =>
+		handleStage("create", () => {
+			if (!config.client) throw new Error("Client not initialized");
+			return config.client.createRecordStage(
+				config.did,
+				ops.create.nsid,
+				ops.create.body,
 			);
-			if (res?.bytes) {
-				setCreateBytes(res.bytes);
-				setResult(`Bytes to sign:\n${res.bytes}`);
-			} else {
-				setResult(JSON.stringify(res, null, 2));
-			}
-		} catch (e) {
-			setResult(`Error: ${e}`);
-		}
-	};
+		});
 
-	const handleCreateRecordCommit = async () => {
-		const instance = client();
-		const skInstance = sk();
-		const bytesInstance = createBytes();
-		const didInstance = did();
-		const nsidInstance = createNsid();
-		const bodyInstance = createBody();
-		if (!instance) return setResult("Client not initialized");
-		if (!skInstance) return setResult("Secret key not set");
-		if (!bytesInstance) return setResult("No bytes to sign. Stage first.");
-		try {
-			const sig = await signBytes(skInstance, bytesInstance);
-			const res = await instance.createRecordCommit(
-				didInstance,
-				nsidInstance,
-				bodyInstance,
+	const handleCreateRecordCommit = () =>
+		handleCommit("create", ops.create.bytes, (sig) => {
+			if (!config.client) throw new Error("Client not initialized");
+			return config.client.createRecordCommit(
+				config.did,
+				ops.create.nsid,
+				ops.create.body,
 				sig,
 			);
-			setResult(JSON.stringify(res, null, 2));
-			setCreateBytes("");
-		} catch (e) {
-			setResult(`Error: ${e}`);
-		}
-	};
+		});
 
-	const handleUpdateRecordStage = async () => {
-		if (!client()) return setResult("Client not initialized");
-		try {
-			const res = await client()?.updateRecordStage(
-				updateRpath(),
-				updateBody(),
-			);
-			if (res?.bytes) {
-				setUpdateBytes(res.bytes);
-				setResult(`Bytes to sign:\n${res.bytes}`);
-			} else {
-				setResult(JSON.stringify(res, null, 2));
-			}
-		} catch (e) {
-			setResult(`Error: ${e}`);
-		}
-	};
+	const handleUpdateRecordStage = () =>
+		handleStage("update", () => {
+			if (!config.client) throw new Error("Client not initialized");
+			return config.client.updateRecordStage(ops.update.rpath, ops.update.body);
+		});
 
-	const handleUpdateRecordCommit = async () => {
-		const instance = client();
-		const skInstance = sk();
-		const bytesInstance = updateBytes();
-		const didInstance = did();
-		const rpathInstance = updateRpath();
-		const bodyInstance = updateBody();
-		if (!instance) return setResult("Client not initialized");
-		if (!skInstance) return setResult("Secret key not set");
-		if (!bytesInstance) return setResult("No bytes to sign. Stage first.");
-		try {
-			const sig = await signBytes(skInstance, bytesInstance);
-			const res = await instance.updateRecordCommit(
-				didInstance,
-				rpathInstance,
-				bodyInstance,
+	const handleUpdateRecordCommit = () =>
+		handleCommit("update", ops.update.bytes, (sig) => {
+			if (!config.client) throw new Error("Client not initialized");
+			return config.client.updateRecordCommit(
+				config.did,
+				ops.update.rpath,
+				ops.update.body,
 				sig,
 			);
-			setResult(JSON.stringify(res, null, 2));
-			setUpdateBytes("");
-		} catch (e) {
-			setResult(`Error: ${e}`);
-		}
-	};
+		});
 
-	const handleDeleteRecordStage = async () => {
-		if (!client()) return setResult("Client not initialized");
-		try {
-			const res = await client()?.deleteRecordStage(deleteRpath());
-			if (res?.bytes) {
-				setDeleteBytes(res.bytes);
-				setResult(`Bytes to sign:\n${res.bytes}`);
-			} else {
-				setResult(JSON.stringify(res, null, 2));
-			}
-		} catch (e) {
-			setResult(`Error: ${e}`);
-		}
-	};
+	const handleDeleteRecordStage = () =>
+		handleStage("delete", () => {
+			if (!config.client) throw new Error("Client not initialized");
+			return config.client.deleteRecordStage(ops.delete.rpath);
+		});
 
-	const handleDeleteRecordCommit = async () => {
-		const instance = client();
-		const skInstance = sk();
-		const bytesInstance = deleteBytes();
-		const didInstance = did();
-		const rpathInstance = deleteRpath();
-		if (!instance) return setResult("Client not initialized");
-		if (!skInstance) return setResult("Secret key not set");
-		if (!bytesInstance) return setResult("No bytes to sign. Stage first.");
-		try {
-			const sig = await signBytes(skInstance, bytesInstance);
-			const res = await instance.deleteRecordCommit(
-				didInstance,
-				rpathInstance,
+	const handleDeleteRecordCommit = () =>
+		handleCommit("delete", ops.delete.bytes, (sig) => {
+			if (!config.client) throw new Error("Client not initialized");
+			return config.client.deleteRecordCommit(
+				config.did,
+				ops.delete.rpath,
 				sig,
 			);
-			setResult(JSON.stringify(res, null, 2));
-			setDeleteBytes("");
-		} catch (e) {
-			setResult(`Error: ${e}`);
-		}
-	};
+		});
+
+	const InputField = (props: {
+		label: string;
+		value: string;
+		onInput: (v: string) => void;
+		placeholder: string;
+		type?: "input" | "textarea";
+		readonly?: boolean;
+	}) => (
+		<div class="mb-2">
+			<h1 class="block mb-1">{props.label}:</h1>
+			{props.type === "textarea" ? (
+				<textarea
+					value={props.value}
+					onInput={(e) => props.onInput(e.currentTarget.value)}
+					class="w-full p-2 border"
+					rows={4}
+					placeholder={props.placeholder}
+				/>
+			) : (
+				<input
+					type="text"
+					value={props.value}
+					onInput={(e) => props.onInput(e.currentTarget.value)}
+					class={`w-full p-2 border ${props.readonly ? "bg-gray-50 cursor-not-allowed" : ""}`}
+					placeholder={props.placeholder}
+					readonly={props.readonly}
+				/>
+			)}
+		</div>
+	);
+
+	const StageCommitButtons = (props: {
+		onStage: () => void;
+		onCommit: () => void;
+		hasBytes: boolean;
+		stageLabel: string;
+		commitLabel: string;
+		stageColorLight: string;
+		stageColorDark: string;
+	}) => (
+		<div class="flex gap-2">
+			<button
+				type="button"
+				onClick={props.onStage}
+				class={`px-4 py-2 ${props.stageColorLight} text-white`}
+			>
+				{props.stageLabel}
+			</button>
+			<button
+				type="button"
+				onClick={props.onCommit}
+				class={`px-4 py-2 ${props.stageColorDark} text-white`}
+				disabled={!props.hasBytes}
+			>
+				{props.commitLabel}
+			</button>
+		</div>
+	);
 
 	return (
 		<div class="p-4">
@@ -233,9 +258,7 @@ const App: Component = () => {
 
 			<div class="mb-4 p-4 border">
 				<h2 class="text-xl mb-2">Key Generation</h2>
-				<p class="text-sm text-gray-600 mb-3">
-					Generate a new key pair or import an existing secret key below.
-				</p>
+				<p class="text-sm text-gray-600 mb-3">Generate a new key pair</p>
 				<button
 					type="button"
 					onClick={handleGenerateKey}
@@ -247,41 +270,25 @@ const App: Component = () => {
 
 			<div class="mb-4 p-4 border">
 				<h2 class="text-xl mb-2">Configuration</h2>
-				<div class="mb-2">
-					<h1 class="block mb-1">Secret Key:</h1>
-					<input
-						type="text"
-						value={sk()}
-						onInput={(e) => setSk(e.currentTarget.value)}
-						class="w-full p-2 border"
-						placeholder="Enter your secret key (hex)"
-					/>
-				</div>
-				<div class="mb-2">
-					<h1 class="block mb-1">DID (Decentralized Identifier):</h1>
-					<input
-						type="text"
-						value={did()}
-						readonly
-						class="w-full p-2 border bg-gray-50 cursor-not-allowed"
-						placeholder="Generate a key pair or it will be shown after operations"
-					/>
-					{did() && (
-						<p class="text-xs text-gray-500 mt-1">
-							This DID is derived from your secret key
-						</p>
-					)}
-				</div>
-				<div class="mb-2">
-					<h1 class="block mb-1">PDS Server Address:</h1>
-					<input
-						type="text"
-						value={addr()}
-						onInput={(e) => setAddr(e.currentTarget.value)}
-						class="w-full p-2 border"
-						placeholder="/ip4/127.0.0.1/tcp/8080"
-					/>
-				</div>
+				<InputField
+					label="Secret Key"
+					value={config.sk}
+					onInput={(v) => setConfig("sk", v)}
+					placeholder="Enter your secret key (hex)"
+				/>
+				<InputField
+					label="DID (Decentralized Identifier)"
+					value={config.did}
+					onInput={() => {}}
+					placeholder="Generate a key pair or it will be shown after operations"
+					readonly={true}
+				/>
+				<InputField
+					label="PDS Server Address"
+					value={config.addr}
+					onInput={(v) => setConfig("addr", v)}
+					placeholder="/ip4/127.0.0.1/tcp/8080"
+				/>
 				<button
 					type="button"
 					onClick={initClient}
@@ -293,37 +300,25 @@ const App: Component = () => {
 
 			<div class="mb-4 p-4 border">
 				<h2 class="text-xl mb-2">Initialize Repository</h2>
-				<div class="flex gap-2">
-					<button
-						type="button"
-						onClick={handleInitRepoStage}
-						class="px-4 py-2 bg-purple-500 text-white"
-					>
-						Stage Init
-					</button>
-					<button
-						type="button"
-						onClick={handleInitRepoCommit}
-						class="px-4 py-2 bg-purple-700 text-white"
-						disabled={!initBytes()}
-					>
-						Sign & Commit Init
-					</button>
-				</div>
+				<StageCommitButtons
+					onStage={handleInitRepoStage}
+					onCommit={handleInitRepoCommit}
+					hasBytes={!!ops.init.bytes}
+					stageLabel="Stage Init"
+					commitLabel="Sign & Commit Init"
+					stageColorLight="bg-purple-500"
+					stageColorDark="bg-purple-700"
+				/>
 			</div>
 
 			<div class="mb-4 p-4 border">
 				<h2 class="text-xl mb-2">Get Record</h2>
-				<div class="mb-2">
-					<h1 class="block mb-1">Record Path (rpath):</h1>
-					<input
-						type="text"
-						value={getRpath()}
-						onInput={(e) => setGetRpath(e.currentTarget.value)}
-						class="w-full p-2 border"
-						placeholder="app.example.post/abc123"
-					/>
-				</div>
+				<InputField
+					label="Record Path (rpath)"
+					value={ops.get.rpath}
+					onInput={(v) => setOps("get", "rpath", v)}
+					placeholder="app.example.post/abc123"
+				/>
 				<button
 					type="button"
 					onClick={handleGetRecord}
@@ -335,120 +330,78 @@ const App: Component = () => {
 
 			<div class="mb-4 p-4 border">
 				<h2 class="text-xl mb-2">Create Record</h2>
-				<div class="mb-2">
-					<h1 class="block mb-1">NSID:</h1>
-					<input
-						type="text"
-						value={createNsid()}
-						onInput={(e) => setCreateNsid(e.currentTarget.value)}
-						class="w-full p-2 border"
-						placeholder="app.example.post"
-					/>
-				</div>
-				<div class="mb-2">
-					<h1 class="block mb-1">Body (JSON):</h1>
-					<textarea
-						value={createBody()}
-						onInput={(e) => setCreateBody(e.currentTarget.value)}
-						class="w-full p-2 border"
-						rows={4}
-						placeholder='{"text": "Hello world"}'
-					/>
-				</div>
-				<div class="flex gap-2">
-					<button
-						type="button"
-						onClick={handleCreateRecordStage}
-						class="px-4 py-2 bg-blue-500 text-white"
-					>
-						Stage Create
-					</button>
-					<button
-						type="button"
-						onClick={handleCreateRecordCommit}
-						class="px-4 py-2 bg-blue-700 text-white"
-						disabled={!createBytes()}
-					>
-						Sign & Commit
-					</button>
-				</div>
+				<InputField
+					label="NSID"
+					value={ops.create.nsid}
+					onInput={(v) => setOps("create", "nsid", v)}
+					placeholder="app.example.post"
+				/>
+				<InputField
+					label="Body (JSON)"
+					value={ops.create.body}
+					onInput={(v) => setOps("create", "body", v)}
+					placeholder='{"text": "Hello world"}'
+					type="textarea"
+				/>
+				<StageCommitButtons
+					onStage={handleCreateRecordStage}
+					onCommit={handleCreateRecordCommit}
+					hasBytes={!!ops.create.bytes}
+					stageLabel="Stage Create"
+					commitLabel="Sign & Commit"
+					stageColorLight="bg-blue-500"
+					stageColorDark="bg-blue-700"
+				/>
 			</div>
 
 			<div class="mb-4 p-4 border">
 				<h2 class="text-xl mb-2">Update Record</h2>
-				<div class="mb-2">
-					<h1 class="block mb-1">Record Path (rpath):</h1>
-					<input
-						type="text"
-						value={updateRpath()}
-						onInput={(e) => setUpdateRpath(e.currentTarget.value)}
-						class="w-full p-2 border"
-						placeholder="app.example.post/abc123"
-					/>
-				</div>
-				<div class="mb-2">
-					<h1 class="block mb-1">New Body (JSON):</h1>
-					<textarea
-						value={updateBody()}
-						onInput={(e) => setUpdateBody(e.currentTarget.value)}
-						class="w-full p-2 border"
-						rows={4}
-						placeholder='{"text": "Updated content"}'
-					/>
-				</div>
-				<div class="flex gap-2">
-					<button
-						type="button"
-						onClick={handleUpdateRecordStage}
-						class="px-4 py-2 bg-yellow-500 text-white"
-					>
-						Stage Update
-					</button>
-					<button
-						type="button"
-						onClick={handleUpdateRecordCommit}
-						class="px-4 py-2 bg-yellow-700 text-white"
-						disabled={!updateBytes()}
-					>
-						Sign & Commit
-					</button>
-				</div>
+				<InputField
+					label="Record Path (rpath)"
+					value={ops.update.rpath}
+					onInput={(v) => setOps("update", "rpath", v)}
+					placeholder="app.example.post/abc123"
+				/>
+				<InputField
+					label="New Body (JSON)"
+					value={ops.update.body}
+					onInput={(v) => setOps("update", "body", v)}
+					placeholder='{"text": "Updated content"}'
+					type="textarea"
+				/>
+				<StageCommitButtons
+					onStage={handleUpdateRecordStage}
+					onCommit={handleUpdateRecordCommit}
+					hasBytes={!!ops.update.bytes}
+					stageLabel="Stage Update"
+					commitLabel="Sign & Commit"
+					stageColorLight="bg-yellow-500"
+					stageColorDark="bg-yellow-700"
+				/>
 			</div>
 
 			<div class="mb-4 p-4 border">
 				<h2 class="text-xl mb-2">Delete Record</h2>
-				<div class="mb-2">
-					<h1 class="block mb-1">Record Path (rpath):</h1>
-					<input
-						type="text"
-						value={deleteRpath()}
-						onInput={(e) => setDeleteRpath(e.currentTarget.value)}
-						class="w-full p-2 border"
-						placeholder="app.example.post/abc123"
-					/>
-				</div>
-				<div class="flex gap-2">
-					<button
-						type="button"
-						onClick={handleDeleteRecordStage}
-						class="px-4 py-2 bg-red-500 text-white"
-					>
-						Stage Delete
-					</button>
-					<button
-						type="button"
-						onClick={handleDeleteRecordCommit}
-						class="px-4 py-2 bg-red-700 text-white"
-						disabled={!deleteBytes()}
-					>
-						Sign & Commit
-					</button>
-				</div>
+				<InputField
+					label="Record Path (rpath)"
+					value={ops.delete.rpath}
+					onInput={(v) => setOps("delete", "rpath", v)}
+					placeholder="app.example.post/abc123"
+				/>
+				<StageCommitButtons
+					onStage={handleDeleteRecordStage}
+					onCommit={handleDeleteRecordCommit}
+					hasBytes={!!ops.delete.bytes}
+					stageLabel="Stage Delete"
+					commitLabel="Sign & Commit"
+					stageColorLight="bg-red-500"
+					stageColorDark="bg-red-700"
+				/>
 			</div>
 
 			<div class="p-4 border">
 				<h2 class="text-xl mb-2">Result</h2>
-				<pre class="bg-gray-100 p-2 overflow-auto">{result()}</pre>
+				<pre class="bg-gray-100 p-2 overflow-auto">{config.result}</pre>
 			</div>
 		</div>
 	);

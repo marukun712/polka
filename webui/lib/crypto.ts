@@ -32,7 +32,7 @@ export async function generate() {
 	const keypair = await P256Keypair.create({ exportable: true });
 	const sk = await keypair.export();
 	return {
-		did: keypair.did,
+		did: keypair.did(),
 		sk: bytesToHex(sk),
 	};
 }
