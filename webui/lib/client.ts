@@ -58,6 +58,7 @@ export class Client {
 		const response = await this.node.services.http.fetch(resource, {
 			method,
 			body: body ? JSON.stringify(body) : undefined,
+			headers: body ? { "Content-Type": "application/json" } : undefined,
 		});
 		return await response.json();
 	}
