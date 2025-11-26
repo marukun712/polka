@@ -23,6 +23,8 @@ interface repo {
     update-commit: func(rpath: string, data: string, sig: string) -> result<bool, string>;
     delete-commit: func(rpath: string, sig: string) -> result<bool, string>;
   }
+
+  create-repo: func() -> repo;
 }
 
 world repository {

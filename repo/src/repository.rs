@@ -7821,9 +7821,19 @@ pub unsafe fn __post_return_method_repo_delete_commit<T: GuestRepo>(arg0: *mut u
     },
   }
 } }
+#[doc(hidden)]
+#[allow(non_snake_case, unused_unsafe)]
+pub unsafe fn _export_create_repo_cabi<T: Guest>() -> i32 { unsafe {#[cfg(target_arch="wasm32")]
+_rt::run_ctors_once();let result0 = {
+  T::create_repo()
+};
+(result0).take_handle() as i32
+} }
 pub trait Guest {
   type Builder: GuestBuilder;
   type Repo: GuestRepo;
+  #[allow(async_fn_in_trait)]
+  fn create_repo() -> Repo;
 }
 pub trait GuestBuilder: 'static {
 
@@ -8019,6 +8029,10 @@ macro_rules! __export_polka_repository_repo_0_1_0_cabi{
     #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.delete-commit")]
     unsafe extern "C" fn _post_return_method_repo_delete_commit(arg0: *mut u8,) {
       unsafe { $($path_to_types)*::__post_return_method_repo_delete_commit::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
+    }
+    #[unsafe(export_name = "polka:repository/repo@0.1.0#create-repo")]
+    unsafe extern "C" fn export_create_repo() -> i32 {
+      unsafe { $($path_to_types)*::_export_create_repo_cabi::<$ty>() }
     }
 
     const _: () = {
@@ -8337,8 +8351,8 @@ pub(crate) use __export_repository_impl as export;
 #[unsafe(link_section = "component-type:wit-bindgen:0.47.0:polka:repository@0.1.0:repository:encoded world")]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 11393] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x80X\x01A\x02\x01AI\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 11417] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\x98X\x01A\x02\x01AI\x01\
 B\x0a\x01o\x02ss\x01p\0\x01@\0\0\x01\x04\0\x0fget-environment\x01\x02\x01ps\x01@\
 \0\0\x03\x04\0\x0dget-arguments\x01\x04\x01ks\x01@\0\0\x05\x04\0\x0binitial-cwd\x01\
 \x06\x03\0\x1awasi:cli/environment@0.2.0\x05\0\x01B\x03\x01j\0\0\x01@\x01\x06sta\
@@ -8552,7 +8566,7 @@ p}\x01@\x01\x03lenw\0\0\x04\0\x10get-random-bytes\x01\x01\x01@\0\0w\x04\0\x0eget
 \x03lenw\0\0\x04\0\x19get-insecure-random-bytes\x01\x01\x01@\0\0w\x04\0\x17get-i\
 nsecure-random-u64\x01\x02\x03\0\x1awasi:random/insecure@0.2.0\x05*\x01B\x03\x01\
 o\x02ww\x01@\0\0\0\x04\0\x0dinsecure-seed\x01\x01\x03\0\x1fwasi:random/insecure-\
-seed@0.2.0\x05+\x01B!\x01r\x01\x04datas\x04\0\x0aget-result\x03\0\0\x04\0\x07bui\
+seed@0.2.0\x05+\x01B$\x01r\x01\x04datas\x04\0\x0aget-result\x03\0\0\x04\0\x07bui\
 lder\x03\x01\x04\0\x04repo\x03\x01\x01h\x02\x01@\x01\x04self\x04\0s\x04\0\x19[me\
 thod]builder.get-bytes\x01\x05\x01j\x01\x7f\x01s\x01@\x02\x04self\x04\x03sigs\0\x06\
 \x04\0\x18[method]builder.finalize\x01\x07\x01h\x03\x01i\x02\x01j\x01\x09\x01s\x01\
@@ -8565,10 +8579,11 @@ date-stage\x01\x11\x01@\x02\x04self\x08\x05rpaths\0\x0f\x04\0\x19[method]repo.de
 lete-stage\x01\x12\x01@\x04\x04self\x08\x04nsids\x04datas\x03sigs\0\x06\x04\0\x1a\
 [method]repo.create-commit\x01\x13\x01@\x04\x04self\x08\x05rpaths\x04datas\x03si\
 gs\0\x06\x04\0\x1a[method]repo.update-commit\x01\x14\x01@\x03\x04self\x08\x05rpa\
-ths\x03sigs\0\x06\x04\0\x1a[method]repo.delete-commit\x01\x15\x04\0\x1bpolka:rep\
-ository/repo@0.1.0\x05,\x04\0!polka:repository/repository@0.1.0\x04\0\x0b\x10\x01\
-\0\x0arepository\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-componen\
-t\x070.240.0\x10wit-bindgen-rust\x060.47.0";
+ths\x03sigs\0\x06\x04\0\x1a[method]repo.delete-commit\x01\x15\x01i\x03\x01@\0\0\x16\
+\x04\0\x0bcreate-repo\x01\x17\x04\0\x1bpolka:repository/repo@0.1.0\x05,\x04\0!po\
+lka:repository/repository@0.1.0\x04\0\x0b\x10\x01\0\x0arepository\x03\0\0\0G\x09\
+producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.240.0\x10wit-bindgen-rus\
+t\x060.47.0";
 
 #[inline(never)]
 #[doc(hidden)]

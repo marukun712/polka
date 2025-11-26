@@ -1,8 +1,0 @@
-package polka:repository@0.1.0;
-
-interface blockstore {
-  resource blockstore {
-    get: func(cid: string) -> result<list<u8>, string>;
-    put: func(data: list<u8>) -> result<string, string>;
-  }
-}

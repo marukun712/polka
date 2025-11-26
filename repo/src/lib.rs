@@ -188,6 +188,12 @@ impl repo::GuestRepo for Repo {
 impl repository::exports::polka::repository::repo::Guest for Repo {
     type Builder = Builder;
     type Repo = Repo;
+
+    fn create_repo() -> repo::Repo {
+        repo::Repo::new(Repo {
+            repo: RefCell::new(None),
+        })
+    }
 }
 
 repository::export!(Repo);

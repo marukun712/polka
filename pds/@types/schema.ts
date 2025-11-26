@@ -1,5 +1,9 @@
 import z from "zod";
 
+export const initRepoSchema = z.object({
+	sig: z.string().optional(),
+});
+
 export const getRecordSchema = z.object({
 	rpath: z.string(),
 });
@@ -7,14 +11,16 @@ export const getRecordSchema = z.object({
 export const createRecordSchema = z.object({
 	nsid: z.string(),
 	body: z.string(),
+	sig: z.string().optional(),
 });
 
-export const commitSchema = z.object({
-	sig: z.string(),
-	payload: z.object({
-		did: z.string(),
-		version: z.bigint(),
-		data: z.string(),
-		rev: z.string(),
-	}),
+export const updateRecordSchema = z.object({
+	rpath: z.string(),
+	body: z.string(),
+	sig: z.string().optional(),
+});
+
+export const deleteRecordSchema = z.object({
+	rpath: z.string(),
+	sig: z.string().optional(),
 });

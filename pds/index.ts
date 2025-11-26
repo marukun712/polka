@@ -7,13 +7,18 @@ import { Hono } from "hono";
 import { validator } from "hono/validator";
 import { createLibp2p } from "libp2p";
 import {
-	commitSchema,
 	createRecordSchema,
+	deleteRecordSchema,
 	getRecordSchema,
+	initRepoSchema,
+	updateRecordSchema,
 } from "./@types/schema.ts";
 import { repo } from "./dist/transpiled/repo.js";
 
 const did = "did:key:z6MkvPRJTeguSbG1cNKn1S3zgYKnu5asvwWgceHLvxZbZakf";
+
+const instance = repo.createRepo();
+const builder = instance.new(did);
 
 const app = new Hono();
 app.get("/", (c) => {
@@ -24,9 +29,30 @@ app.get("/health", (c) => {
 	return c.json({ status: "ok" });
 });
 
-app.get("/unsigned", (c) => {
-	return c.json(repo.getUnsigned());
-});
+app.get(
+	"/init",
+	validator("query", (value, c) => {
+		const parsed = initRepoSchema.safeParse(value);
+		if (!parsed.success) {
+			return c.text("Invalid Schema!", 401);
+		}
+		return parsed.data;
+	}),
+	(c) => {
+		const sig = c.req.valid("query").sig;
+		try {
+			if (sig) {
+				const success = builder.finalize(sig);
+				return c.json({ success });
+			} else {
+				const bytes = builder.getBytes();
+				return c.json({ bytes });
+			}
+		} catch (error) {
+			return c.json({ error: String(error) }, 500);
+		}
+	},
+);
 
 app.get(
 	"/record",
@@ -39,8 +65,12 @@ app.get(
 	}),
 	(c) => {
 		const rpath = c.req.valid("query").rpath;
-		const record = repo.getRecord(rpath);
-		return c.json(record);
+		try {
+			const record = instance.getRecord(rpath);
+			return c.json(record);
+		} catch (error) {
+			return c.json({ error: String(error) }, 500);
+		}
 	},
 );
 
@@ -56,32 +86,26 @@ app.post(
 	(c) => {
 		const nsid = c.req.valid("json").nsid;
 		const body = c.req.valid("json").body;
-		const success = repo.createRecord(nsid, body);
-		return c.json(success);
+		const sig = c.req.valid("json").sig;
+
+		try {
+			if (sig) {
+				const success = instance.createCommit(nsid, body, sig);
+				return c.json({ success });
+			} else {
+				const bytes = instance.createStage(nsid, body);
+				return c.json({ bytes });
+			}
+		} catch (error) {
+			return c.json({ error: String(error) }, 500);
+		}
 	},
 );
 
 app.put(
 	"/record",
 	validator("json", (value, c) => {
-		const parsed = createRecordSchema.safeParse(value);
-		if (!parsed.success) {
-			return c.text("Invalid Schema!", 401);
-		}
-		return parsed.data;
-	}),
-	(c) => {
-		const nsid = c.req.valid("json").nsid;
-		const body = c.req.valid("json").body;
-		const success = repo.updateRecord(nsid, body);
-		return c.json(success);
-	},
-);
-
-app.delete(
-	"/record",
-	validator("json", (value, c) => {
-		const parsed = getRecordSchema.safeParse(value);
+		const parsed = updateRecordSchema.safeParse(value);
 		if (!parsed.success) {
 			return c.text("Invalid Schema!", 401);
 		}
@@ -89,25 +113,47 @@ app.delete(
 	}),
 	(c) => {
 		const rpath = c.req.valid("json").rpath;
-		const success = repo.deleteRecord(rpath);
-		return c.json(success);
+		const body = c.req.valid("json").body;
+		const sig = c.req.valid("json").sig;
+
+		try {
+			if (sig) {
+				const success = instance.updateCommit(rpath, body, sig);
+				return c.json({ success });
+			} else {
+				const bytes = instance.updateStage(rpath, body);
+				return c.json({ bytes });
+			}
+		} catch (error) {
+			return c.json({ error: String(error) }, 500);
+		}
 	},
 );
 
 app.delete(
-	"/commit",
+	"/record",
 	validator("json", (value, c) => {
-		const parsed = commitSchema.safeParse(value);
+		const parsed = deleteRecordSchema.safeParse(value);
 		if (!parsed.success) {
 			return c.text("Invalid Schema!", 401);
 		}
 		return parsed.data;
 	}),
 	(c) => {
+		const rpath = c.req.valid("json").rpath;
 		const sig = c.req.valid("json").sig;
-		const payload = c.req.valid("json").payload;
-		const success = repo.commit(payload, sig);
-		return c.json(success);
+
+		try {
+			if (sig) {
+				const success = instance.deleteCommit(rpath, sig);
+				return c.json({ success });
+			} else {
+				const bytes = instance.deleteStage(rpath);
+				return c.json({ bytes });
+			}
+		} catch (error) {
+			return c.json({ error: String(error) }, 500);
+		}
 	},
 );
 
