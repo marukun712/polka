@@ -5,14 +5,7 @@ interface repo {
     data: string,
   }
 
-  resource builder {
-    get-bytes: func() -> string;
-    finalize: func(sig: string) -> result<bool, string>;
-  }
-
   resource repo {
-    new: func(did: string) -> result<builder, string>;
-    open: func(cid: string) -> result<bool, string>;
     get-record: func(rpath: string) -> result<get-result, string>;
 
     create-stage: func(nsid: string, data: string) -> result<string, string>;
@@ -24,7 +17,13 @@ interface repo {
     delete-commit: func(rpath: string, sig: string) -> result<bool, string>;
   }
 
-  create-repo: func() -> repo;
+  resource builder {
+    get-bytes: func() -> string;
+    finalize: func(sig: string) -> result<repo, string>;
+  }
+
+  create: func(did: string) -> result<builder, string>;
+  open: func(did: string, cid: string) -> result<repo, string>;
 }
 
 world repository {

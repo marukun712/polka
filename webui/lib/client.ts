@@ -56,27 +56,13 @@ export class Client {
 			`/http-path/${encodeURIComponent(path.substring(1))}`,
 		);
 
-		// JSON文字列をUint8Arrayに変換
-		const bodyStr = body ? JSON.stringify(body) : undefined;
-		const bodyBytes = bodyStr ? new TextEncoder().encode(bodyStr) : undefined;
-
-		console.log("DEBUG: fetch request", {
-			path,
-			method,
-			bodyString: bodyStr,
-			bodyLength: bodyStr?.length || 0,
-			bodyKeys: body ? Object.keys(body) : [],
-		});
+		const blob = body
+			? new Blob([JSON.stringify(body)], { type: "application/json" })
+			: undefined;
 
 		const response = await this.node.services.http.fetch(resource, {
 			method,
-			body: bodyBytes,
-			headers: body
-				? {
-						"Content-Type": "application/json",
-						"Content-Length": String(bodyBytes?.length || 0),
-					}
-				: undefined,
+			body: blob,
 		});
 		return await response.json();
 	}
