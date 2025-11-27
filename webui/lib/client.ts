@@ -55,10 +55,28 @@ export class Client {
 		const resource = this.addr.encapsulate(
 			`/http-path/${encodeURIComponent(path.substring(1))}`,
 		);
+
+		// JSON文字列をUint8Arrayに変換
+		const bodyStr = body ? JSON.stringify(body) : undefined;
+		const bodyBytes = bodyStr ? new TextEncoder().encode(bodyStr) : undefined;
+
+		console.log("DEBUG: fetch request", {
+			path,
+			method,
+			bodyString: bodyStr,
+			bodyLength: bodyStr?.length || 0,
+			bodyKeys: body ? Object.keys(body) : [],
+		});
+
 		const response = await this.node.services.http.fetch(resource, {
 			method,
-			body: body ? JSON.stringify(body) : undefined,
-			headers: body ? { "Content-Type": "application/json" } : undefined,
+			body: bodyBytes,
+			headers: body
+				? {
+						"Content-Type": "application/json",
+						"Content-Length": String(bodyBytes?.length || 0),
+					}
+				: undefined,
 		});
 		return await response.json();
 	}
@@ -68,44 +86,34 @@ export class Client {
 	}
 
 	public initRepoStage() {
-		return this.fetch("/init", "GET");
+		return this.fetch("/init", "POST");
 	}
 
 	public initRepoCommit(sig: string) {
-		return this.fetch("/init", "GET", { sig });
+		return this.fetch("/init", "POST", { sig });
 	}
 
-	public createRecordStage(did: string, nsid: string, body: string) {
-		return this.fetch("/record", "POST", { did, nsid, body });
+	public createRecordStage(nsid: string, body: string) {
+		return this.fetch("/record", "POST", { nsid, body });
 	}
 
-	public createRecordCommit(
-		did: string,
-		nsid: string,
-		body: string,
-		sig: string,
-	) {
-		return this.fetch("/record", "POST", { did, nsid, body, sig });
+	public createRecordCommit(nsid: string, body: string, sig: string) {
+		return this.fetch("/record", "POST", { nsid, body, sig });
 	}
 
 	public updateRecordStage(rpath: string, body: string) {
 		return this.fetch("/record", "PUT", { rpath, body });
 	}
 
-	public updateRecordCommit(
-		did: string,
-		rpath: string,
-		body: string,
-		sig: string,
-	) {
-		return this.fetch("/record", "PUT", { did, rpath, body, sig });
+	public updateRecordCommit(rpath: string, body: string, sig: string) {
+		return this.fetch("/record", "PUT", { rpath, body, sig });
 	}
 
 	public deleteRecordStage(rpath: string) {
 		return this.fetch("/record", "DELETE", { rpath });
 	}
 
-	public deleteRecordCommit(did: string, rpath: string, sig: string) {
-		return this.fetch("/record", "DELETE", { did, rpath, sig });
+	public deleteRecordCommit(rpath: string, sig: string) {
+		return this.fetch("/record", "DELETE", { rpath, sig });
 	}
 }

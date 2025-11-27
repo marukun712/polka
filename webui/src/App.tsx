@@ -142,18 +142,13 @@ const App: Component = () => {
 	const handleCreateRecordStage = () =>
 		handleStage("create", () => {
 			if (!config.client) throw new Error("Client not initialized");
-			return config.client.createRecordStage(
-				config.did,
-				ops.create.nsid,
-				ops.create.body,
-			);
+			return config.client.createRecordStage(ops.create.nsid, ops.create.body);
 		});
 
 	const handleCreateRecordCommit = () =>
 		handleCommit("create", ops.create.bytes, (sig) => {
 			if (!config.client) throw new Error("Client not initialized");
 			return config.client.createRecordCommit(
-				config.did,
 				ops.create.nsid,
 				ops.create.body,
 				sig,
@@ -170,7 +165,6 @@ const App: Component = () => {
 		handleCommit("update", ops.update.bytes, (sig) => {
 			if (!config.client) throw new Error("Client not initialized");
 			return config.client.updateRecordCommit(
-				config.did,
 				ops.update.rpath,
 				ops.update.body,
 				sig,
@@ -186,11 +180,7 @@ const App: Component = () => {
 	const handleDeleteRecordCommit = () =>
 		handleCommit("delete", ops.delete.bytes, (sig) => {
 			if (!config.client) throw new Error("Client not initialized");
-			return config.client.deleteRecordCommit(
-				config.did,
-				ops.delete.rpath,
-				sig,
-			);
+			return config.client.deleteRecordCommit(ops.delete.rpath, sig);
 		});
 
 	const InputField = (props: {

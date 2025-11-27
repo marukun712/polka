@@ -8,6 +8,7 @@ use std::{cell::RefCell, str::FromStr};
 
 struct Repo {
     repo: RefCell<Option<atrium_repo::Repository<atrium_repo::blockstore::MemoryBlockStore>>>,
+    did: RefCell<Option<String>>,
 }
 
 struct Builder {
@@ -46,8 +47,16 @@ impl repo::GuestBuilder for Builder {
 impl repo::GuestRepo for Repo {
     // リポジトリを新規作成
     fn new(&self, did: String) -> Result<repo::Builder, String> {
+        *self.did.borrow_mut() = Some(did);
+        let mut did = self.did.borrow_mut();
+        let did = match did.as_mut() {
+            Some(r) => r,
+            None => {
+                return Err("Repo not initialized. Call open() or finalize() first.".to_string());
+            }
+        };
         // didをDidとして取得
-        let did = match Did::new(did) {
+        let did = match Did::new(did.to_string()) {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
@@ -61,7 +70,6 @@ impl repo::GuestRepo for Repo {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
-
         // WITのBuilder Resourceとして返す
         let builder = Builder {
             builder: RefCell::new(Some(builder)),
@@ -144,13 +152,7 @@ impl repo::GuestRepo for Repo {
     }
 
     // create操作をコミット(確定)
-    fn create_commit(
-        &self,
-        did: String,
-        nsid: String,
-        data: String,
-        sig: String,
-    ) -> Result<bool, String> {
+    fn create_commit(&self, nsid: String, data: String, sig: String) -> Result<bool, String> {
         // repoを取得
         let mut repo = self.repo.borrow_mut();
         let repo = match repo.as_mut() {
@@ -169,6 +171,14 @@ impl repo::GuestRepo for Repo {
         // Commitを確定
         futures::executor::block_on(async { builder.finalize(sig_bytes).await })
             .map_err(|e| e.to_string())?;
+        //didを取得
+        let mut did = self.did.borrow_mut();
+        let did = match did.as_mut() {
+            Some(r) => r,
+            None => {
+                return Err("Did not initialized.".to_string());
+            }
+        };
         // 検証
         let commit = repo.commit();
         let (alg, pub_key) = parse_did_key(&did).unwrap();
@@ -178,13 +188,7 @@ impl repo::GuestRepo for Repo {
         Ok(true)
     }
 
-    fn update_commit(
-        &self,
-        did: String,
-        rpath: String,
-        data: String,
-        sig: String,
-    ) -> Result<bool, String> {
+    fn update_commit(&self, rpath: String, data: String, sig: String) -> Result<bool, String> {
         // repoを取得
         let mut repo = self.repo.borrow_mut();
         let repo = match repo.as_mut() {
@@ -204,6 +208,14 @@ impl repo::GuestRepo for Repo {
         // Commitを確定
         futures::executor::block_on(async { builder.finalize(sig_bytes).await })
             .map_err(|e| e.to_string())?;
+        //didを取得
+        let mut did = self.did.borrow_mut();
+        let did = match did.as_mut() {
+            Some(r) => r,
+            None => {
+                return Err("Did not initialized.".to_string());
+            }
+        };
         // 検証
         let commit = repo.commit();
         let (alg, pub_key) = parse_did_key(&did).unwrap();
@@ -213,7 +225,7 @@ impl repo::GuestRepo for Repo {
         Ok(true)
     }
 
-    fn delete_commit(&self, did: String, rpath: String, sig: String) -> Result<bool, String> {
+    fn delete_commit(&self, rpath: String, sig: String) -> Result<bool, String> {
         // repoを取得
         let mut repo = self.repo.borrow_mut();
         let repo = match repo.as_mut() {
@@ -232,6 +244,14 @@ impl repo::GuestRepo for Repo {
         // Commitを確定
         futures::executor::block_on(async { builder.finalize(sig_bytes).await })
             .map_err(|e| e.to_string())?;
+        //didを取得
+        let mut did = self.did.borrow_mut();
+        let did = match did.as_mut() {
+            Some(r) => r,
+            None => {
+                return Err("Did not initialized.".to_string());
+            }
+        };
         // 検証
         let commit = repo.commit();
         let (alg, pub_key) = parse_did_key(&did).unwrap();
@@ -261,6 +281,7 @@ impl repository::exports::polka::repository::repo::Guest for Repo {
     fn create_repo() -> repo::Repo {
         repo::Repo::new(Repo {
             repo: RefCell::new(None),
+            did: RefCell::new(None),
         })
     }
 }

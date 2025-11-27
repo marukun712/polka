@@ -64,9 +64,9 @@ app.get("/health", (c) => {
 	return c.json({ status: "ok" });
 });
 
-app.get(
+app.post(
 	"/init",
-	validator("query", (value, c) => {
+	validator("json", (value, c) => {
 		const parsed = initRepoSchema.safeParse(value);
 		if (!parsed.success) {
 			logger.warn(
@@ -96,7 +96,7 @@ app.get(
 		return parsed.data;
 	}),
 	(c) => {
-		const sig = c.req.valid("query").sig;
+		const sig = c.req.valid("json").sig;
 		try {
 			if (sig) {
 				logger.info(
@@ -276,7 +276,6 @@ app.post(
 		return parsed.data;
 	}),
 	(c) => {
-		const did = c.req.valid("json").did;
 		const nsid = c.req.valid("json").nsid;
 		const body = c.req.valid("json").body;
 		const sig = c.req.valid("json").sig;
@@ -295,7 +294,7 @@ app.post(
 					`Creating record commit: ${nsid} for ${did}`,
 				);
 
-				const success = instance.createCommit(did, nsid, body, sig);
+				const success = instance.createCommit(nsid, body, sig);
 
 				logger.info(
 					{
@@ -391,7 +390,6 @@ app.put(
 		return parsed.data;
 	}),
 	(c) => {
-		const did = c.req.valid("json").did;
 		const rpath = c.req.valid("json").rpath;
 		const body = c.req.valid("json").body;
 		const sig = c.req.valid("json").sig;
@@ -410,7 +408,7 @@ app.put(
 					`Updating record commit: ${rpath} for ${did}`,
 				);
 
-				const success = instance.updateCommit(did, rpath, body, sig);
+				const success = instance.updateCommit(rpath, body, sig);
 
 				logger.info(
 					{
@@ -506,7 +504,6 @@ app.delete(
 		return parsed.data;
 	}),
 	(c) => {
-		const did = c.req.valid("json").did;
 		const rpath = c.req.valid("json").rpath;
 		const sig = c.req.valid("json").sig;
 
@@ -523,7 +520,7 @@ app.delete(
 					`Deleting record commit: ${rpath} for ${did}`,
 				);
 
-				const success = instance.deleteCommit(did, rpath, sig);
+				const success = instance.deleteCommit(rpath, sig);
 
 				logger.info(
 					{
