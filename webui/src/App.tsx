@@ -15,6 +15,7 @@ const App: Component = () => {
 	const [ops, setOps] = createStore({
 		init: { bytes: "" },
 		get: { rpath: "" },
+		getList: { nsid: "" },
 		create: { nsid: "", body: "", bytes: "" },
 		update: { rpath: "", body: "", bytes: "" },
 		delete: { rpath: "", bytes: "" },
@@ -133,6 +134,23 @@ const App: Component = () => {
 		try {
 			if (!config.client) throw new Error("Client not initialized");
 			const res = await config.client.getRecord(ops.get.rpath);
+			setConfig("result", JSON.stringify(res, null, 2));
+		} catch (e) {
+			setConfig("result", `Error: ${e}`);
+		}
+	};
+
+	const handleGetRecords = async () => {
+		if (checkErrors(validate.client)) return;
+
+		if (!ops.getList.nsid) {
+			setConfig("result", "NSID not specified");
+			return;
+		}
+
+		try {
+			if (!config.client) throw new Error("Client not initialized");
+			const res = await config.client.getRecords(ops.getList.nsid);
 			setConfig("result", JSON.stringify(res, null, 2));
 		} catch (e) {
 			setConfig("result", `Error: ${e}`);
@@ -269,9 +287,8 @@ const App: Component = () => {
 				<InputField
 					label="DID (Decentralized Identifier)"
 					value={config.did}
-					onInput={() => {}}
-					placeholder="Generate a key pair or it will be shown after operations"
-					readonly={true}
+					onInput={(v) => setConfig("did", v)}
+					placeholder="Enter your did:key"
 				/>
 				<InputField
 					label="PDS Server Address"
@@ -315,6 +332,26 @@ const App: Component = () => {
 					class="px-4 py-2 bg-green-500 text-white"
 				>
 					Get
+				</button>
+			</div>
+
+			<div class="mb-4 p-4 border">
+				<h2 class="text-xl mb-2">Get Records by NSID</h2>
+				<p class="text-sm text-gray-600 mb-3">
+					Retrieve all records matching the specified NSID prefix
+				</p>
+				<InputField
+					label="NSID"
+					value={ops.getList.nsid}
+					onInput={(v) => setOps("getList", "nsid", v)}
+					placeholder="app.example.post"
+				/>
+				<button
+					type="button"
+					onClick={handleGetRecords}
+					class="px-4 py-2 bg-green-500 text-white"
+				>
+					Get Records
 				</button>
 			</div>
 

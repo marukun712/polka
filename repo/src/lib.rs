@@ -95,7 +95,7 @@ impl HostRepo {
         let commit = self.repo.commit();
         match parse_did_key(&self.did) {
             Ok((alg, pub_key)) => {
-                match Verifier::default().verify(alg, &pub_key, &commit.bytes(), commit.sig()) {
+                match Verifier::default().verify(alg, &pub_key, &commit.bytes(), &commit.sig()) {
                     Ok(_) => (),
                     Err(e) => return Err(e.to_string()),
                 }
@@ -121,7 +121,7 @@ impl HostRepo {
         let commit = self.repo.commit();
         match parse_did_key(&self.did) {
             Ok((alg, pub_key)) => {
-                match Verifier::default().verify(alg, &pub_key, &commit.bytes(), commit.sig()) {
+                match Verifier::default().verify(alg, &pub_key, &commit.bytes(), &commit.sig()) {
                     Ok(_) => (),
                     Err(e) => return Err(e.to_string()),
                 }
@@ -147,7 +147,7 @@ impl HostRepo {
         let commit = self.repo.commit();
         match parse_did_key(&self.did) {
             Ok((alg, pub_key)) => {
-                match Verifier::default().verify(alg, &pub_key, &commit.bytes(), commit.sig()) {
+                match Verifier::default().verify(alg, &pub_key, &commit.bytes(), &commit.sig()) {
                     Ok(_) => (),
                     Err(e) => return Err(e.to_string()),
                 }

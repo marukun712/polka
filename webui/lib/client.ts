@@ -71,6 +71,10 @@ export class Client {
 		return this.fetch(`/record?rpath=${rpath}`, "GET");
 	}
 
+	public getRecords(nsid: string) {
+		return this.fetch(`/records?nsid=${nsid}`, "GET");
+	}
+
 	public initRepoStage() {
 		return this.fetch("/init", "POST");
 	}
