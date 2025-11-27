@@ -12,6 +12,12 @@ export const getRecordSchema = z
 	})
 	.strict();
 
+export const getRecordsSchema = z
+	.object({
+		nsid: z.string(),
+	})
+	.strict();
+
 export const createRecordSchema = z
 	.object({
 		nsid: z.string(),

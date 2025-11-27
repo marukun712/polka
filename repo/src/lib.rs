@@ -5,6 +5,7 @@ use crate::repository::exports::polka::repository::repo::{GuestBuilder, GuestRep
 use atrium_api::types::string::Did;
 use atrium_crypto::{did::parse_did_key, verify::Verifier};
 use cid::Cid;
+use futures::TryStreamExt;
 use hex::{decode, encode};
 use repository::exports::polka::repository::repo;
 
@@ -25,7 +26,7 @@ impl HostBuilder {
     }
 
     // builderを取得
-    fn finalize(&mut self, sig: String) -> Result<HostRepo, String> {
+    fn finalize(self, sig: String) -> Result<HostRepo, String> {
         // sigをbytesとして取得
         let sig_bytes = match decode(sig) {
             Ok(v) => v,
@@ -92,11 +93,15 @@ impl HostRepo {
 
         // 検証
         let commit = self.repo.commit();
-        let (alg, pub_key) = parse_did_key(&self.did).unwrap();
-        Verifier::default()
-            .verify(alg, &pub_key, &commit.bytes(), commit.sig())
-            .unwrap();
-
+        match parse_did_key(&self.did) {
+            Ok((alg, pub_key)) => {
+                match Verifier::default().verify(alg, &pub_key, &commit.bytes(), commit.sig()) {
+                    Ok(_) => (),
+                    Err(e) => return Err(e.to_string()),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        }
         Ok(true)
     }
 
@@ -114,11 +119,15 @@ impl HostRepo {
             .map_err(|e| e.to_string())?;
 
         let commit = self.repo.commit();
-        let (alg, pub_key) = parse_did_key(&self.did).unwrap();
-        Verifier::default()
-            .verify(alg, &pub_key, &commit.bytes(), commit.sig())
-            .unwrap();
-
+        match parse_did_key(&self.did) {
+            Ok((alg, pub_key)) => {
+                match Verifier::default().verify(alg, &pub_key, &commit.bytes(), commit.sig()) {
+                    Ok(_) => (),
+                    Err(e) => return Err(e.to_string()),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        }
         Ok(true)
     }
 
@@ -136,35 +145,54 @@ impl HostRepo {
             .map_err(|e| e.to_string())?;
 
         let commit = self.repo.commit();
-        let (alg, pub_key) = parse_did_key(&self.did).unwrap();
-        Verifier::default()
-            .verify(alg, &pub_key, &commit.bytes(), commit.sig())
-            .unwrap();
-
+        match parse_did_key(&self.did) {
+            Ok((alg, pub_key)) => {
+                match Verifier::default().verify(alg, &pub_key, &commit.bytes(), commit.sig()) {
+                    Ok(_) => (),
+                    Err(e) => return Err(e.to_string()),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        }
         Ok(true)
     }
 
-    fn get_record(&mut self, rpath: String) -> Result<repo::GetResult, String> {
+    fn get_record(&mut self, rpath: String) -> Result<String, String> {
         let record: Option<String> =
             futures::executor::block_on(async { self.repo.get_raw(&rpath).await })
                 .map_err(|e| e.to_string())?;
 
         let data = record.ok_or("Record not found")?;
-        Ok(repo::GetResult { data })
+        Ok(data)
+    }
+
+    fn get_records(&mut self, nsid: String) -> Result<Vec<String>, String> {
+        let mut tree = self.repo.tree();
+        let stream =
+            futures::executor::block_on(async { tree.entries_prefixed(&nsid).try_collect().await });
+        let keys: Vec<(String, Cid)> = match stream {
+            Ok(v) => v,
+            Err(e) => return Err(e.to_string()),
+        };
+        let records = keys
+            .iter()
+            .map(|k| self.get_record(k.0.clone()))
+            .collect::<Result<_, _>>()?;
+        Ok(records)
     }
 }
 
 struct GuestBuilderImpl {
-    inner: RefCell<HostBuilder>,
+    inner: RefCell<Option<HostBuilder>>,
 }
 
 impl GuestBuilder for GuestBuilderImpl {
     fn get_bytes(&self) -> String {
-        self.inner.borrow_mut().get_bytes()
+        self.inner.borrow_mut().as_mut().unwrap().get_bytes()
     }
 
     fn finalize(&self, sig: String) -> Result<Repo, String> {
-        let mut host = self.inner.borrow_mut();
+        let host = self.inner.borrow_mut().take().unwrap();
         let host_repo = host.finalize(sig)?;
         let guest_repo = GuestRepoImpl {
             inner: RefCell::new(host_repo),
@@ -202,8 +230,12 @@ impl GuestRepo for GuestRepoImpl {
         self.inner.borrow_mut().delete_commit(rpath, sig)
     }
 
-    fn get_record(&self, rpath: String) -> Result<repo::GetResult, String> {
+    fn get_record(&self, rpath: String) -> Result<String, String> {
         self.inner.borrow_mut().get_record(rpath)
+    }
+
+    fn get_records(&self, nsid: String) -> Result<Vec<String>, String> {
+        self.inner.borrow_mut().get_records(nsid)
     }
 }
 
@@ -214,7 +246,8 @@ impl repository::exports::polka::repository::repo::Guest for Component {
     type Repo = GuestRepoImpl;
 
     fn create(did: String) -> Result<repo::Builder, String> {
-        let parsed = match Did::new(did) {
+        let did_clone = did.clone();
+        let parsed = match Did::new(did_clone) {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
@@ -230,7 +263,7 @@ impl repository::exports::polka::repository::repo::Guest for Component {
         };
         // WITのBuilder Resourceとして返す
         let builder = GuestBuilderImpl {
-            inner: RefCell::new(HostBuilder { builder, did }),
+            inner: RefCell::new(Some(HostBuilder { builder, did })),
         };
         Ok(repo::Builder::new(builder))
     }

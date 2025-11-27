@@ -7077,15 +7077,6 @@ pub mod wasi {
           super::super::super::super::__link_custom_section_describing_imports;
           
           use super::super::super::super::_rt;
-          #[derive(Clone)]
-          pub struct GetResult {
-            pub data: _rt::String,
-          }
-          impl ::core::fmt::Debug for GetResult {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> ::core::fmt::Result {
-              f.debug_struct("GetResult").field("data", &self.data).finish()
-            }
-          }
 
           #[derive(Debug)]
           #[repr(transparent)]
@@ -7380,22 +7371,21 @@ pub mod wasi {
           match result1 {
             Ok(e) => { {
               *ptr2.add(0).cast::<u8>() = (0i32) as u8;
-              let GetResult{ data:data3, } = e;
-              let vec4 = (data3.into_bytes()).into_boxed_slice();
+              let vec3 = (e.into_bytes()).into_boxed_slice();
+              let ptr3 = vec3.as_ptr().cast::<u8>();
+              let len3 = vec3.len();
+              ::core::mem::forget(vec3);
+              *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len3;
+              *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr3.cast_mut();
+            } },
+            Err(e) => { {
+              *ptr2.add(0).cast::<u8>() = (1i32) as u8;
+              let vec4 = (e.into_bytes()).into_boxed_slice();
               let ptr4 = vec4.as_ptr().cast::<u8>();
               let len4 = vec4.len();
               ::core::mem::forget(vec4);
               *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
               *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
-            } },
-            Err(e) => { {
-              *ptr2.add(0).cast::<u8>() = (1i32) as u8;
-              let vec5 = (e.into_bytes()).into_boxed_slice();
-              let ptr5 = vec5.as_ptr().cast::<u8>();
-              let len5 = vec5.len();
-              ::core::mem::forget(vec5);
-              *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
-              *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
             } },
           };ptr2
         } }
@@ -7418,62 +7408,81 @@ pub mod wasi {
         } }
         #[doc(hidden)]
         #[allow(non_snake_case, unused_unsafe)]
-        pub unsafe fn _export_method_repo_create_stage_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-        _rt::run_ctors_once();let result2 = {
+        pub unsafe fn _export_method_repo_get_records_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+        _rt::run_ctors_once();let result1 = {
           let len0 = arg2;
           let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-          let len1 = arg4;
-          let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
-          T::create_stage(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1))
+          T::get_records(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0))
         };
-        let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
-        match result2 {
+        let ptr2 = (&raw mut _RET_AREA.0).cast::<u8>();
+        match result1 {
           Ok(e) => { {
-            *ptr3.add(0).cast::<u8>() = (0i32) as u8;
-            let vec4 = (e.into_bytes()).into_boxed_slice();
-            let ptr4 = vec4.as_ptr().cast::<u8>();
+            *ptr2.add(0).cast::<u8>() = (0i32) as u8;
+            let vec4 = e;
             let len4 = vec4.len();
-            ::core::mem::forget(vec4);
-            *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
-            *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
+            let layout4 = _rt::alloc::Layout::from_size_align(vec4.len() * (2*::core::mem::size_of::<*const u8>()), ::core::mem::size_of::<*const u8>()).unwrap();
+            let (result4, _cleanup4) = wit_bindgen::rt::Cleanup::new(layout4);if let Some(cleanup) = _cleanup4 { cleanup.forget(); }
+            for (i, e) in vec4.into_iter().enumerate() {
+              let base = result4.add(i * (2*::core::mem::size_of::<*const u8>()));
+              {
+                let vec3 = (e.into_bytes()).into_boxed_slice();
+                let ptr3 = vec3.as_ptr().cast::<u8>();
+                let len3 = vec3.len();
+                ::core::mem::forget(vec3);
+                *base.add(::core::mem::size_of::<*const u8>()).cast::<usize>() = len3;
+                *base.add(0).cast::<*mut u8>() = ptr3.cast_mut();
+              }
+            }
+            *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
+            *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = result4;
           } },
           Err(e) => { {
-            *ptr3.add(0).cast::<u8>() = (1i32) as u8;
+            *ptr2.add(0).cast::<u8>() = (1i32) as u8;
             let vec5 = (e.into_bytes()).into_boxed_slice();
             let ptr5 = vec5.as_ptr().cast::<u8>();
             let len5 = vec5.len();
             ::core::mem::forget(vec5);
-            *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
-            *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
+            *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
+            *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
           } },
-        };ptr3
+        };ptr2
       } }
       #[doc(hidden)]
       #[allow(non_snake_case)]
-      pub unsafe fn __post_return_method_repo_create_stage<T: GuestRepo>(arg0: *mut u8,) { unsafe {
+      pub unsafe fn __post_return_method_repo_get_records<T: GuestRepo>(arg0: *mut u8,) { unsafe {
         let l0 = i32::from(*arg0.add(0).cast::<u8>());
         match l0 {
           0 => {
             let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
             let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
-            _rt::cabi_dealloc(l1, l2, 1);
+            let base5 = l1;
+            let len5 = l2;
+            for i in 0..len5 {
+              let base = base5.add(i * (2*::core::mem::size_of::<*const u8>()));
+              {
+                let l3 = *base.add(0).cast::<*mut u8>();
+                let l4 = *base.add(::core::mem::size_of::<*const u8>()).cast::<usize>();
+                _rt::cabi_dealloc(l3, l4, 1);
+              }
+            }
+            _rt::cabi_dealloc(base5, len5 * (2*::core::mem::size_of::<*const u8>()), ::core::mem::size_of::<*const u8>());
           },
           _ => {
-            let l3 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-            let l4 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
-            _rt::cabi_dealloc(l3, l4, 1);
+            let l6 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
+            let l7 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
+            _rt::cabi_dealloc(l6, l7, 1);
           },
         }
       } }
       #[doc(hidden)]
       #[allow(non_snake_case, unused_unsafe)]
-      pub unsafe fn _export_method_repo_update_stage_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+      pub unsafe fn _export_method_repo_create_stage_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
       _rt::run_ctors_once();let result2 = {
         let len0 = arg2;
         let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
         let len1 = arg4;
         let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
-        T::update_stage(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1))
+        T::create_stage(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1))
       };
       let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
       match result2 {
@@ -7499,7 +7508,7 @@ pub mod wasi {
     } }
     #[doc(hidden)]
     #[allow(non_snake_case)]
-    pub unsafe fn __post_return_method_repo_update_stage<T: GuestRepo>(arg0: *mut u8,) { unsafe {
+    pub unsafe fn __post_return_method_repo_create_stage<T: GuestRepo>(arg0: *mut u8,) { unsafe {
       let l0 = i32::from(*arg0.add(0).cast::<u8>());
       match l0 {
         0 => {
@@ -7516,37 +7525,39 @@ pub mod wasi {
     } }
     #[doc(hidden)]
     #[allow(non_snake_case, unused_unsafe)]
-    pub unsafe fn _export_method_repo_delete_stage_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-    _rt::run_ctors_once();let result1 = {
+    pub unsafe fn _export_method_repo_update_stage_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+    _rt::run_ctors_once();let result2 = {
       let len0 = arg2;
       let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-      T::delete_stage(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0))
+      let len1 = arg4;
+      let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
+      T::update_stage(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1))
     };
-    let ptr2 = (&raw mut _RET_AREA.0).cast::<u8>();
-    match result1 {
+    let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
+    match result2 {
       Ok(e) => { {
-        *ptr2.add(0).cast::<u8>() = (0i32) as u8;
-        let vec3 = (e.into_bytes()).into_boxed_slice();
-        let ptr3 = vec3.as_ptr().cast::<u8>();
-        let len3 = vec3.len();
-        ::core::mem::forget(vec3);
-        *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len3;
-        *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr3.cast_mut();
-      } },
-      Err(e) => { {
-        *ptr2.add(0).cast::<u8>() = (1i32) as u8;
+        *ptr3.add(0).cast::<u8>() = (0i32) as u8;
         let vec4 = (e.into_bytes()).into_boxed_slice();
         let ptr4 = vec4.as_ptr().cast::<u8>();
         let len4 = vec4.len();
         ::core::mem::forget(vec4);
-        *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
-        *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
+        *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
+        *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
       } },
-    };ptr2
+      Err(e) => { {
+        *ptr3.add(0).cast::<u8>() = (1i32) as u8;
+        let vec5 = (e.into_bytes()).into_boxed_slice();
+        let ptr5 = vec5.as_ptr().cast::<u8>();
+        let len5 = vec5.len();
+        ::core::mem::forget(vec5);
+        *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
+        *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
+      } },
+    };ptr3
   } }
   #[doc(hidden)]
   #[allow(non_snake_case)]
-  pub unsafe fn __post_return_method_repo_delete_stage<T: GuestRepo>(arg0: *mut u8,) { unsafe {
+  pub unsafe fn __post_return_method_repo_update_stage<T: GuestRepo>(arg0: *mut u8,) { unsafe {
     let l0 = i32::from(*arg0.add(0).cast::<u8>());
     match l0 {
       0 => {
@@ -7563,32 +7574,79 @@ pub mod wasi {
   } }
   #[doc(hidden)]
   #[allow(non_snake_case, unused_unsafe)]
-  pub unsafe fn _export_method_repo_create_commit_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,arg5: *mut u8,arg6: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-  _rt::run_ctors_once();let result3 = {
+  pub unsafe fn _export_method_repo_delete_stage_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+  _rt::run_ctors_once();let result1 = {
     let len0 = arg2;
     let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-    let len1 = arg4;
-    let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
-    let len2 = arg6;
-    let bytes2 = _rt::Vec::from_raw_parts(arg5.cast(), len2, len2);
-    T::create_commit(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1), _rt::string_lift(bytes2))
+    T::delete_stage(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0))
   };
-  let ptr4 = (&raw mut _RET_AREA.0).cast::<u8>();
-  match result3 {
+  let ptr2 = (&raw mut _RET_AREA.0).cast::<u8>();
+  match result1 {
     Ok(e) => { {
-      *ptr4.add(0).cast::<u8>() = (0i32) as u8;
-      *ptr4.add(::core::mem::size_of::<*const u8>()).cast::<u8>() = (match e { true => 1, false => 0 }) as u8;
+      *ptr2.add(0).cast::<u8>() = (0i32) as u8;
+      let vec3 = (e.into_bytes()).into_boxed_slice();
+      let ptr3 = vec3.as_ptr().cast::<u8>();
+      let len3 = vec3.len();
+      ::core::mem::forget(vec3);
+      *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len3;
+      *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr3.cast_mut();
     } },
     Err(e) => { {
-      *ptr4.add(0).cast::<u8>() = (1i32) as u8;
-      let vec5 = (e.into_bytes()).into_boxed_slice();
-      let ptr5 = vec5.as_ptr().cast::<u8>();
-      let len5 = vec5.len();
-      ::core::mem::forget(vec5);
-      *ptr4.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
-      *ptr4.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
+      *ptr2.add(0).cast::<u8>() = (1i32) as u8;
+      let vec4 = (e.into_bytes()).into_boxed_slice();
+      let ptr4 = vec4.as_ptr().cast::<u8>();
+      let len4 = vec4.len();
+      ::core::mem::forget(vec4);
+      *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
+      *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
     } },
-  };ptr4
+  };ptr2
+} }
+#[doc(hidden)]
+#[allow(non_snake_case)]
+pub unsafe fn __post_return_method_repo_delete_stage<T: GuestRepo>(arg0: *mut u8,) { unsafe {
+  let l0 = i32::from(*arg0.add(0).cast::<u8>());
+  match l0 {
+    0 => {
+      let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
+      let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
+      _rt::cabi_dealloc(l1, l2, 1);
+    },
+    _ => {
+      let l3 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
+      let l4 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
+      _rt::cabi_dealloc(l3, l4, 1);
+    },
+  }
+} }
+#[doc(hidden)]
+#[allow(non_snake_case, unused_unsafe)]
+pub unsafe fn _export_method_repo_create_commit_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,arg5: *mut u8,arg6: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+_rt::run_ctors_once();let result3 = {
+  let len0 = arg2;
+  let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
+  let len1 = arg4;
+  let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
+  let len2 = arg6;
+  let bytes2 = _rt::Vec::from_raw_parts(arg5.cast(), len2, len2);
+  T::create_commit(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1), _rt::string_lift(bytes2))
+};
+let ptr4 = (&raw mut _RET_AREA.0).cast::<u8>();
+match result3 {
+  Ok(e) => { {
+    *ptr4.add(0).cast::<u8>() = (0i32) as u8;
+    *ptr4.add(::core::mem::size_of::<*const u8>()).cast::<u8>() = (match e { true => 1, false => 0 }) as u8;
+  } },
+  Err(e) => { {
+    *ptr4.add(0).cast::<u8>() = (1i32) as u8;
+    let vec5 = (e.into_bytes()).into_boxed_slice();
+    let ptr5 = vec5.as_ptr().cast::<u8>();
+    let len5 = vec5.len();
+    ::core::mem::forget(vec5);
+    *ptr4.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
+    *ptr4.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
+  } },
+};ptr4
 } }
 #[doc(hidden)]
 #[allow(non_snake_case)]
@@ -7871,7 +7929,9 @@ pub trait GuestRepo: 'static {
 
   
   #[allow(async_fn_in_trait)]
-  fn get_record(&self,rpath: _rt::String,) -> Result<GetResult,_rt::String>;
+  fn get_record(&self,rpath: _rt::String,) -> Result<_rt::String,_rt::String>;
+  #[allow(async_fn_in_trait)]
+  fn get_records(&self,nsid: _rt::String,) -> Result<_rt::Vec::<_rt::String>,_rt::String>;
   #[allow(async_fn_in_trait)]
   fn create_stage(&self,nsid: _rt::String,data: _rt::String,) -> Result<_rt::String,_rt::String>;
   #[allow(async_fn_in_trait)]
@@ -7941,6 +8001,14 @@ macro_rules! __export_polka_repository_repo_0_1_0_cabi{
     #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.get-record")]
     unsafe extern "C" fn _post_return_method_repo_get_record(arg0: *mut u8,) {
       unsafe { $($path_to_types)*::__post_return_method_repo_get_record::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
+    }
+    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.get-records")]
+    unsafe extern "C" fn export_method_repo_get_records(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 {
+      unsafe { $($path_to_types)*::_export_method_repo_get_records_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2) }
+    }
+    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.get-records")]
+    unsafe extern "C" fn _post_return_method_repo_get_records(arg0: *mut u8,) {
+      unsafe { $($path_to_types)*::__post_return_method_repo_get_records::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
     }
     #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.create-stage")]
     unsafe extern "C" fn export_method_repo_create_stage(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 {
@@ -8339,8 +8407,8 @@ pub(crate) use __export_repository_impl as export;
 #[unsafe(link_section = "component-type:wit-bindgen:0.47.0:polka:repository@0.1.0:repository:encoded world")]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 11372] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xebW\x01A\x02\x01AI\x01\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 11378] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xf1W\x01A\x02\x01AI\x01\
 B\x0a\x01o\x02ss\x01p\0\x01@\0\0\x01\x04\0\x0fget-environment\x01\x02\x01ps\x01@\
 \0\0\x03\x04\0\x0dget-arguments\x01\x04\x01ks\x01@\0\0\x05\x04\0\x0binitial-cwd\x01\
 \x06\x03\0\x1awasi:cli/environment@0.2.0\x05\0\x01B\x03\x01j\0\0\x01@\x01\x06sta\
@@ -8554,23 +8622,23 @@ p}\x01@\x01\x03lenw\0\0\x04\0\x10get-random-bytes\x01\x01\x01@\0\0w\x04\0\x0eget
 \x03lenw\0\0\x04\0\x19get-insecure-random-bytes\x01\x01\x01@\0\0w\x04\0\x17get-i\
 nsecure-random-u64\x01\x02\x03\0\x1awasi:random/insecure@0.2.0\x05*\x01B\x03\x01\
 o\x02ww\x01@\0\0\0\x04\0\x0dinsecure-seed\x01\x01\x03\0\x1fwasi:random/insecure-\
-seed@0.2.0\x05+\x01B#\x01r\x01\x04datas\x04\0\x0aget-result\x03\0\0\x04\0\x04rep\
-o\x03\x01\x04\0\x07builder\x03\x01\x01h\x02\x01j\x01\x01\x01s\x01@\x02\x04self\x04\
-\x05rpaths\0\x05\x04\0\x17[method]repo.get-record\x01\x06\x01j\x01s\x01s\x01@\x03\
-\x04self\x04\x04nsids\x04datas\0\x07\x04\0\x19[method]repo.create-stage\x01\x08\x01\
-@\x03\x04self\x04\x05rpaths\x04datas\0\x07\x04\0\x19[method]repo.update-stage\x01\
-\x09\x01@\x02\x04self\x04\x05rpaths\0\x07\x04\0\x19[method]repo.delete-stage\x01\
-\x0a\x01j\x01\x7f\x01s\x01@\x04\x04self\x04\x04nsids\x04datas\x03sigs\0\x0b\x04\0\
-\x1a[method]repo.create-commit\x01\x0c\x01@\x04\x04self\x04\x05rpaths\x04datas\x03\
-sigs\0\x0b\x04\0\x1a[method]repo.update-commit\x01\x0d\x01@\x03\x04self\x04\x05r\
-paths\x03sigs\0\x0b\x04\0\x1a[method]repo.delete-commit\x01\x0e\x01h\x03\x01@\x01\
-\x04self\x0f\0s\x04\0\x19[method]builder.get-bytes\x01\x10\x01i\x02\x01j\x01\x11\
-\x01s\x01@\x02\x04self\x0f\x03sigs\0\x12\x04\0\x18[method]builder.finalize\x01\x13\
-\x01i\x03\x01j\x01\x14\x01s\x01@\x01\x03dids\0\x15\x04\0\x06create\x01\x16\x01@\x02\
-\x03dids\x03cids\0\x12\x04\0\x04open\x01\x17\x04\0\x1bpolka:repository/repo@0.1.\
-0\x05,\x04\0!polka:repository/repository@0.1.0\x04\0\x0b\x10\x01\0\x0arepository\
-\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.240.0\x10\
-wit-bindgen-rust\x060.47.0";
+seed@0.2.0\x05+\x01B#\x04\0\x04repo\x03\x01\x04\0\x07builder\x03\x01\x01h\0\x01j\
+\x01s\x01s\x01@\x02\x04self\x02\x05rpaths\0\x03\x04\0\x17[method]repo.get-record\
+\x01\x04\x01ps\x01j\x01\x05\x01s\x01@\x02\x04self\x02\x04nsids\0\x06\x04\0\x18[m\
+ethod]repo.get-records\x01\x07\x01@\x03\x04self\x02\x04nsids\x04datas\0\x03\x04\0\
+\x19[method]repo.create-stage\x01\x08\x01@\x03\x04self\x02\x05rpaths\x04datas\0\x03\
+\x04\0\x19[method]repo.update-stage\x01\x09\x04\0\x19[method]repo.delete-stage\x01\
+\x04\x01j\x01\x7f\x01s\x01@\x04\x04self\x02\x04nsids\x04datas\x03sigs\0\x0a\x04\0\
+\x1a[method]repo.create-commit\x01\x0b\x01@\x04\x04self\x02\x05rpaths\x04datas\x03\
+sigs\0\x0a\x04\0\x1a[method]repo.update-commit\x01\x0c\x01@\x03\x04self\x02\x05r\
+paths\x03sigs\0\x0a\x04\0\x1a[method]repo.delete-commit\x01\x0d\x01h\x01\x01@\x01\
+\x04self\x0e\0s\x04\0\x19[method]builder.get-bytes\x01\x0f\x01i\0\x01j\x01\x10\x01\
+s\x01@\x02\x04self\x0e\x03sigs\0\x11\x04\0\x18[method]builder.finalize\x01\x12\x01\
+i\x01\x01j\x01\x13\x01s\x01@\x01\x03dids\0\x14\x04\0\x06create\x01\x15\x01@\x02\x03\
+dids\x03cids\0\x11\x04\0\x04open\x01\x16\x04\0\x1bpolka:repository/repo@0.1.0\x05\
+,\x04\0!polka:repository/repository@0.1.0\x04\0\x0b\x10\x01\0\x0arepository\x03\0\
+\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.240.0\x10wit-bi\
+ndgen-rust\x060.47.0";
 
 #[inline(never)]
 #[doc(hidden)]

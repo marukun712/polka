@@ -13,10 +13,11 @@ import {
 	createRecordSchema,
 	deleteRecordSchema,
 	getRecordSchema,
+	getRecordsSchema,
 	initRepoSchema,
 	updateRecordSchema,
 } from "./@types/schema.ts";
-import { repo } from "./dist/transpiled/repo.js";
+import { repo as wasm } from "./dist/transpiled/repo.js";
 
 const logger = pino({
 	level: process.env.LOG_LEVEL || "info",
@@ -28,7 +29,7 @@ const logger = pino({
 				},
 });
 
-const did = "did:key:z6MkvPRJTeguSbG1cNKn1S3zgYKnu5asvwWgceHLvxZbZakf";
+const did = "did:key:zDnaeWpCx8wFSFwcSifye3r1NSLsgenutZnTxhEaB3tBjUT6H";
 
 logger.info(
 	{
@@ -38,29 +39,29 @@ logger.info(
 	`Initializing repository for DID: ${did}`,
 );
 
-const instance = repo.createRepo();
-const builder = instance.new(did);
+const builder = wasm.create(did);
+let repo: wasm.Repo;
 
 logger.info(
 	{
 		type: "repo.initialized",
 		did,
 	},
-	"Repository instance created",
+	"Builder created",
 );
 
 const app = new Hono();
 
 app.get("/", (c) => {
 	logger.debug(
-		{ endpoint: "/", type: "request.simple" },
+		{ endpoint: "/", type: "request.root" },
 		"Root endpoint accessed",
 	);
 	return c.text("Welcome to polka PDS!");
 });
 
 app.get("/health", (c) => {
-	logger.debug({ endpoint: "/health", type: "request.simple" }, "Health check");
+	logger.debug({ endpoint: "/health", type: "request.health" }, "Health check");
 	return c.json({ status: "ok" });
 });
 
@@ -108,8 +109,8 @@ app.post(
 					"Finalizing repository initialization",
 				);
 
-				const success = builder.finalize(sig);
-
+				repo = builder.finalize(sig);
+				const success = true;
 				logger.info(
 					{
 						operation: "repo.finalize",
@@ -198,6 +199,22 @@ app.get(
 	}),
 	(c) => {
 		const rpath = c.req.valid("query").rpath;
+
+		if (!repo) {
+			logger.warn(
+				{
+					type: "repo.not_initialized",
+					endpoint: c.req.path,
+					method: c.req.method,
+				},
+				"Repository not initialized",
+			);
+			return c.json(
+				{ error: "Repository not initialized. Please call /init first." },
+				400,
+			);
+		}
+
 		try {
 			logger.info(
 				{
@@ -208,7 +225,7 @@ app.get(
 				`Retrieving record: ${rpath}`,
 			);
 
-			const record = instance.getRecord(rpath);
+			const record = repo.getRecord(rpath);
 
 			logger.info(
 				{
@@ -237,6 +254,101 @@ app.get(
 					type: "repo.operation.error",
 				},
 				`Failed to get record ${rpath}: ${error instanceof Error ? error.message : String(error)}`,
+			);
+
+			return c.json({ error: String(error) }, 500);
+		}
+	},
+);
+
+app.get(
+	"/records",
+	validator("query", (value, c) => {
+		const parsed = getRecordsSchema.safeParse(value);
+		if (!parsed.success) {
+			logger.warn(
+				{
+					endpoint: "/records",
+					method: "GET",
+					validationType: "query",
+					errors: z.treeifyError(parsed.error),
+					receivedData: value,
+					type: "validation.failed",
+				},
+				"Get records schema validation failed",
+			);
+			return c.text("Invalid Schema!", 401);
+		}
+
+		logger.debug(
+			{
+				endpoint: "/records",
+				method: "GET",
+				validationType: "query",
+				type: "validation.success",
+			},
+			"Get records schema validation successful",
+		);
+
+		return parsed.data;
+	}),
+	(c) => {
+		const nsid = c.req.valid("query").nsid;
+
+		if (!repo) {
+			logger.warn(
+				{
+					type: "repo.not_initialized",
+					endpoint: c.req.path,
+					method: c.req.method,
+				},
+				"Repository not initialized",
+			);
+			return c.json(
+				{ error: "Repository not initialized. Please call /init first." },
+				400,
+			);
+		}
+
+		try {
+			logger.info(
+				{
+					operation: "records.get",
+					nsid,
+					type: "repo.operation",
+				},
+				`Getting list of record for: ${nsid}`,
+			);
+
+			const record = repo.getRecords(nsid);
+
+			logger.info(
+				{
+					operation: "record.gets",
+					nsid,
+					recordExists: !!record,
+					type: "repo.operation.complete",
+				},
+				`Records retrieved: ${nsid}`,
+			);
+
+			return c.json(record);
+		} catch (error) {
+			logger.error(
+				{
+					operation: "record.gets",
+					nsid,
+					error:
+						error instanceof Error
+							? {
+									message: error.message,
+									stack: error.stack,
+									name: error.name,
+								}
+							: error,
+					type: "repo.operation.error",
+				},
+				`Failed to get records ${nsid}: ${error instanceof Error ? error.message : String(error)}`,
 			);
 
 			return c.json({ error: String(error) }, 500);
@@ -280,6 +392,21 @@ app.post(
 		const body = c.req.valid("json").body;
 		const sig = c.req.valid("json").sig;
 
+		if (!repo) {
+			logger.warn(
+				{
+					type: "repo.not_initialized",
+					endpoint: c.req.path,
+					method: c.req.method,
+				},
+				"Repository not initialized",
+			);
+			return c.json(
+				{ error: "Repository not initialized. Please call /init first." },
+				400,
+			);
+		}
+
 		try {
 			if (sig) {
 				logger.info(
@@ -294,7 +421,7 @@ app.post(
 					`Creating record commit: ${nsid} for ${did}`,
 				);
 
-				const success = instance.createCommit(nsid, body, sig);
+				const success = repo.createCommit(nsid, body, sig);
 
 				logger.info(
 					{
@@ -319,7 +446,7 @@ app.post(
 					`Creating record stage: ${nsid}`,
 				);
 
-				const bytes = instance.createStage(nsid, body);
+				const bytes = repo.createStage(nsid, body);
 
 				logger.debug(
 					{
@@ -394,6 +521,21 @@ app.put(
 		const body = c.req.valid("json").body;
 		const sig = c.req.valid("json").sig;
 
+		if (!repo) {
+			logger.warn(
+				{
+					type: "repo.not_initialized",
+					endpoint: c.req.path,
+					method: c.req.method,
+				},
+				"Repository not initialized",
+			);
+			return c.json(
+				{ error: "Repository not initialized. Please call /init first." },
+				400,
+			);
+		}
+
 		try {
 			if (sig) {
 				logger.info(
@@ -408,7 +550,7 @@ app.put(
 					`Updating record commit: ${rpath} for ${did}`,
 				);
 
-				const success = instance.updateCommit(rpath, body, sig);
+				const success = repo.updateCommit(rpath, body, sig);
 
 				logger.info(
 					{
@@ -433,7 +575,7 @@ app.put(
 					`Creating update stage: ${rpath}`,
 				);
 
-				const bytes = instance.updateStage(rpath, body);
+				const bytes = repo.updateStage(rpath, body);
 
 				logger.debug(
 					{
@@ -507,6 +649,21 @@ app.delete(
 		const rpath = c.req.valid("json").rpath;
 		const sig = c.req.valid("json").sig;
 
+		if (!repo) {
+			logger.warn(
+				{
+					type: "repo.not_initialized",
+					endpoint: c.req.path,
+					method: c.req.method,
+				},
+				"Repository not initialized",
+			);
+			return c.json(
+				{ error: "Repository not initialized. Please call /init first." },
+				400,
+			);
+		}
+
 		try {
 			if (sig) {
 				logger.info(
@@ -520,7 +677,7 @@ app.delete(
 					`Deleting record commit: ${rpath} for ${did}`,
 				);
 
-				const success = instance.deleteCommit(rpath, sig);
+				const success = repo.deleteCommit(rpath, sig);
 
 				logger.info(
 					{
@@ -544,7 +701,7 @@ app.delete(
 					`Creating delete stage: ${rpath}`,
 				);
 
-				const bytes = instance.deleteStage(rpath);
+				const bytes = repo.deleteStage(rpath);
 
 				logger.debug(
 					{
@@ -597,47 +754,6 @@ const server = await createLibp2p({
 			server: fetchServer(app.fetch),
 		}),
 	},
-});
-
-server.addEventListener("peer:connect", (evt) => {
-	logger.info(
-		{
-			type: "libp2p.peer.connect",
-			peerId: evt.detail.toString(),
-		},
-		`Peer connected: ${evt.detail.toString()}`,
-	);
-});
-
-server.addEventListener("peer:disconnect", (evt) => {
-	logger.info(
-		{
-			type: "libp2p.peer.disconnect",
-			peerId: evt.detail.toString(),
-		},
-		`Peer disconnected: ${evt.detail.toString()}`,
-	);
-});
-
-server.addEventListener("connection:open", (evt) => {
-	logger.debug(
-		{
-			type: "libp2p.connection.open",
-			remotePeer: evt.detail.remotePeer.toString(),
-			direction: evt.detail.direction,
-		},
-		`Connection opened: ${evt.detail.direction} from ${evt.detail.remotePeer.toString()}`,
-	);
-});
-
-server.addEventListener("connection:close", (evt) => {
-	logger.debug(
-		{
-			type: "libp2p.connection.close",
-			remotePeer: evt.detail.remotePeer.toString(),
-		},
-		`Connection closed from ${evt.detail.remotePeer.toString()}`,
-	);
 });
 
 await server.start();

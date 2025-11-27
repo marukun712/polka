@@ -1,12 +1,9 @@
 package polka:repository@0.1.0;
 
 interface repo {
-  record get-result {
-    data: string,
-  }
-
   resource repo {
-    get-record: func(rpath: string) -> result<get-result, string>;
+    get-record: func(rpath: string) -> result<string, string>;
+    get-records: func(nsid: string) -> result<list<string>, string>;
 
     create-stage: func(nsid: string, data: string) -> result<string, string>;
     update-stage: func(rpath: string, data: string) -> result<string, string>;
