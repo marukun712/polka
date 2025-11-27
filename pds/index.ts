@@ -14,10 +14,10 @@ import {
 	deleteRecordSchema,
 	getRecordSchema,
 	getRecordsSchema,
-	initRepoSchema,
 	updateRecordSchema,
 } from "./@types/schema.ts";
 import { repo as wasm } from "./dist/transpiled/repo.js";
+import { did } from "./lib/crypto.ts";
 
 const logger = pino({
 	level: process.env.LOG_LEVEL || "info",
@@ -29,8 +29,6 @@ const logger = pino({
 				},
 });
 
-const did = "did:key:zDnaeWpCx8wFSFwcSifye3r1NSLsgenutZnTxhEaB3tBjUT6H";
-
 logger.info(
 	{
 		type: "repo.initializing",
@@ -39,15 +37,14 @@ logger.info(
 	`Initializing repository for DID: ${did}`,
 );
 
-const builder = wasm.create(did);
-let repo: wasm.Repo;
+const repo = wasm.create(did);
 
 logger.info(
 	{
 		type: "repo.initialized",
 		did,
 	},
-	"Builder created",
+	"Repo created",
 );
 
 const app = new Hono();
@@ -64,107 +61,6 @@ app.get("/health", (c) => {
 	logger.debug({ endpoint: "/health", type: "request.health" }, "Health check");
 	return c.json({ status: "ok" });
 });
-
-app.post(
-	"/init",
-	validator("json", (value, c) => {
-		const parsed = initRepoSchema.safeParse(value);
-		if (!parsed.success) {
-			logger.warn(
-				{
-					endpoint: "/init",
-					method: "GET",
-					validationType: "json",
-					errors: z.treeifyError(parsed.error),
-					receivedData: value,
-					type: "validation.failed",
-				},
-				"Init schema validation failed",
-			);
-			return c.text("Invalid Schema!", 401);
-		}
-
-		logger.debug(
-			{
-				endpoint: "/init",
-				method: "GET",
-				validationType: "json",
-				type: "validation.success",
-			},
-			"Init schema validation successful",
-		);
-
-		return parsed.data;
-	}),
-	(c) => {
-		const sig = c.req.valid("json").sig;
-		try {
-			if (sig) {
-				logger.info(
-					{
-						operation: "repo.finalize",
-						hasSig: true,
-						type: "repo.operation",
-					},
-					"Finalizing repository initialization",
-				);
-
-				repo = builder.finalize(sig);
-				const success = true;
-				logger.info(
-					{
-						operation: "repo.finalize",
-						success,
-						type: "repo.operation.complete",
-					},
-					`Repository finalization ${success ? "succeeded" : "failed"}`,
-				);
-
-				return c.json({ success });
-			} else {
-				logger.debug(
-					{
-						operation: "repo.getBytes",
-						type: "repo.operation",
-					},
-					"Getting bytes for repository initialization",
-				);
-
-				const bytes = builder.getBytes();
-
-				logger.debug(
-					{
-						operation: "repo.getBytes",
-						bytesLength: bytes.length,
-						type: "repo.operation.complete",
-					},
-					"Retrieved bytes for signing",
-				);
-
-				return c.json({ bytes });
-			}
-		} catch (error) {
-			logger.error(
-				{
-					operation: "repo.init",
-					hasSig: !!sig,
-					error:
-						error instanceof Error
-							? {
-									message: error.message,
-									stack: error.stack,
-									name: error.name,
-								}
-							: error,
-					type: "repo.operation.error",
-				},
-				`Repository initialization failed: ${error instanceof Error ? error.message : String(error)}`,
-			);
-
-			return c.json({ error: String(error) }, 500);
-		}
-	},
-);
 
 app.post(
 	"/get",
@@ -324,7 +220,7 @@ app.post(
 
 			logger.info(
 				{
-					operation: "record.gets",
+					operation: "records.get",
 					nsid,
 					recordExists: !!record,
 					type: "repo.operation.complete",
@@ -390,7 +286,6 @@ app.post(
 	(c) => {
 		const nsid = c.req.valid("json").nsid;
 		const body = c.req.valid("json").body;
-		const sig = c.req.valid("json").sig;
 
 		if (!repo) {
 			logger.warn(
@@ -408,65 +303,26 @@ app.post(
 		}
 
 		try {
-			if (sig) {
-				logger.info(
-					{
-						operation: "record.createCommit",
-						did,
-						nsid,
-						hasSig: true,
-						bodyLength: body.length,
-						type: "repo.operation",
-					},
-					`Creating record commit: ${nsid} for ${did}`,
-				);
+			const success = repo.create(nsid, body);
 
-				const success = repo.createCommit(nsid, body, sig);
+			logger.info(
+				{
+					operation: "record.create",
+					did,
+					nsid,
+					success,
+					type: "repo.operation.complete",
+				},
+				`Record commit ${success ? "succeeded" : "failed"}: ${nsid}`,
+			);
 
-				logger.info(
-					{
-						operation: "record.createCommit",
-						did,
-						nsid,
-						success,
-						type: "repo.operation.complete",
-					},
-					`Record commit ${success ? "succeeded" : "failed"}: ${nsid}`,
-				);
-
-				return c.json({ success });
-			} else {
-				logger.debug(
-					{
-						operation: "record.createStage",
-						nsid,
-						bodyLength: body.length,
-						type: "repo.operation",
-					},
-					`Creating record stage: ${nsid}`,
-				);
-
-				const bytes = repo.createStage(nsid, body);
-
-				logger.debug(
-					{
-						operation: "record.createStage",
-						nsid,
-						bytesLength: bytes.length,
-						type: "repo.operation.complete",
-					},
-					`Record stage created: ${nsid}`,
-				);
-
-				return c.json({ bytes });
-			}
+			return c.json({ success });
 		} catch (error) {
 			logger.error(
 				{
-					operation: sig ? "record.createCommit" : "record.createStage",
+					operation: "record.create",
 					did,
 					nsid,
-					hasSig: !!sig,
 					error:
 						error instanceof Error
 							? {
@@ -519,7 +375,6 @@ app.put(
 	(c) => {
 		const rpath = c.req.valid("json").rpath;
 		const body = c.req.valid("json").body;
-		const sig = c.req.valid("json").sig;
 
 		if (!repo) {
 			logger.warn(
@@ -537,65 +392,38 @@ app.put(
 		}
 
 		try {
-			if (sig) {
-				logger.info(
-					{
-						operation: "record.updateCommit",
-						did,
-						rpath,
-						hasSig: true,
-						bodyLength: body.length,
-						type: "repo.operation",
-					},
-					`Updating record commit: ${rpath} for ${did}`,
-				);
+			logger.info(
+				{
+					operation: "record.update",
+					did,
+					rpath,
+					hasSig: true,
+					bodyLength: body.length,
+					type: "repo.operation",
+				},
+				`Updating record commit: ${rpath} for ${did}`,
+			);
 
-				const success = repo.updateCommit(rpath, body, sig);
+			const success = repo.update(rpath, body);
 
-				logger.info(
-					{
-						operation: "record.updateCommit",
-						did,
-						rpath,
-						success,
-						type: "repo.operation.complete",
-					},
-					`Record update ${success ? "succeeded" : "failed"}: ${rpath}`,
-				);
+			logger.info(
+				{
+					operation: "record.update",
+					did,
+					rpath,
+					success,
+					type: "repo.operation.complete",
+				},
+				`Record update ${success ? "succeeded" : "failed"}: ${rpath}`,
+			);
 
-				return c.json({ success });
-			} else {
-				logger.debug(
-					{
-						operation: "record.updateStage",
-						rpath,
-						bodyLength: body.length,
-						type: "repo.operation",
-					},
-					`Creating update stage: ${rpath}`,
-				);
-
-				const bytes = repo.updateStage(rpath, body);
-
-				logger.debug(
-					{
-						operation: "record.updateStage",
-						rpath,
-						bytesLength: bytes.length,
-						type: "repo.operation.complete",
-					},
-					`Update stage created: ${rpath}`,
-				);
-
-				return c.json({ bytes });
-			}
+			return c.json({ success });
 		} catch (error) {
 			logger.error(
 				{
-					operation: sig ? "record.updateCommit" : "record.updateStage",
+					operation: "record.update",
 					did,
 					rpath,
-					hasSig: !!sig,
 					error:
 						error instanceof Error
 							? {
@@ -647,7 +475,6 @@ app.delete(
 	}),
 	(c) => {
 		const rpath = c.req.valid("json").rpath;
-		const sig = c.req.valid("json").sig;
 
 		if (!repo) {
 			logger.warn(
@@ -665,63 +492,37 @@ app.delete(
 		}
 
 		try {
-			if (sig) {
-				logger.info(
-					{
-						operation: "record.deleteCommit",
-						did,
-						rpath,
-						hasSig: true,
-						type: "repo.operation",
-					},
-					`Deleting record commit: ${rpath} for ${did}`,
-				);
+			logger.info(
+				{
+					operation: "record.delete",
+					did,
+					rpath,
+					hasSig: true,
+					type: "repo.operation",
+				},
+				`Deleting record commit: ${rpath} for ${did}`,
+			);
 
-				const success = repo.deleteCommit(rpath, sig);
+			const success = repo.delete(rpath);
 
-				logger.info(
-					{
-						operation: "record.deleteCommit",
-						did,
-						rpath,
-						success,
-						type: "repo.operation.complete",
-					},
-					`Record deletion ${success ? "succeeded" : "failed"}: ${rpath}`,
-				);
+			logger.info(
+				{
+					operation: "record.delete",
+					did,
+					rpath,
+					success,
+					type: "repo.operation.complete",
+				},
+				`Record deletion ${success ? "succeeded" : "failed"}: ${rpath}`,
+			);
 
-				return c.json({ success });
-			} else {
-				logger.debug(
-					{
-						operation: "record.deleteStage",
-						rpath,
-						type: "repo.operation",
-					},
-					`Creating delete stage: ${rpath}`,
-				);
-
-				const bytes = repo.deleteStage(rpath);
-
-				logger.debug(
-					{
-						operation: "record.deleteStage",
-						rpath,
-						bytesLength: bytes.length,
-						type: "repo.operation.complete",
-					},
-					`Delete stage created: ${rpath}`,
-				);
-
-				return c.json({ bytes });
-			}
+			return c.json({ success });
 		} catch (error) {
 			logger.error(
 				{
-					operation: sig ? "record.deleteCommit" : "record.deleteStage",
+					operation: "record.delete",
 					did,
 					rpath,
-					hasSig: !!sig,
 					error:
 						error instanceof Error
 							? {

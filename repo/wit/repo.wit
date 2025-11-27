@@ -10,15 +10,11 @@ interface blockstore {
     hash: u64,
     contents: list<u8>
   ) -> list<u8>;
-
-  contains: func(
-    cid: list<u8>
-  ) -> bool;
 }
 
 interface crypto {
   sign: func(bytes: list<u8>) -> list<u8>;
-  get-pk: func(did: string, cid: string) -> string;
+  get-did: func(did: string, cid: string) -> string;
 }
 
 interface repo {

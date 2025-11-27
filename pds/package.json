@@ -10,7 +10,7 @@
 		"lint:fix": "biome lint --write ./",
 		"check": "biome check ./",
 		"check:fix": "biome check --write ./",
-		"transpile": "bunx jco transpile wasm/repo.wasm -o dist/transpiled --map polka:repository/blockstore=../../lib/blockstore.ts"
+		"transpile": "bunx jco transpile wasm/repo.wasm -o dist/transpiled --map polka:repository/blockstore=../../lib/blockstore.ts polka:repository/crypto=../../lib/crypto.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.6",
@@ -20,6 +20,7 @@
 		"typescript": "^5"
 	},
 	"dependencies": {
+		"@atproto/crypto": "^0.4.4",
 		"@bytecodealliance/jco": "^1.15.3",
 		"@bytecodealliance/preview2-shim": "^0.17.5",
 		"@chainsafe/libp2p-noise": "^17.0.0",
@@ -35,6 +36,7 @@
 		"@libp2p/keychain": "^6.0.9",
 		"@libp2p/webrtc": "^6.0.10",
 		"@libp2p/websockets": "^10.1.2",
+		"blockstore-fs": "^3.0.2",
 		"hono": "^4.10.6",
 		"libp2p": "^3.1.2",
 		"multiformats": "^13.4.1",

@@ -22,7 +22,6 @@ export const createRecordSchema = z
 	.object({
 		nsid: z.string(),
 		body: z.string(),
-		sig: z.string().optional(),
 	})
 	.strict();
 
@@ -30,13 +29,11 @@ export const updateRecordSchema = z
 	.object({
 		rpath: z.string(),
 		body: z.string(),
-		sig: z.string().optional(),
 	})
 	.strict();
 
 export const deleteRecordSchema = z
 	.object({
 		rpath: z.string(),
-		sig: z.string().optional(),
 	})
 	.strict();
