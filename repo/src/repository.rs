@@ -2,6 +2,180 @@
 // Options used:
 //   * default-bindings-module: "crate::repository"
 #[allow(dead_code, clippy::all)]
+pub mod polka {
+  pub mod repository {
+
+    #[allow(dead_code, async_fn_in_trait, unused_imports, clippy::all)]
+    pub mod blockstore {
+      #[used]
+      #[doc(hidden)]
+      static __FORCE_SECTION_REF: fn() =
+      super::super::super::__link_custom_section_describing_imports;
+      
+      use super::super::super::_rt;
+      #[allow(unused_unsafe, clippy::all)]
+      #[allow(async_fn_in_trait)]
+      pub fn read_block(cid: &[u8],) -> _rt::Vec::<u8>{
+        unsafe {
+
+          #[cfg_attr(target_pointer_width="64", repr(align(8)))]
+          #[cfg_attr(target_pointer_width="32", repr(align(4)))]
+          struct RetArea([::core::mem::MaybeUninit::<u8>; 2*::core::mem::size_of::<*const u8>()]);
+          let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 2*::core::mem::size_of::<*const u8>()]);
+          let vec0 = cid;
+          let ptr0 = vec0.as_ptr().cast::<u8>();
+          let len0 = vec0.len();
+          let ptr1 = ret_area.0.as_mut_ptr().cast::<u8>();
+          #[cfg(target_arch = "wasm32")]
+          #[link(wasm_import_module = "polka:repository/blockstore@0.1.0")]
+          unsafe extern "C" {
+            #[link_name = "read-block"]
+            fn wit_import2(_: *mut u8, _: usize, _: *mut u8, );
+          }
+
+          #[cfg(not(target_arch = "wasm32"))]
+          unsafe extern "C" fn wit_import2(_: *mut u8, _: usize, _: *mut u8, ) { unreachable!() }
+          wit_import2(ptr0.cast_mut(), len0, ptr1);
+          let l3 = *ptr1.add(0).cast::<*mut u8>();
+          let l4 = *ptr1.add(::core::mem::size_of::<*const u8>()).cast::<usize>();
+          let len5 = l4;
+          let result6 = _rt::Vec::from_raw_parts(l3.cast(), len5, len5);
+          result6
+        }
+      }
+      #[allow(unused_unsafe, clippy::all)]
+      #[allow(async_fn_in_trait)]
+      pub fn write_block(codec: u64,hash: u64,contents: &[u8],) -> _rt::Vec::<u8>{
+        unsafe {
+
+          #[cfg_attr(target_pointer_width="64", repr(align(8)))]
+          #[cfg_attr(target_pointer_width="32", repr(align(4)))]
+          struct RetArea([::core::mem::MaybeUninit::<u8>; 2*::core::mem::size_of::<*const u8>()]);
+          let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 2*::core::mem::size_of::<*const u8>()]);
+          let vec0 = contents;
+          let ptr0 = vec0.as_ptr().cast::<u8>();
+          let len0 = vec0.len();
+          let ptr1 = ret_area.0.as_mut_ptr().cast::<u8>();
+          #[cfg(target_arch = "wasm32")]
+          #[link(wasm_import_module = "polka:repository/blockstore@0.1.0")]
+          unsafe extern "C" {
+            #[link_name = "write-block"]
+            fn wit_import2(_: i64, _: i64, _: *mut u8, _: usize, _: *mut u8, );
+          }
+
+          #[cfg(not(target_arch = "wasm32"))]
+          unsafe extern "C" fn wit_import2(_: i64, _: i64, _: *mut u8, _: usize, _: *mut u8, ) { unreachable!() }
+          wit_import2(_rt::as_i64(&codec), _rt::as_i64(&hash), ptr0.cast_mut(), len0, ptr1);
+          let l3 = *ptr1.add(0).cast::<*mut u8>();
+          let l4 = *ptr1.add(::core::mem::size_of::<*const u8>()).cast::<usize>();
+          let len5 = l4;
+          let result6 = _rt::Vec::from_raw_parts(l3.cast(), len5, len5);
+          result6
+        }
+      }
+      #[allow(unused_unsafe, clippy::all)]
+      #[allow(async_fn_in_trait)]
+      pub fn contains(cid: &[u8],) -> bool{
+        unsafe {
+          let vec0 = cid;
+          let ptr0 = vec0.as_ptr().cast::<u8>();
+          let len0 = vec0.len();
+
+          #[cfg(target_arch = "wasm32")]
+          #[link(wasm_import_module = "polka:repository/blockstore@0.1.0")]
+          unsafe extern "C" {
+            #[link_name = "contains"]
+            fn wit_import1(_: *mut u8, _: usize, ) -> i32;
+          }
+
+          #[cfg(not(target_arch = "wasm32"))]
+          unsafe extern "C" fn wit_import1(_: *mut u8, _: usize, ) -> i32 { unreachable!() }
+          let ret = wit_import1(ptr0.cast_mut(), len0);
+          _rt::bool_lift(ret as u8)
+        }
+      }
+
+    }
+
+
+    #[allow(dead_code, async_fn_in_trait, unused_imports, clippy::all)]
+    pub mod crypto {
+      #[used]
+      #[doc(hidden)]
+      static __FORCE_SECTION_REF: fn() =
+      super::super::super::__link_custom_section_describing_imports;
+      
+      use super::super::super::_rt;
+      #[allow(unused_unsafe, clippy::all)]
+      #[allow(async_fn_in_trait)]
+      pub fn sign(bytes: &[u8],) -> _rt::Vec::<u8>{
+        unsafe {
+
+          #[cfg_attr(target_pointer_width="64", repr(align(8)))]
+          #[cfg_attr(target_pointer_width="32", repr(align(4)))]
+          struct RetArea([::core::mem::MaybeUninit::<u8>; 2*::core::mem::size_of::<*const u8>()]);
+          let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 2*::core::mem::size_of::<*const u8>()]);
+          let vec0 = bytes;
+          let ptr0 = vec0.as_ptr().cast::<u8>();
+          let len0 = vec0.len();
+          let ptr1 = ret_area.0.as_mut_ptr().cast::<u8>();
+          #[cfg(target_arch = "wasm32")]
+          #[link(wasm_import_module = "polka:repository/crypto@0.1.0")]
+          unsafe extern "C" {
+            #[link_name = "sign"]
+            fn wit_import2(_: *mut u8, _: usize, _: *mut u8, );
+          }
+
+          #[cfg(not(target_arch = "wasm32"))]
+          unsafe extern "C" fn wit_import2(_: *mut u8, _: usize, _: *mut u8, ) { unreachable!() }
+          wit_import2(ptr0.cast_mut(), len0, ptr1);
+          let l3 = *ptr1.add(0).cast::<*mut u8>();
+          let l4 = *ptr1.add(::core::mem::size_of::<*const u8>()).cast::<usize>();
+          let len5 = l4;
+          let result6 = _rt::Vec::from_raw_parts(l3.cast(), len5, len5);
+          result6
+        }
+      }
+      #[allow(unused_unsafe, clippy::all)]
+      #[allow(async_fn_in_trait)]
+      pub fn get_pk(did: &str,cid: &str,) -> _rt::String{
+        unsafe {
+
+          #[cfg_attr(target_pointer_width="64", repr(align(8)))]
+          #[cfg_attr(target_pointer_width="32", repr(align(4)))]
+          struct RetArea([::core::mem::MaybeUninit::<u8>; 2*::core::mem::size_of::<*const u8>()]);
+          let mut ret_area = RetArea([::core::mem::MaybeUninit::uninit(); 2*::core::mem::size_of::<*const u8>()]);
+          let vec0 = did;
+          let ptr0 = vec0.as_ptr().cast::<u8>();
+          let len0 = vec0.len();
+          let vec1 = cid;
+          let ptr1 = vec1.as_ptr().cast::<u8>();
+          let len1 = vec1.len();
+          let ptr2 = ret_area.0.as_mut_ptr().cast::<u8>();
+          #[cfg(target_arch = "wasm32")]
+          #[link(wasm_import_module = "polka:repository/crypto@0.1.0")]
+          unsafe extern "C" {
+            #[link_name = "get-pk"]
+            fn wit_import3(_: *mut u8, _: usize, _: *mut u8, _: usize, _: *mut u8, );
+          }
+
+          #[cfg(not(target_arch = "wasm32"))]
+          unsafe extern "C" fn wit_import3(_: *mut u8, _: usize, _: *mut u8, _: usize, _: *mut u8, ) { unreachable!() }
+          wit_import3(ptr0.cast_mut(), len0, ptr1.cast_mut(), len1, ptr2);
+          let l4 = *ptr2.add(0).cast::<*mut u8>();
+          let l5 = *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<usize>();
+          let len6 = l5;
+          let bytes6 = _rt::Vec::from_raw_parts(l4.cast(), len6, len6);
+          let result7 = _rt::string_lift(bytes6);
+          result7
+        }
+      }
+
+    }
+
+  }
+}
+#[allow(dead_code, clippy::all)]
 pub mod wasi {
   pub mod cli {
 
@@ -7218,147 +7392,6 @@ pub mod wasi {
             }
           }
           
-
-          #[derive(Debug)]
-          #[repr(transparent)]
-          pub struct Builder{
-            handle: _rt::Resource<Builder>,
-          }
-
-          type _BuilderRep<T> = Option<T>;
-
-          impl Builder{
-            /// Creates a new resource from the specified representation.
-            ///
-            /// This function will create a new resource handle by moving `val` onto
-            /// the heap and then passing that heap pointer to the component model to
-            /// create a handle. The owned handle is then returned as `Builder`.
-            pub fn new<T: GuestBuilder>(val: T) -> Self {
-              Self::type_guard::<T>();
-              let val: _BuilderRep<T> = Some(val);
-              let ptr: *mut _BuilderRep<T> =
-              _rt::Box::into_raw(_rt::Box::new(val));
-              unsafe {
-                Self::from_handle(T::_resource_new(ptr.cast()))
-              }
-            }
-
-            /// Gets access to the underlying `T` which represents this resource.
-            pub fn get<T: GuestBuilder>(&self) -> &T {
-              let ptr = unsafe { &*self.as_ptr::<T>() };
-              ptr.as_ref().unwrap()
-            }
-
-            /// Gets mutable access to the underlying `T` which represents this
-            /// resource.
-            pub fn get_mut<T: GuestBuilder>(&mut self) -> &mut T {
-              let ptr = unsafe { &mut *self.as_ptr::<T>() };
-              ptr.as_mut().unwrap()
-            }
-
-            /// Consumes this resource and returns the underlying `T`.
-            pub fn into_inner<T: GuestBuilder>(self) -> T {
-              let ptr = unsafe { &mut *self.as_ptr::<T>() };
-              ptr.take().unwrap()
-            }
-
-            #[doc(hidden)]
-            pub unsafe fn from_handle(handle: u32) -> Self {
-              Self {
-                handle: unsafe { _rt::Resource::from_handle(handle) },
-              }
-            }
-
-            #[doc(hidden)]
-            pub fn take_handle(&self) -> u32 {
-              _rt::Resource::take_handle(&self.handle)
-            }
-
-            #[doc(hidden)]
-            pub fn handle(&self) -> u32 {
-              _rt::Resource::handle(&self.handle)
-            }
-
-            // It's theoretically possible to implement the `GuestBuilder` trait twice
-            // so guard against using it with two different types here.
-            #[doc(hidden)]
-            fn type_guard<T: 'static>() {
-              use core::any::TypeId;
-              static mut LAST_TYPE: Option<TypeId> = None;
-              unsafe {
-                assert!(!cfg!(target_feature = "atomics"));
-                let id = TypeId::of::<T>();
-                match LAST_TYPE {
-                  Some(ty) => assert!(ty == id, "cannot use two types with this resource type"),
-                  None => LAST_TYPE = Some(id),
-                }
-              }
-            }
-
-            #[doc(hidden)]
-            pub unsafe fn dtor<T: 'static>(handle: *mut u8) {
-              Self::type_guard::<T>();
-              let _ = unsafe { _rt::Box::from_raw(handle as *mut _BuilderRep<T>) };
-            }
-
-            fn as_ptr<T: GuestBuilder>(&self) -> *mut _BuilderRep<T> {
-              Builder::type_guard::<T>();
-              T::_resource_rep(self.handle()).cast()
-            }
-          }
-
-          /// A borrowed version of [`Builder`] which represents a borrowed value
-          /// with the lifetime `'a`.
-          #[derive(Debug)]
-          #[repr(transparent)]
-          pub struct BuilderBorrow<'a> {
-            rep: *mut u8,
-            _marker: core::marker::PhantomData<&'a Builder>,
-          }
-
-          impl<'a> BuilderBorrow<'a>{
-            #[doc(hidden)]
-            pub unsafe fn lift(rep: usize) -> Self {
-              Self {
-                rep: rep as *mut u8,
-                _marker: core::marker::PhantomData,
-              }
-            }
-
-            /// Gets access to the underlying `T` in this resource.
-            pub fn get<T: GuestBuilder>(&self) -> &T {
-              let ptr = unsafe { &mut *self.as_ptr::<T>() };
-              ptr.as_ref().unwrap()
-            }
-
-            // NB: mutable access is not allowed due to the component model allowing
-            // multiple borrows of the same resource.
-
-            fn as_ptr<T: 'static>(&self) -> *mut _BuilderRep<T> {
-              Builder::type_guard::<T>();
-              self.rep.cast()
-            }
-          }
-          
-
-          unsafe impl _rt::WasmResource for Builder{
-            #[inline]
-            unsafe fn drop(_handle: u32) {
-              
-              #[cfg(target_arch = "wasm32")]
-              #[link(wasm_import_module = "[export]polka:repository/repo@0.1.0")]
-              unsafe extern "C" {
-                #[link_name = "[resource-drop]builder"]
-                fn drop(_: i32, );
-              }
-
-              #[cfg(not(target_arch = "wasm32"))]
-              unsafe extern "C" fn drop(_: i32, ) { unreachable!() }
-              
-              unsafe { drop(_handle as i32); }
-            }
-          }
-          
           #[doc(hidden)]
           #[allow(non_snake_case, unused_unsafe)]
           pub unsafe fn _export_method_repo_get_record_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
@@ -7476,18 +7509,22 @@ pub mod wasi {
       } }
       #[doc(hidden)]
       #[allow(non_snake_case, unused_unsafe)]
-      pub unsafe fn _export_method_repo_create_stage_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+      pub unsafe fn _export_method_repo_create_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
       _rt::run_ctors_once();let result2 = {
         let len0 = arg2;
         let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
         let len1 = arg4;
         let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
-        T::create_stage(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1))
+        T::create(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1))
       };
       let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
       match result2 {
         Ok(e) => { {
           *ptr3.add(0).cast::<u8>() = (0i32) as u8;
+          *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<u8>() = (match e { true => 1, false => 0 }) as u8;
+        } },
+        Err(e) => { {
+          *ptr3.add(0).cast::<u8>() = (1i32) as u8;
           let vec4 = (e.into_bytes()).into_boxed_slice();
           let ptr4 = vec4.as_ptr().cast::<u8>();
           let len4 = vec4.len();
@@ -7495,48 +7532,39 @@ pub mod wasi {
           *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
           *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
         } },
-        Err(e) => { {
-          *ptr3.add(0).cast::<u8>() = (1i32) as u8;
-          let vec5 = (e.into_bytes()).into_boxed_slice();
-          let ptr5 = vec5.as_ptr().cast::<u8>();
-          let len5 = vec5.len();
-          ::core::mem::forget(vec5);
-          *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
-          *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
-        } },
       };ptr3
     } }
     #[doc(hidden)]
     #[allow(non_snake_case)]
-    pub unsafe fn __post_return_method_repo_create_stage<T: GuestRepo>(arg0: *mut u8,) { unsafe {
+    pub unsafe fn __post_return_method_repo_create<T: GuestRepo>(arg0: *mut u8,) { unsafe {
       let l0 = i32::from(*arg0.add(0).cast::<u8>());
       match l0 {
-        0 => {
+        0 => (),
+        _ => {
           let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
           let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
           _rt::cabi_dealloc(l1, l2, 1);
-        },
-        _ => {
-          let l3 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-          let l4 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
-          _rt::cabi_dealloc(l3, l4, 1);
         },
       }
     } }
     #[doc(hidden)]
     #[allow(non_snake_case, unused_unsafe)]
-    pub unsafe fn _export_method_repo_update_stage_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+    pub unsafe fn _export_method_repo_update_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
     _rt::run_ctors_once();let result2 = {
       let len0 = arg2;
       let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
       let len1 = arg4;
       let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
-      T::update_stage(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1))
+      T::update(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1))
     };
     let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
     match result2 {
       Ok(e) => { {
         *ptr3.add(0).cast::<u8>() = (0i32) as u8;
+        *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<u8>() = (match e { true => 1, false => 0 }) as u8;
+      } },
+      Err(e) => { {
+        *ptr3.add(0).cast::<u8>() = (1i32) as u8;
         let vec4 = (e.into_bytes()).into_boxed_slice();
         let ptr4 = vec4.as_ptr().cast::<u8>();
         let len4 = vec4.len();
@@ -7544,46 +7572,37 @@ pub mod wasi {
         *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
         *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
       } },
-      Err(e) => { {
-        *ptr3.add(0).cast::<u8>() = (1i32) as u8;
-        let vec5 = (e.into_bytes()).into_boxed_slice();
-        let ptr5 = vec5.as_ptr().cast::<u8>();
-        let len5 = vec5.len();
-        ::core::mem::forget(vec5);
-        *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
-        *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
-      } },
     };ptr3
   } }
   #[doc(hidden)]
   #[allow(non_snake_case)]
-  pub unsafe fn __post_return_method_repo_update_stage<T: GuestRepo>(arg0: *mut u8,) { unsafe {
+  pub unsafe fn __post_return_method_repo_update<T: GuestRepo>(arg0: *mut u8,) { unsafe {
     let l0 = i32::from(*arg0.add(0).cast::<u8>());
     match l0 {
-      0 => {
+      0 => (),
+      _ => {
         let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
         let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
         _rt::cabi_dealloc(l1, l2, 1);
-      },
-      _ => {
-        let l3 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-        let l4 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
-        _rt::cabi_dealloc(l3, l4, 1);
       },
     }
   } }
   #[doc(hidden)]
   #[allow(non_snake_case, unused_unsafe)]
-  pub unsafe fn _export_method_repo_delete_stage_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
+  pub unsafe fn _export_method_repo_delete_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
   _rt::run_ctors_once();let result1 = {
     let len0 = arg2;
     let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-    T::delete_stage(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0))
+    T::delete(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0))
   };
   let ptr2 = (&raw mut _RET_AREA.0).cast::<u8>();
   match result1 {
     Ok(e) => { {
       *ptr2.add(0).cast::<u8>() = (0i32) as u8;
+      *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<u8>() = (match e { true => 1, false => 0 }) as u8;
+    } },
+    Err(e) => { {
+      *ptr2.add(0).cast::<u8>() = (1i32) as u8;
       let vec3 = (e.into_bytes()).into_boxed_slice();
       let ptr3 = vec3.as_ptr().cast::<u8>();
       let len3 = vec3.len();
@@ -7591,208 +7610,11 @@ pub mod wasi {
       *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len3;
       *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr3.cast_mut();
     } },
-    Err(e) => { {
-      *ptr2.add(0).cast::<u8>() = (1i32) as u8;
-      let vec4 = (e.into_bytes()).into_boxed_slice();
-      let ptr4 = vec4.as_ptr().cast::<u8>();
-      let len4 = vec4.len();
-      ::core::mem::forget(vec4);
-      *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
-      *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
-    } },
   };ptr2
 } }
 #[doc(hidden)]
 #[allow(non_snake_case)]
-pub unsafe fn __post_return_method_repo_delete_stage<T: GuestRepo>(arg0: *mut u8,) { unsafe {
-  let l0 = i32::from(*arg0.add(0).cast::<u8>());
-  match l0 {
-    0 => {
-      let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-      let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
-      _rt::cabi_dealloc(l1, l2, 1);
-    },
-    _ => {
-      let l3 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-      let l4 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
-      _rt::cabi_dealloc(l3, l4, 1);
-    },
-  }
-} }
-#[doc(hidden)]
-#[allow(non_snake_case, unused_unsafe)]
-pub unsafe fn _export_method_repo_create_commit_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,arg5: *mut u8,arg6: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-_rt::run_ctors_once();let result3 = {
-  let len0 = arg2;
-  let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-  let len1 = arg4;
-  let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
-  let len2 = arg6;
-  let bytes2 = _rt::Vec::from_raw_parts(arg5.cast(), len2, len2);
-  T::create_commit(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1), _rt::string_lift(bytes2))
-};
-let ptr4 = (&raw mut _RET_AREA.0).cast::<u8>();
-match result3 {
-  Ok(e) => { {
-    *ptr4.add(0).cast::<u8>() = (0i32) as u8;
-    *ptr4.add(::core::mem::size_of::<*const u8>()).cast::<u8>() = (match e { true => 1, false => 0 }) as u8;
-  } },
-  Err(e) => { {
-    *ptr4.add(0).cast::<u8>() = (1i32) as u8;
-    let vec5 = (e.into_bytes()).into_boxed_slice();
-    let ptr5 = vec5.as_ptr().cast::<u8>();
-    let len5 = vec5.len();
-    ::core::mem::forget(vec5);
-    *ptr4.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
-    *ptr4.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
-  } },
-};ptr4
-} }
-#[doc(hidden)]
-#[allow(non_snake_case)]
-pub unsafe fn __post_return_method_repo_create_commit<T: GuestRepo>(arg0: *mut u8,) { unsafe {
-  let l0 = i32::from(*arg0.add(0).cast::<u8>());
-  match l0 {
-    0 => (),
-    _ => {
-      let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-      let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
-      _rt::cabi_dealloc(l1, l2, 1);
-    },
-  }
-} }
-#[doc(hidden)]
-#[allow(non_snake_case, unused_unsafe)]
-pub unsafe fn _export_method_repo_update_commit_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,arg5: *mut u8,arg6: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-_rt::run_ctors_once();let result3 = {
-  let len0 = arg2;
-  let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-  let len1 = arg4;
-  let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
-  let len2 = arg6;
-  let bytes2 = _rt::Vec::from_raw_parts(arg5.cast(), len2, len2);
-  T::update_commit(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1), _rt::string_lift(bytes2))
-};
-let ptr4 = (&raw mut _RET_AREA.0).cast::<u8>();
-match result3 {
-  Ok(e) => { {
-    *ptr4.add(0).cast::<u8>() = (0i32) as u8;
-    *ptr4.add(::core::mem::size_of::<*const u8>()).cast::<u8>() = (match e { true => 1, false => 0 }) as u8;
-  } },
-  Err(e) => { {
-    *ptr4.add(0).cast::<u8>() = (1i32) as u8;
-    let vec5 = (e.into_bytes()).into_boxed_slice();
-    let ptr5 = vec5.as_ptr().cast::<u8>();
-    let len5 = vec5.len();
-    ::core::mem::forget(vec5);
-    *ptr4.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len5;
-    *ptr4.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr5.cast_mut();
-  } },
-};ptr4
-} }
-#[doc(hidden)]
-#[allow(non_snake_case)]
-pub unsafe fn __post_return_method_repo_update_commit<T: GuestRepo>(arg0: *mut u8,) { unsafe {
-  let l0 = i32::from(*arg0.add(0).cast::<u8>());
-  match l0 {
-    0 => (),
-    _ => {
-      let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-      let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
-      _rt::cabi_dealloc(l1, l2, 1);
-    },
-  }
-} }
-#[doc(hidden)]
-#[allow(non_snake_case, unused_unsafe)]
-pub unsafe fn _export_method_repo_delete_commit_cabi<T: GuestRepo>(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-_rt::run_ctors_once();let result2 = {
-  let len0 = arg2;
-  let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-  let len1 = arg4;
-  let bytes1 = _rt::Vec::from_raw_parts(arg3.cast(), len1, len1);
-  T::delete_commit(RepoBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0), _rt::string_lift(bytes1))
-};
-let ptr3 = (&raw mut _RET_AREA.0).cast::<u8>();
-match result2 {
-  Ok(e) => { {
-    *ptr3.add(0).cast::<u8>() = (0i32) as u8;
-    *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<u8>() = (match e { true => 1, false => 0 }) as u8;
-  } },
-  Err(e) => { {
-    *ptr3.add(0).cast::<u8>() = (1i32) as u8;
-    let vec4 = (e.into_bytes()).into_boxed_slice();
-    let ptr4 = vec4.as_ptr().cast::<u8>();
-    let len4 = vec4.len();
-    ::core::mem::forget(vec4);
-    *ptr3.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len4;
-    *ptr3.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr4.cast_mut();
-  } },
-};ptr3
-} }
-#[doc(hidden)]
-#[allow(non_snake_case)]
-pub unsafe fn __post_return_method_repo_delete_commit<T: GuestRepo>(arg0: *mut u8,) { unsafe {
-  let l0 = i32::from(*arg0.add(0).cast::<u8>());
-  match l0 {
-    0 => (),
-    _ => {
-      let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>();
-      let l2 = *arg0.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>();
-      _rt::cabi_dealloc(l1, l2, 1);
-    },
-  }
-} }
-#[doc(hidden)]
-#[allow(non_snake_case, unused_unsafe)]
-pub unsafe fn _export_method_builder_get_bytes_cabi<T: GuestBuilder>(arg0: *mut u8,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-_rt::run_ctors_once();let result0 = {
-  T::get_bytes(BuilderBorrow::lift(arg0 as u32 as usize).get())
-};
-let ptr1 = (&raw mut _RET_AREA.0).cast::<u8>();
-let vec2 = (result0.into_bytes()).into_boxed_slice();
-let ptr2 = vec2.as_ptr().cast::<u8>();
-let len2 = vec2.len();
-::core::mem::forget(vec2);
-*ptr1.add(::core::mem::size_of::<*const u8>()).cast::<usize>() = len2;
-*ptr1.add(0).cast::<*mut u8>() = ptr2.cast_mut();
-ptr1
-} }
-#[doc(hidden)]
-#[allow(non_snake_case)]
-pub unsafe fn __post_return_method_builder_get_bytes<T: GuestBuilder>(arg0: *mut u8,) { unsafe {
-  let l0 = *arg0.add(0).cast::<*mut u8>();
-  let l1 = *arg0.add(::core::mem::size_of::<*const u8>()).cast::<usize>();
-  _rt::cabi_dealloc(l0, l1, 1);
-} }
-#[doc(hidden)]
-#[allow(non_snake_case, unused_unsafe)]
-pub unsafe fn _export_method_builder_finalize_cabi<T: GuestBuilder>(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 { unsafe {#[cfg(target_arch="wasm32")]
-_rt::run_ctors_once();let result1 = {
-  let len0 = arg2;
-  let bytes0 = _rt::Vec::from_raw_parts(arg1.cast(), len0, len0);
-  T::finalize(BuilderBorrow::lift(arg0 as u32 as usize).get(), _rt::string_lift(bytes0))
-};
-let ptr2 = (&raw mut _RET_AREA.0).cast::<u8>();
-match result1 {
-  Ok(e) => { {
-    *ptr2.add(0).cast::<u8>() = (0i32) as u8;
-    *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<i32>() = (e).take_handle() as i32;
-  } },
-  Err(e) => { {
-    *ptr2.add(0).cast::<u8>() = (1i32) as u8;
-    let vec3 = (e.into_bytes()).into_boxed_slice();
-    let ptr3 = vec3.as_ptr().cast::<u8>();
-    let len3 = vec3.len();
-    ::core::mem::forget(vec3);
-    *ptr2.add(2*::core::mem::size_of::<*const u8>()).cast::<usize>() = len3;
-    *ptr2.add(::core::mem::size_of::<*const u8>()).cast::<*mut u8>() = ptr3.cast_mut();
-  } },
-};ptr2
-} }
-#[doc(hidden)]
-#[allow(non_snake_case)]
-pub unsafe fn __post_return_method_builder_finalize<T: GuestBuilder>(arg0: *mut u8,) { unsafe {
+pub unsafe fn __post_return_method_repo_delete<T: GuestRepo>(arg0: *mut u8,) { unsafe {
   let l0 = i32::from(*arg0.add(0).cast::<u8>());
   match l0 {
     0 => (),
@@ -7883,9 +7705,8 @@ pub unsafe fn __post_return_open<T: Guest>(arg0: *mut u8,) { unsafe {
 } }
 pub trait Guest {
   type Repo: GuestRepo;
-  type Builder: GuestBuilder;
   #[allow(async_fn_in_trait)]
-  fn create(did: _rt::String,) -> Result<Builder,_rt::String>;
+  fn create(did: _rt::String,) -> Result<Repo,_rt::String>;
   #[allow(async_fn_in_trait)]
   fn open(did: _rt::String,cid: _rt::String,) -> Result<Repo,_rt::String>;
 }
@@ -7933,61 +7754,11 @@ pub trait GuestRepo: 'static {
   #[allow(async_fn_in_trait)]
   fn get_records(&self,nsid: _rt::String,) -> Result<_rt::Vec::<_rt::String>,_rt::String>;
   #[allow(async_fn_in_trait)]
-  fn create_stage(&self,nsid: _rt::String,data: _rt::String,) -> Result<_rt::String,_rt::String>;
+  fn create(&self,nsid: _rt::String,data: _rt::String,) -> Result<bool,_rt::String>;
   #[allow(async_fn_in_trait)]
-  fn update_stage(&self,rpath: _rt::String,data: _rt::String,) -> Result<_rt::String,_rt::String>;
+  fn update(&self,rpath: _rt::String,data: _rt::String,) -> Result<bool,_rt::String>;
   #[allow(async_fn_in_trait)]
-  fn delete_stage(&self,rpath: _rt::String,) -> Result<_rt::String,_rt::String>;
-  #[allow(async_fn_in_trait)]
-  fn create_commit(&self,nsid: _rt::String,data: _rt::String,sig: _rt::String,) -> Result<bool,_rt::String>;
-  #[allow(async_fn_in_trait)]
-  fn update_commit(&self,rpath: _rt::String,data: _rt::String,sig: _rt::String,) -> Result<bool,_rt::String>;
-  #[allow(async_fn_in_trait)]
-  fn delete_commit(&self,rpath: _rt::String,sig: _rt::String,) -> Result<bool,_rt::String>;
-}
-pub trait GuestBuilder: 'static {
-
-  #[doc(hidden)]
-  unsafe fn _resource_new(val: *mut u8) -> u32
-  where Self: Sized
-  {
-    
-    #[cfg(target_arch = "wasm32")]
-    #[link(wasm_import_module = "[export]polka:repository/repo@0.1.0")]
-    unsafe extern "C" {
-      #[link_name = "[resource-new]builder"]
-      fn new(_: *mut u8, ) -> i32;
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    unsafe extern "C" fn new(_: *mut u8, ) -> i32 { unreachable!() }
-    
-    unsafe { new(val) as u32 }
-  }
-
-  #[doc(hidden)]
-  fn _resource_rep(handle: u32) -> *mut u8
-  where Self: Sized
-  {
-    
-    #[cfg(target_arch = "wasm32")]
-    #[link(wasm_import_module = "[export]polka:repository/repo@0.1.0")]
-    unsafe extern "C" {
-      #[link_name = "[resource-rep]builder"]
-      fn rep(_: i32, ) -> *mut u8;
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    unsafe extern "C" fn rep(_: i32, ) -> *mut u8 { unreachable!() }
-    
-    unsafe { rep(handle as i32) }
-  }
-
-  
-  #[allow(async_fn_in_trait)]
-  fn get_bytes(&self,) -> _rt::String;
-  #[allow(async_fn_in_trait)]
-  fn finalize(&self,sig: _rt::String,) -> Result<Repo,_rt::String>;
+  fn delete(&self,rpath: _rt::String,) -> Result<bool,_rt::String>;
 }
 #[doc(hidden)]
 
@@ -8010,69 +7781,29 @@ macro_rules! __export_polka_repository_repo_0_1_0_cabi{
     unsafe extern "C" fn _post_return_method_repo_get_records(arg0: *mut u8,) {
       unsafe { $($path_to_types)*::__post_return_method_repo_get_records::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
     }
-    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.create-stage")]
-    unsafe extern "C" fn export_method_repo_create_stage(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_method_repo_create_stage_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2, arg3, arg4) }
+    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.create")]
+    unsafe extern "C" fn export_method_repo_create(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 {
+      unsafe { $($path_to_types)*::_export_method_repo_create_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2, arg3, arg4) }
     }
-    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.create-stage")]
-    unsafe extern "C" fn _post_return_method_repo_create_stage(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_method_repo_create_stage::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
+    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.create")]
+    unsafe extern "C" fn _post_return_method_repo_create(arg0: *mut u8,) {
+      unsafe { $($path_to_types)*::__post_return_method_repo_create::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
     }
-    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.update-stage")]
-    unsafe extern "C" fn export_method_repo_update_stage(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_method_repo_update_stage_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2, arg3, arg4) }
+    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.update")]
+    unsafe extern "C" fn export_method_repo_update(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 {
+      unsafe { $($path_to_types)*::_export_method_repo_update_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2, arg3, arg4) }
     }
-    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.update-stage")]
-    unsafe extern "C" fn _post_return_method_repo_update_stage(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_method_repo_update_stage::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
+    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.update")]
+    unsafe extern "C" fn _post_return_method_repo_update(arg0: *mut u8,) {
+      unsafe { $($path_to_types)*::__post_return_method_repo_update::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
     }
-    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.delete-stage")]
-    unsafe extern "C" fn export_method_repo_delete_stage(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_method_repo_delete_stage_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2) }
+    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.delete")]
+    unsafe extern "C" fn export_method_repo_delete(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 {
+      unsafe { $($path_to_types)*::_export_method_repo_delete_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2) }
     }
-    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.delete-stage")]
-    unsafe extern "C" fn _post_return_method_repo_delete_stage(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_method_repo_delete_stage::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
-    }
-    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.create-commit")]
-    unsafe extern "C" fn export_method_repo_create_commit(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,arg5: *mut u8,arg6: usize,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_method_repo_create_commit_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2, arg3, arg4, arg5, arg6) }
-    }
-    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.create-commit")]
-    unsafe extern "C" fn _post_return_method_repo_create_commit(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_method_repo_create_commit::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
-    }
-    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.update-commit")]
-    unsafe extern "C" fn export_method_repo_update_commit(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,arg5: *mut u8,arg6: usize,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_method_repo_update_commit_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2, arg3, arg4, arg5, arg6) }
-    }
-    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.update-commit")]
-    unsafe extern "C" fn _post_return_method_repo_update_commit(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_method_repo_update_commit::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
-    }
-    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]repo.delete-commit")]
-    unsafe extern "C" fn export_method_repo_delete_commit(arg0: *mut u8,arg1: *mut u8,arg2: usize,arg3: *mut u8,arg4: usize,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_method_repo_delete_commit_cabi::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0, arg1, arg2, arg3, arg4) }
-    }
-    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.delete-commit")]
-    unsafe extern "C" fn _post_return_method_repo_delete_commit(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_method_repo_delete_commit::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
-    }
-    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]builder.get-bytes")]
-    unsafe extern "C" fn export_method_builder_get_bytes(arg0: *mut u8,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_method_builder_get_bytes_cabi::<<$ty as $($path_to_types)*::Guest>::Builder>(arg0) }
-    }
-    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]builder.get-bytes")]
-    unsafe extern "C" fn _post_return_method_builder_get_bytes(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_method_builder_get_bytes::<<$ty as $($path_to_types)*::Guest>::Builder>(arg0) }
-    }
-    #[unsafe(export_name = "polka:repository/repo@0.1.0#[method]builder.finalize")]
-    unsafe extern "C" fn export_method_builder_finalize(arg0: *mut u8,arg1: *mut u8,arg2: usize,) -> *mut u8 {
-      unsafe { $($path_to_types)*::_export_method_builder_finalize_cabi::<<$ty as $($path_to_types)*::Guest>::Builder>(arg0, arg1, arg2) }
-    }
-    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]builder.finalize")]
-    unsafe extern "C" fn _post_return_method_builder_finalize(arg0: *mut u8,) {
-      unsafe { $($path_to_types)*::__post_return_method_builder_finalize::<<$ty as $($path_to_types)*::Guest>::Builder>(arg0) }
+    #[unsafe(export_name = "cabi_post_polka:repository/repo@0.1.0#[method]repo.delete")]
+    unsafe extern "C" fn _post_return_method_repo_delete(arg0: *mut u8,) {
+      unsafe { $($path_to_types)*::__post_return_method_repo_delete::<<$ty as $($path_to_types)*::Guest>::Repo>(arg0) }
     }
     #[unsafe(export_name = "polka:repository/repo@0.1.0#create")]
     unsafe extern "C" fn export_create(arg0: *mut u8,arg1: usize,) -> *mut u8 {
@@ -8104,20 +7835,6 @@ macro_rules! __export_polka_repository_repo_0_1_0_cabi{
       }
     };
     
-
-    const _: () = {
-      #[doc(hidden)]
-      #[unsafe(export_name = "polka:repository/repo@0.1.0#[dtor]builder")]
-      #[allow(non_snake_case)]
-      unsafe extern "C" fn dtor(rep: *mut u8) {
-        unsafe {
-          $($path_to_types)*::Builder::dtor::<
-          <$ty as $($path_to_types)*::Guest>::Builder
-          >(rep)
-        }
-      }
-    };
-    
   };);
 }
 #[doc(hidden)]
@@ -8136,6 +7853,45 @@ static mut _RET_AREA: _RetArea = _RetArea([::core::mem::MaybeUninit::uninit(); 3
 mod _rt {
   #![allow(dead_code, clippy::all)]
   pub use alloc_crate::vec::Vec;
+
+  pub fn as_i64<T: AsI64>(t: T) -> i64 {
+    t.as_i64()
+  }
+
+  pub trait AsI64 {
+    fn as_i64(self) -> i64;
+  }
+
+  impl<'a, T: Copy + AsI64> AsI64 for &'a T {
+    fn as_i64(self) -> i64 {
+      (*self).as_i64()
+    }
+  }
+  
+  impl AsI64 for i64 {
+    #[inline]
+    fn as_i64(self) -> i64 {
+      self as i64
+    }
+  }
+  
+  impl AsI64 for u64 {
+    #[inline]
+    fn as_i64(self) -> i64 {
+      self as i64
+    }
+  }
+  pub unsafe fn bool_lift(val: u8) -> bool {
+    if cfg!(debug_assertions) {
+      match val {
+        0 => false,
+        1 => true,
+        _ => panic!("invalid bool discriminant"),
+      }
+    } else {
+      val != 0
+    }
+  }
   pub use alloc_crate::string::String;
   pub unsafe fn string_lift(bytes: Vec<u8>) -> String {
     if cfg!(debug_assertions) {
@@ -8256,47 +8012,8 @@ mod _rt {
       }
     }
   }
-  pub unsafe fn bool_lift(val: u8) -> bool {
-    if cfg!(debug_assertions) {
-      match val {
-        0 => false,
-        1 => true,
-        _ => panic!("invalid bool discriminant"),
-      }
-    } else {
-      val != 0
-    }
-  }
   pub use alloc_crate::alloc;
 
-  pub fn as_i64<T: AsI64>(t: T) -> i64 {
-    t.as_i64()
-  }
-
-  pub trait AsI64 {
-    fn as_i64(self) -> i64;
-  }
-
-  impl<'a, T: Copy + AsI64> AsI64 for &'a T {
-    fn as_i64(self) -> i64 {
-      (*self).as_i64()
-    }
-  }
-  
-  impl AsI64 for i64 {
-    #[inline]
-    fn as_i64(self) -> i64 {
-      self as i64
-    }
-  }
-  
-  impl AsI64 for u64 {
-    #[inline]
-    fn as_i64(self) -> i64 {
-      self as i64
-    }
-  }
-  
   pub fn as_i32<T: AsI32>(t: T) -> i32 {
     t.as_i32()
   }
@@ -8407,238 +8124,237 @@ pub(crate) use __export_repository_impl as export;
 #[unsafe(link_section = "component-type:wit-bindgen:0.47.0:polka:repository@0.1.0:repository:encoded world")]
 #[doc(hidden)]
 #[allow(clippy::octal_escapes)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 11378] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xf1W\x01A\x02\x01AI\x01\
-B\x0a\x01o\x02ss\x01p\0\x01@\0\0\x01\x04\0\x0fget-environment\x01\x02\x01ps\x01@\
-\0\0\x03\x04\0\x0dget-arguments\x01\x04\x01ks\x01@\0\0\x05\x04\0\x0binitial-cwd\x01\
-\x06\x03\0\x1awasi:cli/environment@0.2.0\x05\0\x01B\x03\x01j\0\0\x01@\x01\x06sta\
-tus\0\x01\0\x04\0\x04exit\x01\x01\x03\0\x13wasi:cli/exit@0.2.0\x05\x01\x01B\x04\x04\
-\0\x05error\x03\x01\x01h\0\x01@\x01\x04self\x01\0s\x04\0\x1d[method]error.to-deb\
-ug-string\x01\x02\x03\0\x13wasi:io/error@0.2.0\x05\x02\x01B\x0a\x04\0\x08pollabl\
-e\x03\x01\x01h\0\x01@\x01\x04self\x01\0\x7f\x04\0\x16[method]pollable.ready\x01\x02\
-\x01@\x01\x04self\x01\x01\0\x04\0\x16[method]pollable.block\x01\x03\x01p\x01\x01\
-py\x01@\x01\x02in\x04\0\x05\x04\0\x04poll\x01\x06\x03\0\x12wasi:io/poll@0.2.0\x05\
-\x03\x02\x03\0\x02\x05error\x02\x03\0\x03\x08pollable\x01B(\x02\x03\x02\x01\x04\x04\
-\0\x05error\x03\0\0\x02\x03\x02\x01\x05\x04\0\x08pollable\x03\0\x02\x01i\x01\x01\
-q\x02\x15last-operation-failed\x01\x04\0\x06closed\0\0\x04\0\x0cstream-error\x03\
-\0\x05\x04\0\x0cinput-stream\x03\x01\x04\0\x0doutput-stream\x03\x01\x01h\x07\x01\
-p}\x01j\x01\x0a\x01\x06\x01@\x02\x04self\x09\x03lenw\0\x0b\x04\0\x19[method]inpu\
-t-stream.read\x01\x0c\x04\0\"[method]input-stream.blocking-read\x01\x0c\x01j\x01\
-w\x01\x06\x01@\x02\x04self\x09\x03lenw\0\x0d\x04\0\x19[method]input-stream.skip\x01\
-\x0e\x04\0\"[method]input-stream.blocking-skip\x01\x0e\x01i\x03\x01@\x01\x04self\
-\x09\0\x0f\x04\0\x1e[method]input-stream.subscribe\x01\x10\x01h\x08\x01@\x01\x04\
-self\x11\0\x0d\x04\0![method]output-stream.check-write\x01\x12\x01j\0\x01\x06\x01\
-@\x02\x04self\x11\x08contents\x0a\0\x13\x04\0\x1b[method]output-stream.write\x01\
-\x14\x04\0.[method]output-stream.blocking-write-and-flush\x01\x14\x01@\x01\x04se\
-lf\x11\0\x13\x04\0\x1b[method]output-stream.flush\x01\x15\x04\0$[method]output-s\
-tream.blocking-flush\x01\x15\x01@\x01\x04self\x11\0\x0f\x04\0\x1f[method]output-\
-stream.subscribe\x01\x16\x01@\x02\x04self\x11\x03lenw\0\x13\x04\0\"[method]outpu\
-t-stream.write-zeroes\x01\x17\x04\05[method]output-stream.blocking-write-zeroes-\
-and-flush\x01\x17\x01@\x03\x04self\x11\x03src\x09\x03lenw\0\x0d\x04\0\x1c[method\
-]output-stream.splice\x01\x18\x04\0%[method]output-stream.blocking-splice\x01\x18\
-\x03\0\x15wasi:io/streams@0.2.0\x05\x06\x02\x03\0\x04\x0cinput-stream\x01B\x05\x02\
-\x03\x02\x01\x07\x04\0\x0cinput-stream\x03\0\0\x01i\x01\x01@\0\0\x02\x04\0\x09ge\
-t-stdin\x01\x03\x03\0\x14wasi:cli/stdin@0.2.0\x05\x08\x02\x03\0\x04\x0doutput-st\
-ream\x01B\x05\x02\x03\x02\x01\x09\x04\0\x0doutput-stream\x03\0\0\x01i\x01\x01@\0\
-\0\x02\x04\0\x0aget-stdout\x01\x03\x03\0\x15wasi:cli/stdout@0.2.0\x05\x0a\x01B\x05\
-\x02\x03\x02\x01\x09\x04\0\x0doutput-stream\x03\0\0\x01i\x01\x01@\0\0\x02\x04\0\x0a\
-get-stderr\x01\x03\x03\0\x15wasi:cli/stderr@0.2.0\x05\x0b\x01B\x01\x04\0\x0eterm\
-inal-input\x03\x01\x03\0\x1dwasi:cli/terminal-input@0.2.0\x05\x0c\x01B\x01\x04\0\
-\x0fterminal-output\x03\x01\x03\0\x1ewasi:cli/terminal-output@0.2.0\x05\x0d\x02\x03\
-\0\x08\x0eterminal-input\x01B\x06\x02\x03\x02\x01\x0e\x04\0\x0eterminal-input\x03\
-\0\0\x01i\x01\x01k\x02\x01@\0\0\x03\x04\0\x12get-terminal-stdin\x01\x04\x03\0\x1d\
-wasi:cli/terminal-stdin@0.2.0\x05\x0f\x02\x03\0\x09\x0fterminal-output\x01B\x06\x02\
-\x03\x02\x01\x10\x04\0\x0fterminal-output\x03\0\0\x01i\x01\x01k\x02\x01@\0\0\x03\
-\x04\0\x13get-terminal-stdout\x01\x04\x03\0\x1ewasi:cli/terminal-stdout@0.2.0\x05\
-\x11\x01B\x06\x02\x03\x02\x01\x10\x04\0\x0fterminal-output\x03\0\0\x01i\x01\x01k\
-\x02\x01@\0\0\x03\x04\0\x13get-terminal-stderr\x01\x04\x03\0\x1ewasi:cli/termina\
-l-stderr@0.2.0\x05\x12\x01B\x0f\x02\x03\x02\x01\x05\x04\0\x08pollable\x03\0\0\x01\
-w\x04\0\x07instant\x03\0\x02\x01w\x04\0\x08duration\x03\0\x04\x01@\0\0\x03\x04\0\
-\x03now\x01\x06\x01@\0\0\x05\x04\0\x0aresolution\x01\x07\x01i\x01\x01@\x01\x04wh\
-en\x03\0\x08\x04\0\x11subscribe-instant\x01\x09\x01@\x01\x04when\x05\0\x08\x04\0\
-\x12subscribe-duration\x01\x0a\x03\0!wasi:clocks/monotonic-clock@0.2.0\x05\x13\x01\
-B\x05\x01r\x02\x07secondsw\x0bnanosecondsy\x04\0\x08datetime\x03\0\0\x01@\0\0\x01\
-\x04\0\x03now\x01\x02\x04\0\x0aresolution\x01\x02\x03\0\x1cwasi:clocks/wall-cloc\
-k@0.2.0\x05\x14\x02\x03\0\x04\x05error\x02\x03\0\x0e\x08datetime\x01Br\x02\x03\x02\
-\x01\x07\x04\0\x0cinput-stream\x03\0\0\x02\x03\x02\x01\x09\x04\0\x0doutput-strea\
-m\x03\0\x02\x02\x03\x02\x01\x15\x04\0\x05error\x03\0\x04\x02\x03\x02\x01\x16\x04\
-\0\x08datetime\x03\0\x06\x01w\x04\0\x08filesize\x03\0\x08\x01m\x08\x07unknown\x0c\
-block-device\x10character-device\x09directory\x04fifo\x0dsymbolic-link\x0cregula\
-r-file\x06socket\x04\0\x0fdescriptor-type\x03\0\x0a\x01n\x06\x04read\x05write\x13\
-file-integrity-sync\x13data-integrity-sync\x14requested-write-sync\x10mutate-dir\
-ectory\x04\0\x10descriptor-flags\x03\0\x0c\x01n\x01\x0esymlink-follow\x04\0\x0ap\
-ath-flags\x03\0\x0e\x01n\x04\x06create\x09directory\x09exclusive\x08truncate\x04\
-\0\x0aopen-flags\x03\0\x10\x01w\x04\0\x0alink-count\x03\0\x12\x01k\x07\x01r\x06\x04\
-type\x0b\x0alink-count\x13\x04size\x09\x15data-access-timestamp\x14\x1bdata-modi\
-fication-timestamp\x14\x17status-change-timestamp\x14\x04\0\x0fdescriptor-stat\x03\
-\0\x15\x01q\x03\x09no-change\0\0\x03now\0\0\x09timestamp\x01\x07\0\x04\0\x0dnew-\
-timestamp\x03\0\x17\x01r\x02\x04type\x0b\x04names\x04\0\x0fdirectory-entry\x03\0\
-\x19\x01m%\x06access\x0bwould-block\x07already\x0ebad-descriptor\x04busy\x08dead\
-lock\x05quota\x05exist\x0efile-too-large\x15illegal-byte-sequence\x0bin-progress\
-\x0binterrupted\x07invalid\x02io\x0cis-directory\x04loop\x0etoo-many-links\x0cme\
-ssage-size\x0dname-too-long\x09no-device\x08no-entry\x07no-lock\x13insufficient-\
-memory\x12insufficient-space\x0dnot-directory\x09not-empty\x0fnot-recoverable\x0b\
-unsupported\x06no-tty\x0eno-such-device\x08overflow\x0dnot-permitted\x04pipe\x09\
-read-only\x0cinvalid-seek\x0etext-file-busy\x0ccross-device\x04\0\x0aerror-code\x03\
-\0\x1b\x01m\x06\x06normal\x0asequential\x06random\x09will-need\x09dont-need\x08n\
-o-reuse\x04\0\x06advice\x03\0\x1d\x01r\x02\x05lowerw\x05upperw\x04\0\x13metadata\
--hash-value\x03\0\x1f\x04\0\x0adescriptor\x03\x01\x04\0\x16directory-entry-strea\
-m\x03\x01\x01h!\x01i\x01\x01j\x01$\x01\x1c\x01@\x02\x04self#\x06offset\x09\0%\x04\
-\0\"[method]descriptor.read-via-stream\x01&\x01i\x03\x01j\x01'\x01\x1c\x01@\x02\x04\
-self#\x06offset\x09\0(\x04\0#[method]descriptor.write-via-stream\x01)\x01@\x01\x04\
-self#\0(\x04\0$[method]descriptor.append-via-stream\x01*\x01j\0\x01\x1c\x01@\x04\
-\x04self#\x06offset\x09\x06length\x09\x06advice\x1e\0+\x04\0\x19[method]descript\
-or.advise\x01,\x01@\x01\x04self#\0+\x04\0\x1c[method]descriptor.sync-data\x01-\x01\
-j\x01\x0d\x01\x1c\x01@\x01\x04self#\0.\x04\0\x1c[method]descriptor.get-flags\x01\
-/\x01j\x01\x0b\x01\x1c\x01@\x01\x04self#\00\x04\0\x1b[method]descriptor.get-type\
-\x011\x01@\x02\x04self#\x04size\x09\0+\x04\0\x1b[method]descriptor.set-size\x012\
-\x01@\x03\x04self#\x15data-access-timestamp\x18\x1bdata-modification-timestamp\x18\
-\0+\x04\0\x1c[method]descriptor.set-times\x013\x01p}\x01o\x024\x7f\x01j\x015\x01\
-\x1c\x01@\x03\x04self#\x06length\x09\x06offset\x09\06\x04\0\x17[method]descripto\
-r.read\x017\x01j\x01\x09\x01\x1c\x01@\x03\x04self#\x06buffer4\x06offset\x09\08\x04\
-\0\x18[method]descriptor.write\x019\x01i\"\x01j\x01:\x01\x1c\x01@\x01\x04self#\0\
-;\x04\0![method]descriptor.read-directory\x01<\x04\0\x17[method]descriptor.sync\x01\
--\x01@\x02\x04self#\x04paths\0+\x04\0&[method]descriptor.create-directory-at\x01\
-=\x01j\x01\x16\x01\x1c\x01@\x01\x04self#\0>\x04\0\x17[method]descriptor.stat\x01\
-?\x01@\x03\x04self#\x0apath-flags\x0f\x04paths\0>\x04\0\x1a[method]descriptor.st\
-at-at\x01@\x01@\x05\x04self#\x0apath-flags\x0f\x04paths\x15data-access-timestamp\
-\x18\x1bdata-modification-timestamp\x18\0+\x04\0\x1f[method]descriptor.set-times\
--at\x01A\x01@\x05\x04self#\x0eold-path-flags\x0f\x08old-paths\x0enew-descriptor#\
-\x08new-paths\0+\x04\0\x1a[method]descriptor.link-at\x01B\x01i!\x01j\x01\xc3\0\x01\
-\x1c\x01@\x05\x04self#\x0apath-flags\x0f\x04paths\x0aopen-flags\x11\x05flags\x0d\
-\0\xc4\0\x04\0\x1a[method]descriptor.open-at\x01E\x01j\x01s\x01\x1c\x01@\x02\x04\
-self#\x04paths\0\xc6\0\x04\0\x1e[method]descriptor.readlink-at\x01G\x04\0&[metho\
-d]descriptor.remove-directory-at\x01=\x01@\x04\x04self#\x08old-paths\x0enew-desc\
-riptor#\x08new-paths\0+\x04\0\x1c[method]descriptor.rename-at\x01H\x01@\x03\x04s\
-elf#\x08old-paths\x08new-paths\0+\x04\0\x1d[method]descriptor.symlink-at\x01I\x04\
-\0![method]descriptor.unlink-file-at\x01=\x01@\x02\x04self#\x05other#\0\x7f\x04\0\
-![method]descriptor.is-same-object\x01J\x01j\x01\x20\x01\x1c\x01@\x01\x04self#\0\
-\xcb\0\x04\0\x20[method]descriptor.metadata-hash\x01L\x01@\x03\x04self#\x0apath-\
-flags\x0f\x04paths\0\xcb\0\x04\0#[method]descriptor.metadata-hash-at\x01M\x01h\"\
-\x01k\x1a\x01j\x01\xcf\0\x01\x1c\x01@\x01\x04self\xce\0\0\xd0\0\x04\03[method]di\
-rectory-entry-stream.read-directory-entry\x01Q\x01h\x05\x01k\x1c\x01@\x01\x03err\
-\xd2\0\0\xd3\0\x04\0\x15filesystem-error-code\x01T\x03\0\x1bwasi:filesystem/type\
-s@0.2.0\x05\x17\x02\x03\0\x0f\x0adescriptor\x01B\x07\x02\x03\x02\x01\x18\x04\0\x0a\
-descriptor\x03\0\0\x01i\x01\x01o\x02\x02s\x01p\x03\x01@\0\0\x04\x04\0\x0fget-dir\
-ectories\x01\x05\x03\0\x1ewasi:filesystem/preopens@0.2.0\x05\x19\x01B\x11\x04\0\x07\
-network\x03\x01\x01m\x15\x07unknown\x0daccess-denied\x0dnot-supported\x10invalid\
--argument\x0dout-of-memory\x07timeout\x14concurrency-conflict\x0fnot-in-progress\
-\x0bwould-block\x0dinvalid-state\x10new-socket-limit\x14address-not-bindable\x0e\
-address-in-use\x12remote-unreachable\x12connection-refused\x10connection-reset\x12\
-connection-aborted\x12datagram-too-large\x11name-unresolvable\x1atemporary-resol\
-ver-failure\x1apermanent-resolver-failure\x04\0\x0aerror-code\x03\0\x01\x01m\x02\
-\x04ipv4\x04ipv6\x04\0\x11ip-address-family\x03\0\x03\x01o\x04}}}}\x04\0\x0cipv4\
--address\x03\0\x05\x01o\x08{{{{{{{{\x04\0\x0cipv6-address\x03\0\x07\x01q\x02\x04\
-ipv4\x01\x06\0\x04ipv6\x01\x08\0\x04\0\x0aip-address\x03\0\x09\x01r\x02\x04port{\
-\x07address\x06\x04\0\x13ipv4-socket-address\x03\0\x0b\x01r\x04\x04port{\x09flow\
--infoy\x07address\x08\x08scope-idy\x04\0\x13ipv6-socket-address\x03\0\x0d\x01q\x02\
-\x04ipv4\x01\x0c\0\x04ipv6\x01\x0e\0\x04\0\x11ip-socket-address\x03\0\x0f\x03\0\x1a\
-wasi:sockets/network@0.2.0\x05\x1a\x02\x03\0\x11\x07network\x01B\x05\x02\x03\x02\
-\x01\x1b\x04\0\x07network\x03\0\0\x01i\x01\x01@\0\0\x02\x04\0\x10instance-networ\
-k\x01\x03\x03\0#wasi:sockets/instance-network@0.2.0\x05\x1c\x02\x03\0\x11\x0aerr\
-or-code\x02\x03\0\x11\x11ip-socket-address\x02\x03\0\x11\x11ip-address-family\x01\
-BD\x02\x03\x02\x01\x05\x04\0\x08pollable\x03\0\0\x02\x03\x02\x01\x1b\x04\0\x07ne\
-twork\x03\0\x02\x02\x03\x02\x01\x1d\x04\0\x0aerror-code\x03\0\x04\x02\x03\x02\x01\
-\x1e\x04\0\x11ip-socket-address\x03\0\x06\x02\x03\x02\x01\x1f\x04\0\x11ip-addres\
-s-family\x03\0\x08\x01p}\x01r\x02\x04data\x0a\x0eremote-address\x07\x04\0\x11inc\
-oming-datagram\x03\0\x0b\x01k\x07\x01r\x02\x04data\x0a\x0eremote-address\x0d\x04\
-\0\x11outgoing-datagram\x03\0\x0e\x04\0\x0audp-socket\x03\x01\x04\0\x18incoming-\
-datagram-stream\x03\x01\x04\0\x18outgoing-datagram-stream\x03\x01\x01h\x10\x01h\x03\
-\x01j\0\x01\x05\x01@\x03\x04self\x13\x07network\x14\x0dlocal-address\x07\0\x15\x04\
-\0\x1d[method]udp-socket.start-bind\x01\x16\x01@\x01\x04self\x13\0\x15\x04\0\x1e\
-[method]udp-socket.finish-bind\x01\x17\x01i\x11\x01i\x12\x01o\x02\x18\x19\x01j\x01\
-\x1a\x01\x05\x01@\x02\x04self\x13\x0eremote-address\x0d\0\x1b\x04\0\x19[method]u\
-dp-socket.stream\x01\x1c\x01j\x01\x07\x01\x05\x01@\x01\x04self\x13\0\x1d\x04\0\x20\
-[method]udp-socket.local-address\x01\x1e\x04\0![method]udp-socket.remote-address\
-\x01\x1e\x01@\x01\x04self\x13\0\x09\x04\0![method]udp-socket.address-family\x01\x1f\
-\x01j\x01}\x01\x05\x01@\x01\x04self\x13\0\x20\x04\0$[method]udp-socket.unicast-h\
-op-limit\x01!\x01@\x02\x04self\x13\x05value}\0\x15\x04\0([method]udp-socket.set-\
-unicast-hop-limit\x01\"\x01j\x01w\x01\x05\x01@\x01\x04self\x13\0#\x04\0&[method]\
-udp-socket.receive-buffer-size\x01$\x01@\x02\x04self\x13\x05valuew\0\x15\x04\0*[\
-method]udp-socket.set-receive-buffer-size\x01%\x04\0#[method]udp-socket.send-buf\
-fer-size\x01$\x04\0'[method]udp-socket.set-send-buffer-size\x01%\x01i\x01\x01@\x01\
-\x04self\x13\0&\x04\0\x1c[method]udp-socket.subscribe\x01'\x01h\x11\x01p\x0c\x01\
-j\x01)\x01\x05\x01@\x02\x04self(\x0bmax-resultsw\0*\x04\0([method]incoming-datag\
-ram-stream.receive\x01+\x01@\x01\x04self(\0&\x04\0*[method]incoming-datagram-str\
-eam.subscribe\x01,\x01h\x12\x01@\x01\x04self-\0#\x04\0+[method]outgoing-datagram\
--stream.check-send\x01.\x01p\x0f\x01@\x02\x04self-\x09datagrams/\0#\x04\0%[metho\
-d]outgoing-datagram-stream.send\x010\x01@\x01\x04self-\0&\x04\0*[method]outgoing\
--datagram-stream.subscribe\x011\x03\0\x16wasi:sockets/udp@0.2.0\x05\x20\x02\x03\0\
-\x13\x0audp-socket\x01B\x0c\x02\x03\x02\x01\x1b\x04\0\x07network\x03\0\0\x02\x03\
-\x02\x01\x1d\x04\0\x0aerror-code\x03\0\x02\x02\x03\x02\x01\x1f\x04\0\x11ip-addre\
-ss-family\x03\0\x04\x02\x03\x02\x01!\x04\0\x0audp-socket\x03\0\x06\x01i\x07\x01j\
-\x01\x08\x01\x03\x01@\x01\x0eaddress-family\x05\0\x09\x04\0\x11create-udp-socket\
-\x01\x0a\x03\0$wasi:sockets/udp-create-socket@0.2.0\x05\"\x02\x03\0\x0d\x08durat\
-ion\x01BT\x02\x03\x02\x01\x07\x04\0\x0cinput-stream\x03\0\0\x02\x03\x02\x01\x09\x04\
-\0\x0doutput-stream\x03\0\x02\x02\x03\x02\x01\x05\x04\0\x08pollable\x03\0\x04\x02\
-\x03\x02\x01#\x04\0\x08duration\x03\0\x06\x02\x03\x02\x01\x1b\x04\0\x07network\x03\
-\0\x08\x02\x03\x02\x01\x1d\x04\0\x0aerror-code\x03\0\x0a\x02\x03\x02\x01\x1e\x04\
-\0\x11ip-socket-address\x03\0\x0c\x02\x03\x02\x01\x1f\x04\0\x11ip-address-family\
-\x03\0\x0e\x01m\x03\x07receive\x04send\x04both\x04\0\x0dshutdown-type\x03\0\x10\x04\
-\0\x0atcp-socket\x03\x01\x01h\x12\x01h\x09\x01j\0\x01\x0b\x01@\x03\x04self\x13\x07\
-network\x14\x0dlocal-address\x0d\0\x15\x04\0\x1d[method]tcp-socket.start-bind\x01\
-\x16\x01@\x01\x04self\x13\0\x15\x04\0\x1e[method]tcp-socket.finish-bind\x01\x17\x01\
-@\x03\x04self\x13\x07network\x14\x0eremote-address\x0d\0\x15\x04\0\x20[method]tc\
-p-socket.start-connect\x01\x18\x01i\x01\x01i\x03\x01o\x02\x19\x1a\x01j\x01\x1b\x01\
-\x0b\x01@\x01\x04self\x13\0\x1c\x04\0![method]tcp-socket.finish-connect\x01\x1d\x04\
-\0\x1f[method]tcp-socket.start-listen\x01\x17\x04\0\x20[method]tcp-socket.finish\
--listen\x01\x17\x01i\x12\x01o\x03\x1e\x19\x1a\x01j\x01\x1f\x01\x0b\x01@\x01\x04s\
-elf\x13\0\x20\x04\0\x19[method]tcp-socket.accept\x01!\x01j\x01\x0d\x01\x0b\x01@\x01\
-\x04self\x13\0\"\x04\0\x20[method]tcp-socket.local-address\x01#\x04\0![method]tc\
-p-socket.remote-address\x01#\x01@\x01\x04self\x13\0\x7f\x04\0\x1f[method]tcp-soc\
-ket.is-listening\x01$\x01@\x01\x04self\x13\0\x0f\x04\0![method]tcp-socket.addres\
-s-family\x01%\x01@\x02\x04self\x13\x05valuew\0\x15\x04\0*[method]tcp-socket.set-\
-listen-backlog-size\x01&\x01j\x01\x7f\x01\x0b\x01@\x01\x04self\x13\0'\x04\0%[met\
-hod]tcp-socket.keep-alive-enabled\x01(\x01@\x02\x04self\x13\x05value\x7f\0\x15\x04\
-\0)[method]tcp-socket.set-keep-alive-enabled\x01)\x01j\x01\x07\x01\x0b\x01@\x01\x04\
-self\x13\0*\x04\0'[method]tcp-socket.keep-alive-idle-time\x01+\x01@\x02\x04self\x13\
-\x05value\x07\0\x15\x04\0+[method]tcp-socket.set-keep-alive-idle-time\x01,\x04\0\
-&[method]tcp-socket.keep-alive-interval\x01+\x04\0*[method]tcp-socket.set-keep-a\
-live-interval\x01,\x01j\x01y\x01\x0b\x01@\x01\x04self\x13\0-\x04\0#[method]tcp-s\
-ocket.keep-alive-count\x01.\x01@\x02\x04self\x13\x05valuey\0\x15\x04\0'[method]t\
-cp-socket.set-keep-alive-count\x01/\x01j\x01}\x01\x0b\x01@\x01\x04self\x13\00\x04\
-\0\x1c[method]tcp-socket.hop-limit\x011\x01@\x02\x04self\x13\x05value}\0\x15\x04\
-\0\x20[method]tcp-socket.set-hop-limit\x012\x01j\x01w\x01\x0b\x01@\x01\x04self\x13\
-\03\x04\0&[method]tcp-socket.receive-buffer-size\x014\x04\0*[method]tcp-socket.s\
-et-receive-buffer-size\x01&\x04\0#[method]tcp-socket.send-buffer-size\x014\x04\0\
-'[method]tcp-socket.set-send-buffer-size\x01&\x01i\x05\x01@\x01\x04self\x13\05\x04\
-\0\x1c[method]tcp-socket.subscribe\x016\x01@\x02\x04self\x13\x0dshutdown-type\x11\
-\0\x15\x04\0\x1b[method]tcp-socket.shutdown\x017\x03\0\x16wasi:sockets/tcp@0.2.0\
-\x05$\x02\x03\0\x15\x0atcp-socket\x01B\x0c\x02\x03\x02\x01\x1b\x04\0\x07network\x03\
-\0\0\x02\x03\x02\x01\x1d\x04\0\x0aerror-code\x03\0\x02\x02\x03\x02\x01\x1f\x04\0\
-\x11ip-address-family\x03\0\x04\x02\x03\x02\x01%\x04\0\x0atcp-socket\x03\0\x06\x01\
-i\x07\x01j\x01\x08\x01\x03\x01@\x01\x0eaddress-family\x05\0\x09\x04\0\x11create-\
-tcp-socket\x01\x0a\x03\0$wasi:sockets/tcp-create-socket@0.2.0\x05&\x02\x03\0\x11\
-\x0aip-address\x01B\x16\x02\x03\x02\x01\x05\x04\0\x08pollable\x03\0\0\x02\x03\x02\
-\x01\x1b\x04\0\x07network\x03\0\x02\x02\x03\x02\x01\x1d\x04\0\x0aerror-code\x03\0\
-\x04\x02\x03\x02\x01'\x04\0\x0aip-address\x03\0\x06\x04\0\x16resolve-address-str\
-eam\x03\x01\x01h\x08\x01k\x07\x01j\x01\x0a\x01\x05\x01@\x01\x04self\x09\0\x0b\x04\
-\03[method]resolve-address-stream.resolve-next-address\x01\x0c\x01i\x01\x01@\x01\
-\x04self\x09\0\x0d\x04\0([method]resolve-address-stream.subscribe\x01\x0e\x01h\x03\
-\x01i\x08\x01j\x01\x10\x01\x05\x01@\x02\x07network\x0f\x04names\0\x11\x04\0\x11r\
-esolve-addresses\x01\x12\x03\0!wasi:sockets/ip-name-lookup@0.2.0\x05(\x01B\x05\x01\
-p}\x01@\x01\x03lenw\0\0\x04\0\x10get-random-bytes\x01\x01\x01@\0\0w\x04\0\x0eget\
--random-u64\x01\x02\x03\0\x18wasi:random/random@0.2.0\x05)\x01B\x05\x01p}\x01@\x01\
-\x03lenw\0\0\x04\0\x19get-insecure-random-bytes\x01\x01\x01@\0\0w\x04\0\x17get-i\
-nsecure-random-u64\x01\x02\x03\0\x1awasi:random/insecure@0.2.0\x05*\x01B\x03\x01\
-o\x02ww\x01@\0\0\0\x04\0\x0dinsecure-seed\x01\x01\x03\0\x1fwasi:random/insecure-\
-seed@0.2.0\x05+\x01B#\x04\0\x04repo\x03\x01\x04\0\x07builder\x03\x01\x01h\0\x01j\
-\x01s\x01s\x01@\x02\x04self\x02\x05rpaths\0\x03\x04\0\x17[method]repo.get-record\
-\x01\x04\x01ps\x01j\x01\x05\x01s\x01@\x02\x04self\x02\x04nsids\0\x06\x04\0\x18[m\
-ethod]repo.get-records\x01\x07\x01@\x03\x04self\x02\x04nsids\x04datas\0\x03\x04\0\
-\x19[method]repo.create-stage\x01\x08\x01@\x03\x04self\x02\x05rpaths\x04datas\0\x03\
-\x04\0\x19[method]repo.update-stage\x01\x09\x04\0\x19[method]repo.delete-stage\x01\
-\x04\x01j\x01\x7f\x01s\x01@\x04\x04self\x02\x04nsids\x04datas\x03sigs\0\x0a\x04\0\
-\x1a[method]repo.create-commit\x01\x0b\x01@\x04\x04self\x02\x05rpaths\x04datas\x03\
-sigs\0\x0a\x04\0\x1a[method]repo.update-commit\x01\x0c\x01@\x03\x04self\x02\x05r\
-paths\x03sigs\0\x0a\x04\0\x1a[method]repo.delete-commit\x01\x0d\x01h\x01\x01@\x01\
-\x04self\x0e\0s\x04\0\x19[method]builder.get-bytes\x01\x0f\x01i\0\x01j\x01\x10\x01\
-s\x01@\x02\x04self\x0e\x03sigs\0\x11\x04\0\x18[method]builder.finalize\x01\x12\x01\
-i\x01\x01j\x01\x13\x01s\x01@\x01\x03dids\0\x14\x04\0\x06create\x01\x15\x01@\x02\x03\
-dids\x03cids\0\x11\x04\0\x04open\x01\x16\x04\0\x1bpolka:repository/repo@0.1.0\x05\
-,\x04\0!polka:repository/repository@0.1.0\x04\0\x0b\x10\x01\0\x0arepository\x03\0\
-\0\0G\x09producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.240.0\x10wit-bi\
-ndgen-rust\x060.47.0";
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 11318] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xb5W\x01A\x02\x01AM\x01\
+B\x07\x01p}\x01@\x01\x03cid\0\0\0\x04\0\x0aread-block\x01\x01\x01@\x03\x05codecw\
+\x04hashw\x08contents\0\0\0\x04\0\x0bwrite-block\x01\x02\x01@\x01\x03cid\0\0\x7f\
+\x04\0\x08contains\x01\x03\x03\0!polka:repository/blockstore@0.1.0\x05\0\x01B\x05\
+\x01p}\x01@\x01\x05bytes\0\0\0\x04\0\x04sign\x01\x01\x01@\x02\x03dids\x03cids\0s\
+\x04\0\x06get-pk\x01\x02\x03\0\x1dpolka:repository/crypto@0.1.0\x05\x01\x01B\x0a\
+\x01o\x02ss\x01p\0\x01@\0\0\x01\x04\0\x0fget-environment\x01\x02\x01ps\x01@\0\0\x03\
+\x04\0\x0dget-arguments\x01\x04\x01ks\x01@\0\0\x05\x04\0\x0binitial-cwd\x01\x06\x03\
+\0\x1awasi:cli/environment@0.2.0\x05\x02\x01B\x03\x01j\0\0\x01@\x01\x06status\0\x01\
+\0\x04\0\x04exit\x01\x01\x03\0\x13wasi:cli/exit@0.2.0\x05\x03\x01B\x04\x04\0\x05\
+error\x03\x01\x01h\0\x01@\x01\x04self\x01\0s\x04\0\x1d[method]error.to-debug-str\
+ing\x01\x02\x03\0\x13wasi:io/error@0.2.0\x05\x04\x01B\x0a\x04\0\x08pollable\x03\x01\
+\x01h\0\x01@\x01\x04self\x01\0\x7f\x04\0\x16[method]pollable.ready\x01\x02\x01@\x01\
+\x04self\x01\x01\0\x04\0\x16[method]pollable.block\x01\x03\x01p\x01\x01py\x01@\x01\
+\x02in\x04\0\x05\x04\0\x04poll\x01\x06\x03\0\x12wasi:io/poll@0.2.0\x05\x05\x02\x03\
+\0\x04\x05error\x02\x03\0\x05\x08pollable\x01B(\x02\x03\x02\x01\x06\x04\0\x05err\
+or\x03\0\0\x02\x03\x02\x01\x07\x04\0\x08pollable\x03\0\x02\x01i\x01\x01q\x02\x15\
+last-operation-failed\x01\x04\0\x06closed\0\0\x04\0\x0cstream-error\x03\0\x05\x04\
+\0\x0cinput-stream\x03\x01\x04\0\x0doutput-stream\x03\x01\x01h\x07\x01p}\x01j\x01\
+\x0a\x01\x06\x01@\x02\x04self\x09\x03lenw\0\x0b\x04\0\x19[method]input-stream.re\
+ad\x01\x0c\x04\0\"[method]input-stream.blocking-read\x01\x0c\x01j\x01w\x01\x06\x01\
+@\x02\x04self\x09\x03lenw\0\x0d\x04\0\x19[method]input-stream.skip\x01\x0e\x04\0\
+\"[method]input-stream.blocking-skip\x01\x0e\x01i\x03\x01@\x01\x04self\x09\0\x0f\
+\x04\0\x1e[method]input-stream.subscribe\x01\x10\x01h\x08\x01@\x01\x04self\x11\0\
+\x0d\x04\0![method]output-stream.check-write\x01\x12\x01j\0\x01\x06\x01@\x02\x04\
+self\x11\x08contents\x0a\0\x13\x04\0\x1b[method]output-stream.write\x01\x14\x04\0\
+.[method]output-stream.blocking-write-and-flush\x01\x14\x01@\x01\x04self\x11\0\x13\
+\x04\0\x1b[method]output-stream.flush\x01\x15\x04\0$[method]output-stream.blocki\
+ng-flush\x01\x15\x01@\x01\x04self\x11\0\x0f\x04\0\x1f[method]output-stream.subsc\
+ribe\x01\x16\x01@\x02\x04self\x11\x03lenw\0\x13\x04\0\"[method]output-stream.wri\
+te-zeroes\x01\x17\x04\05[method]output-stream.blocking-write-zeroes-and-flush\x01\
+\x17\x01@\x03\x04self\x11\x03src\x09\x03lenw\0\x0d\x04\0\x1c[method]output-strea\
+m.splice\x01\x18\x04\0%[method]output-stream.blocking-splice\x01\x18\x03\0\x15wa\
+si:io/streams@0.2.0\x05\x08\x02\x03\0\x06\x0cinput-stream\x01B\x05\x02\x03\x02\x01\
+\x09\x04\0\x0cinput-stream\x03\0\0\x01i\x01\x01@\0\0\x02\x04\0\x09get-stdin\x01\x03\
+\x03\0\x14wasi:cli/stdin@0.2.0\x05\x0a\x02\x03\0\x06\x0doutput-stream\x01B\x05\x02\
+\x03\x02\x01\x0b\x04\0\x0doutput-stream\x03\0\0\x01i\x01\x01@\0\0\x02\x04\0\x0ag\
+et-stdout\x01\x03\x03\0\x15wasi:cli/stdout@0.2.0\x05\x0c\x01B\x05\x02\x03\x02\x01\
+\x0b\x04\0\x0doutput-stream\x03\0\0\x01i\x01\x01@\0\0\x02\x04\0\x0aget-stderr\x01\
+\x03\x03\0\x15wasi:cli/stderr@0.2.0\x05\x0d\x01B\x01\x04\0\x0eterminal-input\x03\
+\x01\x03\0\x1dwasi:cli/terminal-input@0.2.0\x05\x0e\x01B\x01\x04\0\x0fterminal-o\
+utput\x03\x01\x03\0\x1ewasi:cli/terminal-output@0.2.0\x05\x0f\x02\x03\0\x0a\x0et\
+erminal-input\x01B\x06\x02\x03\x02\x01\x10\x04\0\x0eterminal-input\x03\0\0\x01i\x01\
+\x01k\x02\x01@\0\0\x03\x04\0\x12get-terminal-stdin\x01\x04\x03\0\x1dwasi:cli/ter\
+minal-stdin@0.2.0\x05\x11\x02\x03\0\x0b\x0fterminal-output\x01B\x06\x02\x03\x02\x01\
+\x12\x04\0\x0fterminal-output\x03\0\0\x01i\x01\x01k\x02\x01@\0\0\x03\x04\0\x13ge\
+t-terminal-stdout\x01\x04\x03\0\x1ewasi:cli/terminal-stdout@0.2.0\x05\x13\x01B\x06\
+\x02\x03\x02\x01\x12\x04\0\x0fterminal-output\x03\0\0\x01i\x01\x01k\x02\x01@\0\0\
+\x03\x04\0\x13get-terminal-stderr\x01\x04\x03\0\x1ewasi:cli/terminal-stderr@0.2.\
+0\x05\x14\x01B\x0f\x02\x03\x02\x01\x07\x04\0\x08pollable\x03\0\0\x01w\x04\0\x07i\
+nstant\x03\0\x02\x01w\x04\0\x08duration\x03\0\x04\x01@\0\0\x03\x04\0\x03now\x01\x06\
+\x01@\0\0\x05\x04\0\x0aresolution\x01\x07\x01i\x01\x01@\x01\x04when\x03\0\x08\x04\
+\0\x11subscribe-instant\x01\x09\x01@\x01\x04when\x05\0\x08\x04\0\x12subscribe-du\
+ration\x01\x0a\x03\0!wasi:clocks/monotonic-clock@0.2.0\x05\x15\x01B\x05\x01r\x02\
+\x07secondsw\x0bnanosecondsy\x04\0\x08datetime\x03\0\0\x01@\0\0\x01\x04\0\x03now\
+\x01\x02\x04\0\x0aresolution\x01\x02\x03\0\x1cwasi:clocks/wall-clock@0.2.0\x05\x16\
+\x02\x03\0\x06\x05error\x02\x03\0\x10\x08datetime\x01Br\x02\x03\x02\x01\x09\x04\0\
+\x0cinput-stream\x03\0\0\x02\x03\x02\x01\x0b\x04\0\x0doutput-stream\x03\0\x02\x02\
+\x03\x02\x01\x17\x04\0\x05error\x03\0\x04\x02\x03\x02\x01\x18\x04\0\x08datetime\x03\
+\0\x06\x01w\x04\0\x08filesize\x03\0\x08\x01m\x08\x07unknown\x0cblock-device\x10c\
+haracter-device\x09directory\x04fifo\x0dsymbolic-link\x0cregular-file\x06socket\x04\
+\0\x0fdescriptor-type\x03\0\x0a\x01n\x06\x04read\x05write\x13file-integrity-sync\
+\x13data-integrity-sync\x14requested-write-sync\x10mutate-directory\x04\0\x10des\
+criptor-flags\x03\0\x0c\x01n\x01\x0esymlink-follow\x04\0\x0apath-flags\x03\0\x0e\
+\x01n\x04\x06create\x09directory\x09exclusive\x08truncate\x04\0\x0aopen-flags\x03\
+\0\x10\x01w\x04\0\x0alink-count\x03\0\x12\x01k\x07\x01r\x06\x04type\x0b\x0alink-\
+count\x13\x04size\x09\x15data-access-timestamp\x14\x1bdata-modification-timestam\
+p\x14\x17status-change-timestamp\x14\x04\0\x0fdescriptor-stat\x03\0\x15\x01q\x03\
+\x09no-change\0\0\x03now\0\0\x09timestamp\x01\x07\0\x04\0\x0dnew-timestamp\x03\0\
+\x17\x01r\x02\x04type\x0b\x04names\x04\0\x0fdirectory-entry\x03\0\x19\x01m%\x06a\
+ccess\x0bwould-block\x07already\x0ebad-descriptor\x04busy\x08deadlock\x05quota\x05\
+exist\x0efile-too-large\x15illegal-byte-sequence\x0bin-progress\x0binterrupted\x07\
+invalid\x02io\x0cis-directory\x04loop\x0etoo-many-links\x0cmessage-size\x0dname-\
+too-long\x09no-device\x08no-entry\x07no-lock\x13insufficient-memory\x12insuffici\
+ent-space\x0dnot-directory\x09not-empty\x0fnot-recoverable\x0bunsupported\x06no-\
+tty\x0eno-such-device\x08overflow\x0dnot-permitted\x04pipe\x09read-only\x0cinval\
+id-seek\x0etext-file-busy\x0ccross-device\x04\0\x0aerror-code\x03\0\x1b\x01m\x06\
+\x06normal\x0asequential\x06random\x09will-need\x09dont-need\x08no-reuse\x04\0\x06\
+advice\x03\0\x1d\x01r\x02\x05lowerw\x05upperw\x04\0\x13metadata-hash-value\x03\0\
+\x1f\x04\0\x0adescriptor\x03\x01\x04\0\x16directory-entry-stream\x03\x01\x01h!\x01\
+i\x01\x01j\x01$\x01\x1c\x01@\x02\x04self#\x06offset\x09\0%\x04\0\"[method]descri\
+ptor.read-via-stream\x01&\x01i\x03\x01j\x01'\x01\x1c\x01@\x02\x04self#\x06offset\
+\x09\0(\x04\0#[method]descriptor.write-via-stream\x01)\x01@\x01\x04self#\0(\x04\0\
+$[method]descriptor.append-via-stream\x01*\x01j\0\x01\x1c\x01@\x04\x04self#\x06o\
+ffset\x09\x06length\x09\x06advice\x1e\0+\x04\0\x19[method]descriptor.advise\x01,\
+\x01@\x01\x04self#\0+\x04\0\x1c[method]descriptor.sync-data\x01-\x01j\x01\x0d\x01\
+\x1c\x01@\x01\x04self#\0.\x04\0\x1c[method]descriptor.get-flags\x01/\x01j\x01\x0b\
+\x01\x1c\x01@\x01\x04self#\00\x04\0\x1b[method]descriptor.get-type\x011\x01@\x02\
+\x04self#\x04size\x09\0+\x04\0\x1b[method]descriptor.set-size\x012\x01@\x03\x04s\
+elf#\x15data-access-timestamp\x18\x1bdata-modification-timestamp\x18\0+\x04\0\x1c\
+[method]descriptor.set-times\x013\x01p}\x01o\x024\x7f\x01j\x015\x01\x1c\x01@\x03\
+\x04self#\x06length\x09\x06offset\x09\06\x04\0\x17[method]descriptor.read\x017\x01\
+j\x01\x09\x01\x1c\x01@\x03\x04self#\x06buffer4\x06offset\x09\08\x04\0\x18[method\
+]descriptor.write\x019\x01i\"\x01j\x01:\x01\x1c\x01@\x01\x04self#\0;\x04\0![meth\
+od]descriptor.read-directory\x01<\x04\0\x17[method]descriptor.sync\x01-\x01@\x02\
+\x04self#\x04paths\0+\x04\0&[method]descriptor.create-directory-at\x01=\x01j\x01\
+\x16\x01\x1c\x01@\x01\x04self#\0>\x04\0\x17[method]descriptor.stat\x01?\x01@\x03\
+\x04self#\x0apath-flags\x0f\x04paths\0>\x04\0\x1a[method]descriptor.stat-at\x01@\
+\x01@\x05\x04self#\x0apath-flags\x0f\x04paths\x15data-access-timestamp\x18\x1bda\
+ta-modification-timestamp\x18\0+\x04\0\x1f[method]descriptor.set-times-at\x01A\x01\
+@\x05\x04self#\x0eold-path-flags\x0f\x08old-paths\x0enew-descriptor#\x08new-path\
+s\0+\x04\0\x1a[method]descriptor.link-at\x01B\x01i!\x01j\x01\xc3\0\x01\x1c\x01@\x05\
+\x04self#\x0apath-flags\x0f\x04paths\x0aopen-flags\x11\x05flags\x0d\0\xc4\0\x04\0\
+\x1a[method]descriptor.open-at\x01E\x01j\x01s\x01\x1c\x01@\x02\x04self#\x04paths\
+\0\xc6\0\x04\0\x1e[method]descriptor.readlink-at\x01G\x04\0&[method]descriptor.r\
+emove-directory-at\x01=\x01@\x04\x04self#\x08old-paths\x0enew-descriptor#\x08new\
+-paths\0+\x04\0\x1c[method]descriptor.rename-at\x01H\x01@\x03\x04self#\x08old-pa\
+ths\x08new-paths\0+\x04\0\x1d[method]descriptor.symlink-at\x01I\x04\0![method]de\
+scriptor.unlink-file-at\x01=\x01@\x02\x04self#\x05other#\0\x7f\x04\0![method]des\
+criptor.is-same-object\x01J\x01j\x01\x20\x01\x1c\x01@\x01\x04self#\0\xcb\0\x04\0\
+\x20[method]descriptor.metadata-hash\x01L\x01@\x03\x04self#\x0apath-flags\x0f\x04\
+paths\0\xcb\0\x04\0#[method]descriptor.metadata-hash-at\x01M\x01h\"\x01k\x1a\x01\
+j\x01\xcf\0\x01\x1c\x01@\x01\x04self\xce\0\0\xd0\0\x04\03[method]directory-entry\
+-stream.read-directory-entry\x01Q\x01h\x05\x01k\x1c\x01@\x01\x03err\xd2\0\0\xd3\0\
+\x04\0\x15filesystem-error-code\x01T\x03\0\x1bwasi:filesystem/types@0.2.0\x05\x19\
+\x02\x03\0\x11\x0adescriptor\x01B\x07\x02\x03\x02\x01\x1a\x04\0\x0adescriptor\x03\
+\0\0\x01i\x01\x01o\x02\x02s\x01p\x03\x01@\0\0\x04\x04\0\x0fget-directories\x01\x05\
+\x03\0\x1ewasi:filesystem/preopens@0.2.0\x05\x1b\x01B\x11\x04\0\x07network\x03\x01\
+\x01m\x15\x07unknown\x0daccess-denied\x0dnot-supported\x10invalid-argument\x0dou\
+t-of-memory\x07timeout\x14concurrency-conflict\x0fnot-in-progress\x0bwould-block\
+\x0dinvalid-state\x10new-socket-limit\x14address-not-bindable\x0eaddress-in-use\x12\
+remote-unreachable\x12connection-refused\x10connection-reset\x12connection-abort\
+ed\x12datagram-too-large\x11name-unresolvable\x1atemporary-resolver-failure\x1ap\
+ermanent-resolver-failure\x04\0\x0aerror-code\x03\0\x01\x01m\x02\x04ipv4\x04ipv6\
+\x04\0\x11ip-address-family\x03\0\x03\x01o\x04}}}}\x04\0\x0cipv4-address\x03\0\x05\
+\x01o\x08{{{{{{{{\x04\0\x0cipv6-address\x03\0\x07\x01q\x02\x04ipv4\x01\x06\0\x04\
+ipv6\x01\x08\0\x04\0\x0aip-address\x03\0\x09\x01r\x02\x04port{\x07address\x06\x04\
+\0\x13ipv4-socket-address\x03\0\x0b\x01r\x04\x04port{\x09flow-infoy\x07address\x08\
+\x08scope-idy\x04\0\x13ipv6-socket-address\x03\0\x0d\x01q\x02\x04ipv4\x01\x0c\0\x04\
+ipv6\x01\x0e\0\x04\0\x11ip-socket-address\x03\0\x0f\x03\0\x1awasi:sockets/networ\
+k@0.2.0\x05\x1c\x02\x03\0\x13\x07network\x01B\x05\x02\x03\x02\x01\x1d\x04\0\x07n\
+etwork\x03\0\0\x01i\x01\x01@\0\0\x02\x04\0\x10instance-network\x01\x03\x03\0#was\
+i:sockets/instance-network@0.2.0\x05\x1e\x02\x03\0\x13\x0aerror-code\x02\x03\0\x13\
+\x11ip-socket-address\x02\x03\0\x13\x11ip-address-family\x01BD\x02\x03\x02\x01\x07\
+\x04\0\x08pollable\x03\0\0\x02\x03\x02\x01\x1d\x04\0\x07network\x03\0\x02\x02\x03\
+\x02\x01\x1f\x04\0\x0aerror-code\x03\0\x04\x02\x03\x02\x01\x20\x04\0\x11ip-socke\
+t-address\x03\0\x06\x02\x03\x02\x01!\x04\0\x11ip-address-family\x03\0\x08\x01p}\x01\
+r\x02\x04data\x0a\x0eremote-address\x07\x04\0\x11incoming-datagram\x03\0\x0b\x01\
+k\x07\x01r\x02\x04data\x0a\x0eremote-address\x0d\x04\0\x11outgoing-datagram\x03\0\
+\x0e\x04\0\x0audp-socket\x03\x01\x04\0\x18incoming-datagram-stream\x03\x01\x04\0\
+\x18outgoing-datagram-stream\x03\x01\x01h\x10\x01h\x03\x01j\0\x01\x05\x01@\x03\x04\
+self\x13\x07network\x14\x0dlocal-address\x07\0\x15\x04\0\x1d[method]udp-socket.s\
+tart-bind\x01\x16\x01@\x01\x04self\x13\0\x15\x04\0\x1e[method]udp-socket.finish-\
+bind\x01\x17\x01i\x11\x01i\x12\x01o\x02\x18\x19\x01j\x01\x1a\x01\x05\x01@\x02\x04\
+self\x13\x0eremote-address\x0d\0\x1b\x04\0\x19[method]udp-socket.stream\x01\x1c\x01\
+j\x01\x07\x01\x05\x01@\x01\x04self\x13\0\x1d\x04\0\x20[method]udp-socket.local-a\
+ddress\x01\x1e\x04\0![method]udp-socket.remote-address\x01\x1e\x01@\x01\x04self\x13\
+\0\x09\x04\0![method]udp-socket.address-family\x01\x1f\x01j\x01}\x01\x05\x01@\x01\
+\x04self\x13\0\x20\x04\0$[method]udp-socket.unicast-hop-limit\x01!\x01@\x02\x04s\
+elf\x13\x05value}\0\x15\x04\0([method]udp-socket.set-unicast-hop-limit\x01\"\x01\
+j\x01w\x01\x05\x01@\x01\x04self\x13\0#\x04\0&[method]udp-socket.receive-buffer-s\
+ize\x01$\x01@\x02\x04self\x13\x05valuew\0\x15\x04\0*[method]udp-socket.set-recei\
+ve-buffer-size\x01%\x04\0#[method]udp-socket.send-buffer-size\x01$\x04\0'[method\
+]udp-socket.set-send-buffer-size\x01%\x01i\x01\x01@\x01\x04self\x13\0&\x04\0\x1c\
+[method]udp-socket.subscribe\x01'\x01h\x11\x01p\x0c\x01j\x01)\x01\x05\x01@\x02\x04\
+self(\x0bmax-resultsw\0*\x04\0([method]incoming-datagram-stream.receive\x01+\x01\
+@\x01\x04self(\0&\x04\0*[method]incoming-datagram-stream.subscribe\x01,\x01h\x12\
+\x01@\x01\x04self-\0#\x04\0+[method]outgoing-datagram-stream.check-send\x01.\x01\
+p\x0f\x01@\x02\x04self-\x09datagrams/\0#\x04\0%[method]outgoing-datagram-stream.\
+send\x010\x01@\x01\x04self-\0&\x04\0*[method]outgoing-datagram-stream.subscribe\x01\
+1\x03\0\x16wasi:sockets/udp@0.2.0\x05\"\x02\x03\0\x15\x0audp-socket\x01B\x0c\x02\
+\x03\x02\x01\x1d\x04\0\x07network\x03\0\0\x02\x03\x02\x01\x1f\x04\0\x0aerror-cod\
+e\x03\0\x02\x02\x03\x02\x01!\x04\0\x11ip-address-family\x03\0\x04\x02\x03\x02\x01\
+#\x04\0\x0audp-socket\x03\0\x06\x01i\x07\x01j\x01\x08\x01\x03\x01@\x01\x0eaddres\
+s-family\x05\0\x09\x04\0\x11create-udp-socket\x01\x0a\x03\0$wasi:sockets/udp-cre\
+ate-socket@0.2.0\x05$\x02\x03\0\x0f\x08duration\x01BT\x02\x03\x02\x01\x09\x04\0\x0c\
+input-stream\x03\0\0\x02\x03\x02\x01\x0b\x04\0\x0doutput-stream\x03\0\x02\x02\x03\
+\x02\x01\x07\x04\0\x08pollable\x03\0\x04\x02\x03\x02\x01%\x04\0\x08duration\x03\0\
+\x06\x02\x03\x02\x01\x1d\x04\0\x07network\x03\0\x08\x02\x03\x02\x01\x1f\x04\0\x0a\
+error-code\x03\0\x0a\x02\x03\x02\x01\x20\x04\0\x11ip-socket-address\x03\0\x0c\x02\
+\x03\x02\x01!\x04\0\x11ip-address-family\x03\0\x0e\x01m\x03\x07receive\x04send\x04\
+both\x04\0\x0dshutdown-type\x03\0\x10\x04\0\x0atcp-socket\x03\x01\x01h\x12\x01h\x09\
+\x01j\0\x01\x0b\x01@\x03\x04self\x13\x07network\x14\x0dlocal-address\x0d\0\x15\x04\
+\0\x1d[method]tcp-socket.start-bind\x01\x16\x01@\x01\x04self\x13\0\x15\x04\0\x1e\
+[method]tcp-socket.finish-bind\x01\x17\x01@\x03\x04self\x13\x07network\x14\x0ere\
+mote-address\x0d\0\x15\x04\0\x20[method]tcp-socket.start-connect\x01\x18\x01i\x01\
+\x01i\x03\x01o\x02\x19\x1a\x01j\x01\x1b\x01\x0b\x01@\x01\x04self\x13\0\x1c\x04\0\
+![method]tcp-socket.finish-connect\x01\x1d\x04\0\x1f[method]tcp-socket.start-lis\
+ten\x01\x17\x04\0\x20[method]tcp-socket.finish-listen\x01\x17\x01i\x12\x01o\x03\x1e\
+\x19\x1a\x01j\x01\x1f\x01\x0b\x01@\x01\x04self\x13\0\x20\x04\0\x19[method]tcp-so\
+cket.accept\x01!\x01j\x01\x0d\x01\x0b\x01@\x01\x04self\x13\0\"\x04\0\x20[method]\
+tcp-socket.local-address\x01#\x04\0![method]tcp-socket.remote-address\x01#\x01@\x01\
+\x04self\x13\0\x7f\x04\0\x1f[method]tcp-socket.is-listening\x01$\x01@\x01\x04sel\
+f\x13\0\x0f\x04\0![method]tcp-socket.address-family\x01%\x01@\x02\x04self\x13\x05\
+valuew\0\x15\x04\0*[method]tcp-socket.set-listen-backlog-size\x01&\x01j\x01\x7f\x01\
+\x0b\x01@\x01\x04self\x13\0'\x04\0%[method]tcp-socket.keep-alive-enabled\x01(\x01\
+@\x02\x04self\x13\x05value\x7f\0\x15\x04\0)[method]tcp-socket.set-keep-alive-ena\
+bled\x01)\x01j\x01\x07\x01\x0b\x01@\x01\x04self\x13\0*\x04\0'[method]tcp-socket.\
+keep-alive-idle-time\x01+\x01@\x02\x04self\x13\x05value\x07\0\x15\x04\0+[method]\
+tcp-socket.set-keep-alive-idle-time\x01,\x04\0&[method]tcp-socket.keep-alive-int\
+erval\x01+\x04\0*[method]tcp-socket.set-keep-alive-interval\x01,\x01j\x01y\x01\x0b\
+\x01@\x01\x04self\x13\0-\x04\0#[method]tcp-socket.keep-alive-count\x01.\x01@\x02\
+\x04self\x13\x05valuey\0\x15\x04\0'[method]tcp-socket.set-keep-alive-count\x01/\x01\
+j\x01}\x01\x0b\x01@\x01\x04self\x13\00\x04\0\x1c[method]tcp-socket.hop-limit\x01\
+1\x01@\x02\x04self\x13\x05value}\0\x15\x04\0\x20[method]tcp-socket.set-hop-limit\
+\x012\x01j\x01w\x01\x0b\x01@\x01\x04self\x13\03\x04\0&[method]tcp-socket.receive\
+-buffer-size\x014\x04\0*[method]tcp-socket.set-receive-buffer-size\x01&\x04\0#[m\
+ethod]tcp-socket.send-buffer-size\x014\x04\0'[method]tcp-socket.set-send-buffer-\
+size\x01&\x01i\x05\x01@\x01\x04self\x13\05\x04\0\x1c[method]tcp-socket.subscribe\
+\x016\x01@\x02\x04self\x13\x0dshutdown-type\x11\0\x15\x04\0\x1b[method]tcp-socke\
+t.shutdown\x017\x03\0\x16wasi:sockets/tcp@0.2.0\x05&\x02\x03\0\x17\x0atcp-socket\
+\x01B\x0c\x02\x03\x02\x01\x1d\x04\0\x07network\x03\0\0\x02\x03\x02\x01\x1f\x04\0\
+\x0aerror-code\x03\0\x02\x02\x03\x02\x01!\x04\0\x11ip-address-family\x03\0\x04\x02\
+\x03\x02\x01'\x04\0\x0atcp-socket\x03\0\x06\x01i\x07\x01j\x01\x08\x01\x03\x01@\x01\
+\x0eaddress-family\x05\0\x09\x04\0\x11create-tcp-socket\x01\x0a\x03\0$wasi:socke\
+ts/tcp-create-socket@0.2.0\x05(\x02\x03\0\x13\x0aip-address\x01B\x16\x02\x03\x02\
+\x01\x07\x04\0\x08pollable\x03\0\0\x02\x03\x02\x01\x1d\x04\0\x07network\x03\0\x02\
+\x02\x03\x02\x01\x1f\x04\0\x0aerror-code\x03\0\x04\x02\x03\x02\x01)\x04\0\x0aip-\
+address\x03\0\x06\x04\0\x16resolve-address-stream\x03\x01\x01h\x08\x01k\x07\x01j\
+\x01\x0a\x01\x05\x01@\x01\x04self\x09\0\x0b\x04\03[method]resolve-address-stream\
+.resolve-next-address\x01\x0c\x01i\x01\x01@\x01\x04self\x09\0\x0d\x04\0([method]\
+resolve-address-stream.subscribe\x01\x0e\x01h\x03\x01i\x08\x01j\x01\x10\x01\x05\x01\
+@\x02\x07network\x0f\x04names\0\x11\x04\0\x11resolve-addresses\x01\x12\x03\0!was\
+i:sockets/ip-name-lookup@0.2.0\x05*\x01B\x05\x01p}\x01@\x01\x03lenw\0\0\x04\0\x10\
+get-random-bytes\x01\x01\x01@\0\0w\x04\0\x0eget-random-u64\x01\x02\x03\0\x18wasi\
+:random/random@0.2.0\x05+\x01B\x05\x01p}\x01@\x01\x03lenw\0\0\x04\0\x19get-insec\
+ure-random-bytes\x01\x01\x01@\0\0w\x04\0\x17get-insecure-random-u64\x01\x02\x03\0\
+\x1awasi:random/insecure@0.2.0\x05,\x01B\x03\x01o\x02ww\x01@\0\0\0\x04\0\x0dinse\
+cure-seed\x01\x01\x03\0\x1fwasi:random/insecure-seed@0.2.0\x05-\x01B\x16\x04\0\x04\
+repo\x03\x01\x01h\0\x01j\x01s\x01s\x01@\x02\x04self\x01\x05rpaths\0\x02\x04\0\x17\
+[method]repo.get-record\x01\x03\x01ps\x01j\x01\x04\x01s\x01@\x02\x04self\x01\x04\
+nsids\0\x05\x04\0\x18[method]repo.get-records\x01\x06\x01j\x01\x7f\x01s\x01@\x03\
+\x04self\x01\x04nsids\x04datas\0\x07\x04\0\x13[method]repo.create\x01\x08\x01@\x03\
+\x04self\x01\x05rpaths\x04datas\0\x07\x04\0\x13[method]repo.update\x01\x09\x01@\x02\
+\x04self\x01\x05rpaths\0\x07\x04\0\x13[method]repo.delete\x01\x0a\x01i\0\x01j\x01\
+\x0b\x01s\x01@\x01\x03dids\0\x0c\x04\0\x06create\x01\x0d\x01@\x02\x03dids\x03cid\
+s\0\x0c\x04\0\x04open\x01\x0e\x04\0\x1bpolka:repository/repo@0.1.0\x05.\x04\0!po\
+lka:repository/repository@0.1.0\x04\0\x0b\x10\x01\0\x0arepository\x03\0\0\0G\x09\
+producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.240.0\x10wit-bindgen-rus\
+t\x060.47.0";
 
 #[inline(never)]
 #[doc(hidden)]

@@ -66,6 +66,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "async-trait"
+version = "0.1.89"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9035ad2d096bed7955a320ee7e2230574d28fd3c3a0f186cbea1ff3c7eed5dbb"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.111",
+]
+
+[[package]]
 name = "atrium-api"
 version = "0.25.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1072,12 +1083,14 @@ checksum = "7a2d987857b319362043e95f5353c0535c1f58eec5336fdfcf626430af7def58"
 name = "repo"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "atrium-api",
  "atrium-crypto",
  "atrium-repo",
  "cid",
  "futures",
  "hex",
+ "ipld-core",
  "once_cell",
  "serde",
  "serde_ipld_dagcbor",

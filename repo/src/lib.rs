@@ -1,140 +1,30 @@
 mod repository;
+mod wasip2_store;
 use std::{cell::RefCell, str::FromStr};
 
-use crate::repository::exports::polka::repository::repo::{GuestBuilder, GuestRepo, Repo};
-use atrium_api::types::LimitedU32;
-use atrium_api::types::string::{Did, Tid};
+use crate::repository::exports::polka::repository::repo::{GuestRepo, Repo};
+use crate::repository::polka::repository::crypto;
+use atrium_api::types::string::Did;
 use atrium_crypto::{did::parse_did_key, verify::Verifier};
 use cid::Cid;
 use futures::TryStreamExt;
-use hex::{decode, encode};
+use futures::executor::block_on;
 use repository::exports::polka::repository::repo;
+use wasip2_store::Wasip2Blockstore;
 
 struct HostRepo {
-    repo: atrium_repo::Repository<atrium_repo::blockstore::MemoryBlockStore>,
+    repo: atrium_repo::Repository<Wasip2Blockstore>,
     did: String,
-    pending_create_tid: Option<(String, String, Tid)>,
-    pending_update_tid: Option<(String, String, Tid)>,
-    pending_delete_tid: Option<(String, Tid)>,
-}
-
-struct HostBuilder {
-    builder: atrium_repo::repo::RepoBuilder<atrium_repo::blockstore::MemoryBlockStore>,
-    did: String,
-}
-
-impl HostBuilder {
-    // builderをhexとして返す
-    fn get_bytes(&mut self) -> String {
-        encode(self.builder.bytes())
-    }
-
-    // builderを取得
-    fn finalize(self, sig: String) -> Result<HostRepo, String> {
-        // sigをbytesとして取得
-        let sig_bytes = match decode(sig) {
-            Ok(v) => v,
-            Err(e) => return Err(e.to_string()),
-        };
-
-        let repo = futures::executor::block_on(async { self.builder.finalize(sig_bytes).await })
-            .map_err(|e: atrium_repo::repo::Error| e.to_string())?;
-
-        Ok(HostRepo {
-            repo,
-            did: self.did,
-            pending_create_tid: None,
-            pending_update_tid: None,
-            pending_delete_tid: None,
-        })
-    }
 }
 
 impl HostRepo {
-    // create操作をステージング(署名用bytesを取得)
-    fn create_stage(&mut self, nsid: String, data: String) -> Result<String, String> {
-        // TIDを事前に生成
-        let tid = Tid::now(LimitedU32::MIN);
-
-        // add_rawを呼び出し、署名用bytesを取得(Commit確定はしない)
-        let (mut stage_builder, _) =
-            futures::executor::block_on(async { self.repo.add_raw(&nsid, data.clone()).await })
-                .map_err(|e| e.to_string())?;
-
-        // TIDを設定
-        stage_builder.rev(tid.clone());
-
-        // TIDとパラメータを保存
-        self.pending_create_tid = Some((nsid, data, tid));
-
-        // hexにして返す
-        Ok(encode(stage_builder.bytes()))
-    }
-
-    // update操作をステージング(署名用bytesを取得)
-    fn update_stage(&mut self, rpath: String, data: String) -> Result<String, String> {
-        // TIDを事前に生成
-        let tid = Tid::now(LimitedU32::MIN);
-
-        // update_rawを呼び出し、署名用bytesを取得(Commit確定はしない)
-        let (mut stage_builder, _) =
-            futures::executor::block_on(async { self.repo.update_raw(&rpath, data.clone()).await })
-                .map_err(|e| e.to_string())?;
-
-        // TIDを設定
-        stage_builder.rev(tid.clone());
-
-        // TIDとパラメータを保存
-        self.pending_update_tid = Some((rpath, data, tid));
-
-        Ok(encode(stage_builder.bytes()))
-    }
-
-    // delete操作をステージング(署名用bytesを取得)
-    fn delete_stage(&mut self, rpath: String) -> Result<String, String> {
-        // TIDを事前に生成
-        let tid = Tid::now(LimitedU32::MIN);
-
-        // delete_rawを呼び出し、署名用bytesを取得(Commit確定はしない)
-        let mut stage_builder =
-            futures::executor::block_on(async { self.repo.delete_raw(&rpath).await })
-                .map_err(|e| e.to_string())?;
-
-        // TIDを設定
-        stage_builder.rev(tid.clone());
-
-        // TIDとパラメータを保存
-        self.pending_delete_tid = Some((rpath, tid));
-
-        Ok(encode(stage_builder.bytes()))
-    }
-
-    // create操作をコミット(確定)
-    fn create_commit(&mut self, nsid: String, data: String, sig: String) -> Result<bool, String> {
-        let pending = self.pending_create_tid.clone().unwrap();
-
-        // パラメータが一致することを確認
-        if pending.0 != nsid || pending.1 != data {
-            return Err("Parameters do not match staged operation".to_string());
-        }
-
-        let (mut commit_builder, _) =
-            futures::executor::block_on(async { self.repo.add_raw(&nsid, data).await })
-                .map_err(|e| e.to_string())?;
-
-        // Stage時と同じTIDを設定
-        commit_builder.rev(pending.2);
-
-        // 署名をデシリアライズ
-        let sig_bytes = match decode(sig) {
-            Ok(v) => v,
-            Err(e) => return Err(e.to_string()),
-        };
-
+    fn create(&mut self, nsid: String, data: String) -> Result<bool, String> {
+        let (commit_builder, _) =
+            block_on(async { self.repo.add_raw(&nsid, data).await }).map_err(|e| e.to_string())?;
+        // このcrypto interfaceはホストが実装する
+        let sig = crypto::sign(&commit_builder.bytes());
         // Commitを確定
-        futures::executor::block_on(async { commit_builder.finalize(sig_bytes).await })
-            .map_err(|e| e.to_string())?;
-
+        block_on(async { commit_builder.finalize(sig).await }).map_err(|e| e.to_string())?;
         // 検証
         let commit = self.repo.commit();
         match parse_did_key(&self.did) {
@@ -149,29 +39,11 @@ impl HostRepo {
         Ok(true)
     }
 
-    fn update_commit(&mut self, rpath: String, data: String, sig: String) -> Result<bool, String> {
-        let pending = self.pending_update_tid.clone().unwrap();
-
-        // パラメータが一致することを確認
-        if pending.0 != rpath || pending.1 != data {
-            return Err("Parameters do not match staged operation".to_string());
-        }
-
-        let (mut commit_builder, _) =
-            futures::executor::block_on(async { self.repo.update_raw(&rpath, data).await })
-                .map_err(|e| e.to_string())?;
-
-        // Stage時と同じTIDを設定
-        commit_builder.rev(pending.2);
-
-        let sig_bytes = match decode(sig) {
-            Ok(v) => v,
-            Err(e) => return Err(e.to_string()),
-        };
-
-        futures::executor::block_on(async { commit_builder.finalize(sig_bytes).await })
+    fn update(&mut self, rpath: String, data: String) -> Result<bool, String> {
+        let (commit_builder, _) = block_on(async { self.repo.update_raw(&rpath, data).await })
             .map_err(|e| e.to_string())?;
-
+        let sig = crypto::sign(&commit_builder.bytes());
+        block_on(async { commit_builder.finalize(sig).await }).map_err(|e| e.to_string())?;
         let commit = self.repo.commit();
         match parse_did_key(&self.did) {
             Ok((alg, pub_key)) => {
@@ -185,29 +57,11 @@ impl HostRepo {
         Ok(true)
     }
 
-    fn delete_commit(&mut self, rpath: String, sig: String) -> Result<bool, String> {
-        let pending = self.pending_delete_tid.clone().unwrap();
-
-        // パラメータが一致することを確認
-        if pending.0 != rpath {
-            return Err("Parameters do not match staged operation".to_string());
-        }
-
-        let mut commit_builder =
-            futures::executor::block_on(async { self.repo.delete_raw(&rpath).await })
-                .map_err(|e| e.to_string())?;
-
-        // Stage時と同じTIDを設定
-        commit_builder.rev(pending.1);
-
-        let sig_bytes = match decode(sig) {
-            Ok(v) => v,
-            Err(e) => return Err(e.to_string()),
-        };
-
-        futures::executor::block_on(async { commit_builder.finalize(sig_bytes).await })
-            .map_err(|e| e.to_string())?;
-
+    fn delete(&mut self, rpath: String) -> Result<bool, String> {
+        let commit_builder =
+            block_on(async { self.repo.delete_raw(&rpath).await }).map_err(|e| e.to_string())?;
+        let sig = crypto::sign(&commit_builder.bytes());
+        block_on(async { commit_builder.finalize(sig).await }).map_err(|e| e.to_string())?;
         let commit = self.repo.commit();
         match parse_did_key(&self.did) {
             Ok((alg, pub_key)) => {
@@ -223,17 +77,14 @@ impl HostRepo {
 
     fn get_record(&mut self, rpath: String) -> Result<String, String> {
         let record: Option<String> =
-            futures::executor::block_on(async { self.repo.get_raw(&rpath).await })
-                .map_err(|e| e.to_string())?;
-
+            block_on(async { self.repo.get_raw(&rpath).await }).map_err(|e| e.to_string())?;
         let data = record.ok_or("Record not found")?;
         Ok(data)
     }
 
     fn get_records(&mut self, nsid: String) -> Result<Vec<String>, String> {
         let mut tree = self.repo.tree();
-        let stream =
-            futures::executor::block_on(async { tree.entries_prefixed(&nsid).try_collect().await });
+        let stream = block_on(async { tree.entries_prefixed(&nsid).try_collect().await });
         let keys: Vec<(String, Cid)> = match stream {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
@@ -246,52 +97,21 @@ impl HostRepo {
     }
 }
 
-struct GuestBuilderImpl {
-    inner: RefCell<Option<HostBuilder>>,
-}
-
-impl GuestBuilder for GuestBuilderImpl {
-    fn get_bytes(&self) -> String {
-        self.inner.borrow_mut().as_mut().unwrap().get_bytes()
-    }
-
-    fn finalize(&self, sig: String) -> Result<Repo, String> {
-        let host = self.inner.borrow_mut().take().unwrap();
-        let host_repo = host.finalize(sig)?;
-        let guest_repo = GuestRepoImpl {
-            inner: RefCell::new(host_repo),
-        };
-        Ok(Repo::new(guest_repo))
-    }
-}
-
 struct GuestRepoImpl {
     inner: RefCell<HostRepo>,
 }
 
 impl GuestRepo for GuestRepoImpl {
-    fn create_stage(&self, nsid: String, data: String) -> Result<String, String> {
-        self.inner.borrow_mut().create_stage(nsid, data)
+    fn create(&self, nsid: String, data: String) -> Result<bool, String> {
+        self.inner.borrow_mut().create(nsid, data)
     }
 
-    fn update_stage(&self, rpath: String, data: String) -> Result<String, String> {
-        self.inner.borrow_mut().update_stage(rpath, data)
+    fn update(&self, rpath: String, data: String) -> Result<bool, String> {
+        self.inner.borrow_mut().update(rpath, data)
     }
 
-    fn delete_stage(&self, rpath: String) -> Result<String, String> {
-        self.inner.borrow_mut().delete_stage(rpath)
-    }
-
-    fn create_commit(&self, nsid: String, data: String, sig: String) -> Result<bool, String> {
-        self.inner.borrow_mut().create_commit(nsid, data, sig)
-    }
-
-    fn update_commit(&self, rpath: String, data: String, sig: String) -> Result<bool, String> {
-        self.inner.borrow_mut().update_commit(rpath, data, sig)
-    }
-
-    fn delete_commit(&self, rpath: String, sig: String) -> Result<bool, String> {
-        self.inner.borrow_mut().delete_commit(rpath, sig)
+    fn delete(&self, rpath: String) -> Result<bool, String> {
+        self.inner.borrow_mut().delete(rpath)
     }
 
     fn get_record(&self, rpath: String) -> Result<String, String> {
@@ -306,30 +126,34 @@ impl GuestRepo for GuestRepoImpl {
 struct Component;
 
 impl repository::exports::polka::repository::repo::Guest for Component {
-    type Builder = GuestBuilderImpl;
     type Repo = GuestRepoImpl;
 
-    fn create(did: String) -> Result<repo::Builder, String> {
+    fn create(did: String) -> Result<repo::Repo, String> {
         let did_clone = did.clone();
         let parsed = match Did::new(did_clone) {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
         // blockstoreを生成
-        let bs = atrium_repo::blockstore::MemoryBlockStore::new();
+        let bs = Wasip2Blockstore::new();
         // CommitBuilderを取得
-        let builder = futures::executor::block_on(async {
-            atrium_repo::Repository::create(bs, parsed).await
-        });
+        let builder = block_on(async { atrium_repo::Repository::create(bs, parsed).await });
         let builder = match builder {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
-        // WITのBuilder Resourceとして返す
-        let builder = GuestBuilderImpl {
-            inner: RefCell::new(Some(HostBuilder { builder, did })),
+        // このcrypto interfaceはホスト側が実装する
+        let sig = crypto::sign(&builder.bytes());
+
+        let repo = block_on(async { builder.finalize(sig).await });
+        let repo = match repo {
+            Ok(v) => v,
+            Err(e) => return Err(e.to_string()),
         };
-        Ok(repo::Builder::new(builder))
+        let guest_repo = GuestRepoImpl {
+            inner: RefCell::new(HostRepo { repo, did }),
+        };
+        Ok(repo::Repo::new(guest_repo))
     }
 
     fn open(did: String, cid: String) -> Result<Repo, String> {
@@ -338,23 +162,15 @@ impl repository::exports::polka::repository::repo::Guest for Component {
             Err(e) => return Err(e.to_string()),
         };
         // blockstoreを生成
-        let bs = atrium_repo::blockstore::MemoryBlockStore::new();
+        let bs = wasip2_store::Wasip2Blockstore::new();
         // Repositoryを取得
-        let repo = futures::executor::block_on(async {
-            atrium_repo::Repository::open(bs, parsed_cid).await
-        });
+        let repo = block_on(async { atrium_repo::Repository::open(bs, parsed_cid).await });
         let repo = match repo {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
         let guest_repo = GuestRepoImpl {
-            inner: RefCell::new(HostRepo {
-                repo,
-                did,
-                pending_create_tid: None,
-                pending_update_tid: None,
-                pending_delete_tid: None,
-            }),
+            inner: RefCell::new(HostRepo { repo, did }),
         };
         Ok(repo::Repo::new(guest_repo))
     }

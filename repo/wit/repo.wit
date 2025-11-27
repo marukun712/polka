@@ -1,29 +1,44 @@
 package polka:repository@0.1.0;
 
+interface blockstore {
+  read-block: func(
+    cid: list<u8>
+  ) -> list<u8>;
+
+  write-block: func(
+    codec: u64,
+    hash: u64,
+    contents: list<u8>
+  ) -> list<u8>;
+
+  contains: func(
+    cid: list<u8>
+  ) -> bool;
+}
+
+interface crypto {
+  sign: func(bytes: list<u8>) -> list<u8>;
+  get-pk: func(did: string, cid: string) -> string;
+}
+
 interface repo {
   resource repo {
     get-record: func(rpath: string) -> result<string, string>;
     get-records: func(nsid: string) -> result<list<string>, string>;
 
-    create-stage: func(nsid: string, data: string) -> result<string, string>;
-    update-stage: func(rpath: string, data: string) -> result<string, string>;
-    delete-stage: func(rpath: string) -> result<string, string>;
-
-    create-commit: func(nsid: string, data: string, sig: string) -> result<bool, string>;
-    update-commit: func(rpath: string, data: string, sig: string) -> result<bool, string>;
-    delete-commit: func(rpath: string, sig: string) -> result<bool, string>;
+    create: func(nsid: string, data: string) -> result<bool, string>;
+    update: func(rpath: string, data: string) -> result<bool, string>;
+    delete: func(rpath: string) -> result<bool, string>;
   }
 
-  resource builder {
-    get-bytes: func() -> string;
-    finalize: func(sig: string) -> result<repo, string>;
-  }
-
-  create: func(did: string) -> result<builder, string>;
+  create: func(did: string) -> result<repo, string>;
   open: func(did: string, cid: string) -> result<repo, string>;
 }
 
 world repository {
   include wasi:cli/imports@0.2.0;
+
+  import blockstore;
+  import crypto;
   export repo;
 }
