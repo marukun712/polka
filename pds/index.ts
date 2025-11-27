@@ -74,7 +74,7 @@ app.post(
 				{
 					endpoint: "/init",
 					method: "GET",
-					validationType: "query",
+					validationType: "json",
 					errors: z.treeifyError(parsed.error),
 					receivedData: value,
 					type: "validation.failed",
@@ -88,7 +88,7 @@ app.post(
 			{
 				endpoint: "/init",
 				method: "GET",
-				validationType: "query",
+				validationType: "json",
 				type: "validation.success",
 			},
 			"Init schema validation successful",
@@ -166,16 +166,16 @@ app.post(
 	},
 );
 
-app.get(
-	"/record",
-	validator("query", (value, c) => {
+app.post(
+	"/get",
+	validator("json", (value, c) => {
 		const parsed = getRecordSchema.safeParse(value);
 		if (!parsed.success) {
 			logger.warn(
 				{
 					endpoint: "/record",
 					method: "GET",
-					validationType: "query",
+					validationType: "json",
 					errors: z.treeifyError(parsed.error),
 					receivedData: value,
 					type: "validation.failed",
@@ -189,7 +189,7 @@ app.get(
 			{
 				endpoint: "/record",
 				method: "GET",
-				validationType: "query",
+				validationType: "json",
 				type: "validation.success",
 			},
 			"Get record schema validation successful",
@@ -198,7 +198,7 @@ app.get(
 		return parsed.data;
 	}),
 	(c) => {
-		const rpath = c.req.valid("query").rpath;
+		const rpath = c.req.valid("json").rpath;
 
 		if (!repo) {
 			logger.warn(
@@ -261,16 +261,16 @@ app.get(
 	},
 );
 
-app.get(
+app.post(
 	"/records",
-	validator("query", (value, c) => {
+	validator("json", (value, c) => {
 		const parsed = getRecordsSchema.safeParse(value);
 		if (!parsed.success) {
 			logger.warn(
 				{
 					endpoint: "/records",
 					method: "GET",
-					validationType: "query",
+					validationType: "json",
 					errors: z.treeifyError(parsed.error),
 					receivedData: value,
 					type: "validation.failed",
@@ -284,7 +284,7 @@ app.get(
 			{
 				endpoint: "/records",
 				method: "GET",
-				validationType: "query",
+				validationType: "json",
 				type: "validation.success",
 			},
 			"Get records schema validation successful",
@@ -293,7 +293,7 @@ app.get(
 		return parsed.data;
 	}),
 	(c) => {
-		const nsid = c.req.valid("query").nsid;
+		const nsid = c.req.valid("json").nsid;
 
 		if (!repo) {
 			logger.warn(

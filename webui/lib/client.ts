@@ -67,12 +67,13 @@ export class Client {
 		return await response.json();
 	}
 
+	// libp2p-http-fetchはqueryを捨ててしまうため、すべてPOSTで送信
 	public getRecord(rpath: string) {
-		return this.fetch(`/record?rpath=${rpath}`, "GET");
+		return this.fetch("/record", "POST", { rpath });
 	}
 
 	public getRecords(nsid: string) {
-		return this.fetch(`/records?nsid=${nsid}`, "GET");
+		return this.fetch("/records", "POST", { nsid });
 	}
 
 	public initRepoStage() {

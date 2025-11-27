@@ -7,7 +7,6 @@ const App: Component = () => {
 	const [config, setConfig] = createStore({
 		sk: "",
 		addr: "",
-		did: "",
 		result: "",
 		client: null as Client | null,
 	});
@@ -24,7 +23,6 @@ const App: Component = () => {
 	const validate = {
 		client: () => (config.client ? null : "Client not initialized"),
 		sk: () => (config.sk ? null : "Secret key not set"),
-		did: () => (config.did ? null : "DID not set. Generate a key pair first."),
 		bytes: (b: string) => (b ? null : "No bytes to sign. Stage first."),
 		rpath: (r: string) => (r ? null : "Record path not specified"),
 	};
@@ -70,11 +68,7 @@ const App: Component = () => {
 		bytes: string,
 		apiFn: (sig: string) => Promise<unknown>,
 	) => {
-		if (
-			checkErrors(validate.client, validate.sk, validate.did, () =>
-				validate.bytes(bytes),
-			)
-		)
+		if (checkErrors(validate.client, validate.sk, () => validate.bytes(bytes)))
 			return;
 		try {
 			const sig = await signBytes(config.sk, bytes);
@@ -105,7 +99,6 @@ const App: Component = () => {
 	const handleGenerateKey = async () => {
 		try {
 			const { did: generatedDid, sk: generatedSk } = await generate();
-			setConfig("did", generatedDid);
 			setConfig("sk", generatedSk);
 			setConfig(
 				"result",
@@ -283,12 +276,6 @@ const App: Component = () => {
 					value={config.sk}
 					onInput={(v) => setConfig("sk", v)}
 					placeholder="Enter your secret key (hex)"
-				/>
-				<InputField
-					label="DID (Decentralized Identifier)"
-					value={config.did}
-					onInput={(v) => setConfig("did", v)}
-					placeholder="Enter your did:key"
 				/>
 				<InputField
 					label="PDS Server Address"
