@@ -4,7 +4,8 @@ use std::{cell::RefCell, str::FromStr};
 
 use crate::repository::exports::polka::repository::repo::{GuestRepo, Repo};
 use crate::repository::polka::repository::crypto;
-use atrium_api::types::string::Did;
+use atrium_api::types::LimitedU32;
+use atrium_api::types::string::{Did, Tid};
 use atrium_crypto::{did::parse_did_key, verify::Verifier};
 use cid::Cid;
 use futures::TryStreamExt;
@@ -18,9 +19,11 @@ struct HostRepo {
 }
 
 impl HostRepo {
-    fn create(&mut self, nsid: String, data: String) -> Result<bool, String> {
-        let (commit_builder, _) =
-            block_on(async { self.repo.add_raw(&nsid, data).await }).map_err(|e| e.to_string())?;
+    fn create(&mut self, nsid: String, data: String) -> Result<String, String> {
+        let tid = Tid::now(LimitedU32::MIN).to_string();
+        let key = nsid + "/" + &tid;
+        let (commit_builder, cid) =
+            block_on(async { self.repo.add_raw(&key, data).await }).map_err(|e| e.to_string())?;
         // このcrypto interfaceはホストが実装する
         let sig = crypto::sign(&commit_builder.bytes());
         // Commitを確定
@@ -36,11 +39,11 @@ impl HostRepo {
             }
             Err(e) => return Err(e.to_string()),
         }
-        Ok(true)
+        Ok(cid.to_string())
     }
 
-    fn update(&mut self, rpath: String, data: String) -> Result<bool, String> {
-        let (commit_builder, _) = block_on(async { self.repo.update_raw(&rpath, data).await })
+    fn update(&mut self, rpath: String, data: String) -> Result<String, String> {
+        let (commit_builder, cid) = block_on(async { self.repo.update_raw(&rpath, data).await })
             .map_err(|e| e.to_string())?;
         let sig = crypto::sign(&commit_builder.bytes());
         block_on(async { commit_builder.finalize(sig).await }).map_err(|e| e.to_string())?;
@@ -54,7 +57,7 @@ impl HostRepo {
             }
             Err(e) => return Err(e.to_string()),
         }
-        Ok(true)
+        Ok(cid.to_string())
     }
 
     fn delete(&mut self, rpath: String) -> Result<bool, String> {
@@ -95,6 +98,10 @@ impl HostRepo {
             .collect::<Result<_, _>>()?;
         Ok(records)
     }
+
+    fn get_root(&mut self) -> Result<String, String> {
+        Ok(self.repo.root().to_string())
+    }
 }
 
 struct GuestRepoImpl {
@@ -102,11 +109,11 @@ struct GuestRepoImpl {
 }
 
 impl GuestRepo for GuestRepoImpl {
-    fn create(&self, nsid: String, data: String) -> Result<bool, String> {
+    fn create(&self, nsid: String, data: String) -> Result<String, String> {
         self.inner.borrow_mut().create(nsid, data)
     }
 
-    fn update(&self, rpath: String, data: String) -> Result<bool, String> {
+    fn update(&self, rpath: String, data: String) -> Result<String, String> {
         self.inner.borrow_mut().update(rpath, data)
     }
 
@@ -120,6 +127,10 @@ impl GuestRepo for GuestRepoImpl {
 
     fn get_records(&self, nsid: String) -> Result<Vec<String>, String> {
         self.inner.borrow_mut().get_records(nsid)
+    }
+
+    fn get_root(&self) -> Result<String, String> {
+        self.inner.borrow_mut().get_root()
     }
 }
 

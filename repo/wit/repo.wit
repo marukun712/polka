@@ -21,9 +21,10 @@ interface repo {
   resource repo {
     get-record: func(rpath: string) -> result<string, string>;
     get-records: func(nsid: string) -> result<list<string>, string>;
+    get-root: func() -> result<string, string>;
 
-    create: func(nsid: string, data: string) -> result<bool, string>;
-    update: func(rpath: string, data: string) -> result<bool, string>;
+    create: func(nsid: string, data: string) -> result<string, string>;
+    update: func(rpath: string, data: string) -> result<string, string>;
     delete: func(rpath: string) -> result<bool, string>;
   }
 
