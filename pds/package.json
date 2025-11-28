@@ -36,6 +36,8 @@
 		"@libp2p/keychain": "^6.0.9",
 		"@libp2p/webrtc": "^6.0.10",
 		"@libp2p/websockets": "^10.1.2",
+		"@noble/curves": "^2.0.1",
+		"@noble/secp256k1": "^3.0.0",
 		"blockstore-fs": "^3.0.2",
 		"hono": "^4.10.6",
 		"libp2p": "^3.1.2",
