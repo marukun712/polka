@@ -4,6 +4,7 @@ import { circuitRelayServer } from "@libp2p/circuit-relay-v2";
 import { http } from "@libp2p/http";
 import { fetchServer } from "@libp2p/http-server";
 import { identify } from "@libp2p/identify";
+import { webRTC } from "@libp2p/webrtc";
 import { webSockets } from "@libp2p/websockets";
 import { Hono } from "hono";
 import { validator } from "hono/validator";
@@ -152,7 +153,7 @@ export async function startServer(repo: Repo, logger: Logger) {
 		addresses: {
 			listen: ["/ip4/0.0.0.0/tcp/8000/ws"],
 		},
-		transports: [webSockets()],
+		transports: [webRTC(), webSockets()],
 		connectionEncrypters: [noise()],
 		streamMuxers: [yamux()],
 		services: {

@@ -3,6 +3,7 @@ import { pino } from "pino";
 import type { Repo } from "./dist/transpiled/interfaces/polka-repository-repo";
 import { repo as wasm } from "./dist/transpiled/repo.js";
 import { did } from "./lib/crypto.ts";
+import { startServer } from "./lib/server.ts";
 
 const logger = pino({
 	level: process.env.LOG_LEVEL || "info",
@@ -44,3 +45,5 @@ writeFileSync(rootPath, root);
 
 const record = repo.getRecords("polka.post");
 console.log(record, cid);
+
+await startServer(repo, logger);
