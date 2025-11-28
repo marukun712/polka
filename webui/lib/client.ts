@@ -69,42 +69,22 @@ export class Client {
 
 	// libp2p-http-fetchはqueryを捨ててしまうため、すべてPOSTで送信
 	public getRecord(rpath: string) {
-		return this.fetch("/record", "POST", { rpath });
+		return this.fetch("/get", "POST", { rpath });
 	}
 
 	public getRecords(nsid: string) {
 		return this.fetch("/records", "POST", { nsid });
 	}
 
-	public initRepoStage() {
-		return this.fetch("/init", "POST");
-	}
-
-	public initRepoCommit(sig: string) {
-		return this.fetch("/init", "POST", { sig });
-	}
-
-	public createRecordStage(nsid: string, body: string) {
+	public createRecord(nsid: string, body: string) {
 		return this.fetch("/record", "POST", { nsid, body });
 	}
 
-	public createRecordCommit(nsid: string, body: string, sig: string) {
-		return this.fetch("/record", "POST", { nsid, body, sig });
-	}
-
-	public updateRecordStage(rpath: string, body: string) {
+	public updateRecord(rpath: string, body: string) {
 		return this.fetch("/record", "PUT", { rpath, body });
 	}
 
-	public updateRecordCommit(rpath: string, body: string, sig: string) {
-		return this.fetch("/record", "PUT", { rpath, body, sig });
-	}
-
-	public deleteRecordStage(rpath: string) {
+	public deleteRecord(rpath: string) {
 		return this.fetch("/record", "DELETE", { rpath });
-	}
-
-	public deleteRecordCommit(rpath: string, sig: string) {
-		return this.fetch("/record", "DELETE", { rpath, sig });
 	}
 }
