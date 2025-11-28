@@ -9,6 +9,7 @@ import { createLibp2p, type Libp2p } from "libp2p";
 import type { Repo } from "../dist/transpiled/interfaces/polka-repository-repo";
 import { repo as wasm } from "../dist/transpiled/repo";
 import { did } from "./crypto";
+
 export class Client {
 	private node: Libp2p;
 	private repo: Repo;
@@ -19,7 +20,7 @@ export class Client {
 		console.log("Libp2p node started", this.node.getMultiaddrs());
 	}
 
-	public static async create(relayAddr: string) {
+	public static async create(relayAddr: string, root?: string) {
 		const node = await createLibp2p({
 			transports: [webRTC(), webSockets(), circuitRelayTransport()],
 			connectionEncrypters: [noise()],
@@ -46,7 +47,12 @@ export class Client {
 			console.error("Failed to dial server:", err);
 			throw err;
 		}
-		const repo = wasm.create(did);
+		let repo: Repo;
+		if (root) {
+			repo = wasm.open(did, root);
+		} else {
+			repo = wasm.create(did);
+		}
 		return new Client(repo, node);
 	}
 
@@ -56,6 +62,10 @@ export class Client {
 
 	public getRecords(nsid: string) {
 		return this.repo.getRecords(nsid);
+	}
+
+	public getRoot(): string {
+		return this.repo.getRoot();
 	}
 
 	public createRecord(nsid: string, body: string) {
