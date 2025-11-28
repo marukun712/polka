@@ -1,6 +1,9 @@
 import { noise } from "@chainsafe/libp2p-noise";
 import { yamux } from "@chainsafe/libp2p-yamux";
-import { circuitRelayServer } from "@libp2p/circuit-relay-v2";
+import {
+	circuitRelayServer,
+	circuitRelayTransport,
+} from "@libp2p/circuit-relay-v2";
 import { http } from "@libp2p/http";
 import { fetchServer } from "@libp2p/http-server";
 import { identify } from "@libp2p/identify";
@@ -153,7 +156,7 @@ export async function startServer(repo: Repo, logger: Logger) {
 		addresses: {
 			listen: ["/ip4/0.0.0.0/tcp/8000/ws"],
 		},
-		transports: [webRTC(), webSockets()],
+		transports: [webRTC(), webSockets(), circuitRelayTransport()],
 		connectionEncrypters: [noise()],
 		streamMuxers: [yamux()],
 		services: {
