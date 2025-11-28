@@ -21,7 +21,6 @@ const App: Component = () => {
 
 	const validate = {
 		client: () => (config.client ? null : "Client not initialized"),
-		sk: () => (config.sk ? null : "Secret key not set"),
 		rpath: (r: string) => (r ? null : "Record path not specified"),
 	};
 
@@ -49,7 +48,6 @@ const App: Component = () => {
 	const handleGenerateKey = async () => {
 		try {
 			const { did: generatedDid, sk: generatedSk } = await generate();
-			setConfig("sk", generatedSk);
 			setConfig(
 				"result",
 				`Key pair generated successfully!\nDID: ${generatedDid}\nSecret Key: ${generatedSk}`,
@@ -102,6 +100,7 @@ const App: Component = () => {
 			);
 			setConfig("result", JSON.stringify(res, null, 2));
 		} catch (e) {
+			console.error(e);
 			setConfig("result", `Error: ${e}`);
 		}
 	};
@@ -189,7 +188,7 @@ const App: Component = () => {
 			<div class="mb-4 p-4 border">
 				<h2 class="text-xl mb-2">Configuration</h2>
 				<InputField
-					label="PDS Server Address"
+					label="Relay Server Address"
 					value={config.addr}
 					onInput={(v) => setConfig("addr", v)}
 					placeholder="/ip4/127.0.0.1/tcp/8080"
