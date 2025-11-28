@@ -22,4 +22,3 @@ export async function generate() {
 		sk: bytesToHex(skExported),
 	};
 }
-console.log(await generate());

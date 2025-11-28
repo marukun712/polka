@@ -1,7 +1,16 @@
+import {
+	accessSync,
+	existsSync,
+	mkdirSync,
+	readFileSync,
+	writeFileSync,
+} from "node:fs";
+import { join } from "node:path";
 import { sha256 as createHash } from "@noble/hashes/sha2.js";
 import { CID } from "multiformats";
 import * as Digest from "multiformats/hashes/digest";
 import { sha256 } from "multiformats/hashes/sha2";
+import { NextToLast, type ShardingStrategy } from "./sharding.ts";
 
 export const SHA2_256 = sha256.code;
 
@@ -18,23 +27,33 @@ export class UnsupportedHash extends Error {
 }
 
 export type ErrorType = CidNotFound | UnsupportedHash;
-export class MemoryBlockStore {
-	private blocks: Map<string, Uint8Array>;
+export class FsBlockStoreSync {
+	private path: string;
+	private shardingStrategy: ShardingStrategy;
 
-	constructor() {
-		this.blocks = new Map();
+	constructor(path: string) {
+		this.shardingStrategy = new NextToLast();
+		if (existsSync(path)) {
+			this.path = path;
+			accessSync(this.path);
+		} else {
+			this.path = path;
+			mkdirSync(this.path);
+		}
 	}
 
-	static new(): MemoryBlockStore {
-		return new MemoryBlockStore();
+	static new(path: string): FsBlockStoreSync {
+		return new FsBlockStoreSync(path);
 	}
 
 	contains(cid: CID): boolean {
-		return this.blocks.has(cid.toString());
+		const { dir, file } = this.shardingStrategy.encode(cid);
+		return existsSync(join(this.path, dir, file));
 	}
 
 	readBlock(cid: CID, out: Uint8Array[]): void {
-		const data = this.blocks.get(cid.toString());
+		const { dir, file } = this.shardingStrategy.encode(cid);
+		const data = readFileSync(join(this.path, dir, file));
 		if (!data) throw new CidNotFound();
 		out.length = 0;
 		out.push(data);
@@ -47,12 +66,14 @@ export class MemoryBlockStore {
 		const digest = createHash(contents);
 		const encoded = Digest.create(SHA2_256, digest);
 		const cid = CID.create(1, codec, encoded);
-		this.blocks.set(cid.toString(), contents.slice());
+		const { dir, file } = this.shardingStrategy.encode(cid);
+		mkdirSync(join(this.path, dir), { recursive: true });
+		writeFileSync(join(this.path, dir, file), contents);
 		return cid.bytes;
 	}
 }
 
-const store = new MemoryBlockStore();
+const store = new FsBlockStoreSync("./store/blocks");
 
 export function readBlock(cid: Uint8Array) {
 	const parsed = CID.decode(cid);
