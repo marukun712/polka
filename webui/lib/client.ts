@@ -46,6 +46,31 @@ export class Client {
 		return new Client(ma, node);
 	}
 
+	public static async createDirect(pdsAddr: string) {
+		const node = await createLibp2p({
+			transports: [webRTC(), webSockets()],
+			connectionEncrypters: [noise()],
+			streamMuxers: [yamux()],
+			services: { http: http(), identify: identify() },
+			connectionGater: {
+				denyDialMultiaddr: () => false,
+			},
+		});
+
+		await node.start();
+		const ma = multiaddr(pdsAddr);
+		try {
+			// pdsに直接接続
+			await node.dial(ma);
+			console.log("Protocols:", node.getProtocols());
+		} catch (err) {
+			console.error("Failed to dial server:", err);
+			throw err;
+		}
+
+		return new Client(ma, node);
+	}
+
 	private async fetch(
 		path: string,
 		method: string,

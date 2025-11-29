@@ -14,12 +14,15 @@ import {
 
 const App: Component = () => {
 	const params = new URLSearchParams(window.location.search);
-	const addrParam = params.get("relay");
-	const id = params.get("relay");
+	const pdsAddr = params.get("addr");
+	const relayAddr = params.get("relay");
+	const peerId = params.get("peer");
 
 	const [state, setState] = createStore({
-		id: id ? decodeURIComponent(id) : "",
-		relay: addrParam ? decodeURIComponent(addrParam) : "",
+		pdsAddr: pdsAddr ? decodeURIComponent(pdsAddr) : "",
+		relayAddr: relayAddr ? decodeURIComponent(relayAddr) : "",
+		peerId: peerId ? decodeURIComponent(peerId) : "",
+		useRelay: !!(relayAddr && peerId),
 		client: null as Client | null,
 		profile: null as Profile | null,
 		treeRoot: null as TreeNode | null,
@@ -28,7 +31,7 @@ const App: Component = () => {
 	});
 
 	onMount(() => {
-		if (state.id && state.relay) {
+		if (state.useRelay ? state.relayAddr && state.peerId : state.pdsAddr) {
 			initializeAndFetch();
 		}
 	});
@@ -83,7 +86,9 @@ const App: Component = () => {
 		setState("error", "");
 
 		try {
-			const client = await Client.create(state.relay, state.id);
+			const client = state.useRelay
+				? await Client.create(state.relayAddr, state.peerId)
+				: await Client.createDirect(state.pdsAddr);
 			setState("client", client);
 
 			const [profileResult, allRecordsResult] = await Promise.all([
@@ -106,18 +111,34 @@ const App: Component = () => {
 		}
 	};
 
-	const handleAddrSubmit = (addr: string) => {
-		const encoded = encodeURIComponent(addr);
-		window.location.href = `?addr=${encoded}`;
+	const handleAddrSubmit = (
+		addr: string,
+		useRelay: boolean,
+		relayAddr?: string,
+	) => {
+		if (useRelay && relayAddr) {
+			const encodedRelay = encodeURIComponent(relayAddr);
+			const encodedPeer = encodeURIComponent(addr);
+			window.location.href = `?relay=${encodedRelay}&peer=${encodedPeer}`;
+		} else {
+			const encodedAddr = encodeURIComponent(addr);
+			window.location.href = `?addr=${encodedAddr}`;
+		}
 	};
 
 	return (
 		<div class="min-h-screen bg-gray-50">
-			<Show when={!state.relay || !state.id}>
+			<Show
+				when={
+					!(state.useRelay ? state.relayAddr && state.peerId : state.pdsAddr)
+				}
+			>
 				<AddrInputView onSubmit={handleAddrSubmit} />
 			</Show>
 
-			<Show when={state.relay && state.id}>
+			<Show
+				when={state.useRelay ? state.relayAddr && state.peerId : state.pdsAddr}
+			>
 				<div class="max-w-6xl mx-auto p-4 md:p-6">
 					<div class="mb-4">
 						<button
