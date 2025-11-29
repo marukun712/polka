@@ -1,42 +1,41 @@
 import { noise } from "@chainsafe/libp2p-noise";
 import { yamux } from "@chainsafe/libp2p-yamux";
-import { circuitRelayTransport } from "@libp2p/circuit-relay-v2";
+import { type HTTP, http } from "@libp2p/http";
 import { identify } from "@libp2p/identify";
-import { webRTC } from "@libp2p/webrtc";
 import { webSockets } from "@libp2p/websockets";
-import { multiaddr } from "@multiformats/multiaddr";
+import { type Multiaddr, multiaddr } from "@multiformats/multiaddr";
 import { createLibp2p, type Libp2p } from "libp2p";
-import type { Repo } from "../dist/transpiled/interfaces/polka-repository-repo";
-import { repo as wasm } from "../dist/transpiled/repo";
-import { did } from "./crypto";
-
 export class Client {
-	private node: Libp2p;
-	private repo: Repo;
+	private node!: Libp2p<{ http: HTTP }>;
+	private addr: Multiaddr;
 
-	constructor(repo: Repo, node: Libp2p) {
-		this.node = node;
-		this.repo = repo;
-		console.log("Libp2p node started", this.node.getMultiaddrs());
+	constructor(addr: Multiaddr, node?: Libp2p<{ http: HTTP }>) {
+		if (node) {
+			this.node = node;
+		}
+		this.addr = addr;
 	}
 
-	public static async create(relayAddr: string, root?: string) {
+	public static async create(addr: string) {
 		const node = await createLibp2p({
-			transports: [webRTC(), webSockets(), circuitRelayTransport()],
+			transports: [webSockets()],
 			connectionEncrypters: [noise()],
 			streamMuxers: [yamux()],
-			services: {
-				identify: identify(),
-			},
+			services: { http: http(), identify: identify() },
 			connectionGater: {
 				denyDialMultiaddr: () => false,
+				denyDialPeer: () => false,
+				denyInboundConnection: () => false,
+				denyOutboundConnection: () => false,
 			},
 		});
 
 		await node.start();
-		const ma = multiaddr(relayAddr);
+		console.log("Libp2p node started");
+
+		const ma = multiaddr(addr);
 		try {
-			console.log("Dialing relay server at:", relayAddr);
+			console.log("Dialing PDS server at:", addr);
 			await node.dial(ma);
 			console.log("Connected to server");
 			console.log("Protocols:", node.getProtocols());
@@ -44,36 +43,40 @@ export class Client {
 			console.error("Failed to dial server:", err);
 			throw err;
 		}
-		let repo: Repo;
-		if (root) {
-			repo = wasm.open(did, root);
-		} else {
-			repo = wasm.create(did);
-		}
-		return new Client(repo, node);
+
+		return new Client(ma, node);
 	}
 
+	private async fetch(
+		path: string,
+		method: string,
+		body?: Record<string, unknown>,
+	) {
+		const resource = this.addr.encapsulate(
+			`/http-path/${encodeURIComponent(path.substring(1))}`,
+		);
+
+		const blob = body
+			? new Blob([JSON.stringify(body)], { type: "application/json" })
+			: undefined;
+
+		const response = await this.node.services.http.fetch(resource, {
+			method,
+			body: blob,
+		});
+		return await response.json();
+	}
+
+	// libp2p-http-fetchはqueryを捨ててしまうため、すべてPOSTで送信
 	public getRecord(rpath: string) {
-		return this.repo.getRecord(rpath);
+		return this.fetch("/get", "POST", { rpath });
 	}
 
 	public getRecords(nsid: string) {
-		return this.repo.getRecords(nsid);
+		return this.fetch("/records", "POST", { nsid });
 	}
 
-	public getRoot(): string {
-		return this.repo.getRoot();
-	}
-
-	public createRecord(nsid: string, body: string) {
-		return this.repo.create(nsid, body);
-	}
-
-	public updateRecord(rpath: string, body: string) {
-		return this.repo.update(rpath, body);
-	}
-
-	public deleteRecord(rpath: string) {
-		return this.repo.delete(rpath);
+	public allRecords() {
+		return this.fetch("/all", "POST");
 	}
 }
