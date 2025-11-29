@@ -1,10 +1,13 @@
 import { noise } from "@chainsafe/libp2p-noise";
 import { yamux } from "@chainsafe/libp2p-yamux";
+import { circuitRelayTransport } from "@libp2p/circuit-relay-v2";
 import { type HTTP, http } from "@libp2p/http";
 import { identify } from "@libp2p/identify";
+import { webRTC } from "@libp2p/webrtc";
 import { webSockets } from "@libp2p/websockets";
 import { type Multiaddr, multiaddr } from "@multiformats/multiaddr";
 import { createLibp2p, type Libp2p } from "libp2p";
+
 export class Client {
 	private node!: Libp2p<{ http: HTTP }>;
 	private addr: Multiaddr;
@@ -16,28 +19,24 @@ export class Client {
 		this.addr = addr;
 	}
 
-	public static async create(addr: string) {
+	public static async create(relay: string, peer: string) {
 		const node = await createLibp2p({
-			transports: [webSockets()],
+			transports: [webRTC(), webSockets(), circuitRelayTransport()],
 			connectionEncrypters: [noise()],
 			streamMuxers: [yamux()],
 			services: { http: http(), identify: identify() },
 			connectionGater: {
 				denyDialMultiaddr: () => false,
-				denyDialPeer: () => false,
-				denyInboundConnection: () => false,
-				denyOutboundConnection: () => false,
 			},
 		});
 
 		await node.start();
-		console.log("Libp2p node started");
-
-		const ma = multiaddr(addr);
+		const ma = multiaddr(`${relay}/p2p-circuit/p2p/${peer}`);
 		try {
-			console.log("Dialing PDS server at:", addr);
+			// relayに接続
+			await node.dial(multiaddr(relay));
+			// pdsに接続
 			await node.dial(ma);
-			console.log("Connected to server");
 			console.log("Protocols:", node.getProtocols());
 		} catch (err) {
 			console.error("Failed to dial server:", err);

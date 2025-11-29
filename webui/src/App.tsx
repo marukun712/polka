@@ -14,10 +14,12 @@ import {
 
 const App: Component = () => {
 	const params = new URLSearchParams(window.location.search);
-	const addrParam = params.get("addr");
+	const addrParam = params.get("relay");
+	const id = params.get("relay");
 
 	const [state, setState] = createStore({
-		addr: addrParam ? decodeURIComponent(addrParam) : "",
+		id: id ? decodeURIComponent(id) : "",
+		relay: addrParam ? decodeURIComponent(addrParam) : "",
 		client: null as Client | null,
 		profile: null as Profile | null,
 		treeRoot: null as TreeNode | null,
@@ -26,7 +28,7 @@ const App: Component = () => {
 	});
 
 	onMount(() => {
-		if (state.addr) {
+		if (state.id && state.relay) {
 			initializeAndFetch();
 		}
 	});
@@ -81,7 +83,7 @@ const App: Component = () => {
 		setState("error", "");
 
 		try {
-			const client = await Client.create(state.addr);
+			const client = await Client.create(state.relay, state.id);
 			setState("client", client);
 
 			const [profileResult, allRecordsResult] = await Promise.all([
@@ -111,11 +113,11 @@ const App: Component = () => {
 
 	return (
 		<div class="min-h-screen bg-gray-50">
-			<Show when={!state.addr}>
+			<Show when={!state.relay || !state.id}>
 				<AddrInputView onSubmit={handleAddrSubmit} />
 			</Show>
 
-			<Show when={state.addr}>
+			<Show when={state.relay && state.id}>
 				<div class="max-w-6xl mx-auto p-4 md:p-6">
 					<div class="mb-4">
 						<button
