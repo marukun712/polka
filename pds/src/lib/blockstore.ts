@@ -10,7 +10,7 @@ import { sha256 as createHash } from "@noble/hashes/sha2.js";
 import { CID } from "multiformats";
 import * as Digest from "multiformats/hashes/digest";
 import { sha256 } from "multiformats/hashes/sha2";
-import { NextToLast, type ShardingStrategy } from "./sharding.ts";
+import { NextToLast, type ShardingStrategy } from "./sharding.js";
 
 export const SHA2_256 = sha256.code;
 

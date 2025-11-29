@@ -14,11 +14,10 @@ import { validator } from "hono/validator";
 import { createLibp2p } from "libp2p";
 import type { Logger } from "pino";
 import { z } from "zod";
-import { getRecordSchema, getRecordsSchema } from "../@types/schema.ts";
-import type { Repo } from "../dist/transpiled/interfaces/polka-repository-repo";
-import { did } from "./crypto.ts";
+import type { Repo } from "../../public/interfaces/polka-repository-repo.js";
+import { getRecordSchema, getRecordsSchema } from "../@types/schema.js";
 
-export async function startServer(repo: Repo, logger: Logger) {
+export async function startServer(repo: Repo, did: string, logger: Logger) {
 	const app = new Hono();
 
 	app.get("/", (c) => {

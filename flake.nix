@@ -35,6 +35,7 @@
       {
         devShell = pkgs.mkShell {
           buildInputs = [
+            pkgs.electron
             pkgs.nodejs_24
             pkgs.pnpm
             pkgs.bun
