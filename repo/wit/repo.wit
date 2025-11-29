@@ -18,12 +18,19 @@ interface crypto {
 }
 
 interface repo {
+  record get-result {
+    rpath: string,
+    data: string
+  }
+
   resource repo {
-    get-record: func(rpath: string) -> result<string, string>;
-    get-records: func(nsid: string) -> result<list<string>, string>;
+    get-cid: func(rpath: string) -> result<string, string>;
+    get-record: func(rpath: string) -> result<get-result, string>;
+    get-records: func(nsid: string) -> result<list<get-result>, string>;
+    all-records: func() -> result<list<get-result>, string>;
     get-root: func() -> result<string, string>;
 
-    create: func(nsid: string, data: string) -> result<string, string>;
+    create: func(rpath: string, data: string) -> result<string, string>;
     update: func(rpath: string, data: string) -> result<string, string>;
     delete: func(rpath: string) -> result<bool, string>;
   }

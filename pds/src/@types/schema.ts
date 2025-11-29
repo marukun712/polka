@@ -6,6 +6,12 @@ export const initRepoSchema = z
 	})
 	.strict();
 
+export const getCidSchema = z
+	.object({
+		rpath: z.string(),
+	})
+	.strict();
+
 export const getRecordSchema = z
 	.object({
 		rpath: z.string(),
@@ -15,25 +21,5 @@ export const getRecordSchema = z
 export const getRecordsSchema = z
 	.object({
 		nsid: z.string(),
-	})
-	.strict();
-
-export const createRecordSchema = z
-	.object({
-		nsid: z.string(),
-		body: z.string(),
-	})
-	.strict();
-
-export const updateRecordSchema = z
-	.object({
-		rpath: z.string(),
-		body: z.string(),
-	})
-	.strict();
-
-export const deleteRecordSchema = z
-	.object({
-		rpath: z.string(),
 	})
 	.strict();

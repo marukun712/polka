@@ -30,9 +30,6 @@ export class Client {
 			},
 			connectionGater: {
 				denyDialMultiaddr: () => false,
-				denyDialPeer: () => false,
-				denyInboundConnection: () => false,
-				denyOutboundConnection: () => false,
 			},
 		});
 

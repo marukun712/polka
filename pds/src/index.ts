@@ -20,14 +20,6 @@ app.whenReady().then(async () => {
 	await setupCrypto();
 	const did = await getDid();
 
-	logger.info(
-		{
-			type: "repo.initializing",
-			did,
-		},
-		`Initializing repository for DID: ${did}`,
-	);
-
 	let repo: Repo;
 	const rootPath = "./store/blocks/root.txt";
 
@@ -35,21 +27,26 @@ app.whenReady().then(async () => {
 		const root = readFileSync(rootPath, "utf-8");
 		repo = wasm.open(did, root);
 	} else {
+		logger.info(
+			{
+				type: "repo.initializing",
+				did,
+			},
+			`Initializing repository for DID: ${did}`,
+		);
 		repo = wasm.create(did);
+		repo.create(
+			"polka.profile/self",
+			JSON.stringify({
+				version: 0.1,
+				name: "alice",
+				icon: "https://images.goodsmile.info/cgm/images/product/20150729/5151/34832/large/670a8dc4945a19eb616ea7575abe5e95.jpg",
+				description: "hello world",
+			}),
+		);
 	}
-
-	const cid = repo.create(
-		"polka.post",
-		JSON.stringify({
-			content: "秘密鍵の無断使用は、罰金バッキンガムよ!",
-		}),
-	);
 
 	const root = repo.getRoot();
 	writeFileSync(rootPath, root);
-
-	const record = repo.getRecords("polka.post");
-	console.log(record, cid);
-
 	await startServer(repo, did, logger);
 });

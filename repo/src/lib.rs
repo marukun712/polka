@@ -4,8 +4,7 @@ use std::{cell::RefCell, str::FromStr};
 
 use crate::repository::exports::polka::repository::repo::{GuestRepo, Repo};
 use crate::repository::polka::repository::crypto;
-use atrium_api::types::LimitedU32;
-use atrium_api::types::string::{Did, Tid};
+use atrium_api::types::string::Did;
 use atrium_crypto::{did::parse_did_key, verify::Verifier};
 use cid::Cid;
 use futures::TryStreamExt;
@@ -19,11 +18,9 @@ struct HostRepo {
 }
 
 impl HostRepo {
-    fn create(&mut self, nsid: String, data: String) -> Result<String, String> {
-        let tid = Tid::now(LimitedU32::MIN).to_string();
-        let key = nsid + "/" + &tid;
+    fn create(&mut self, rpath: String, data: String) -> Result<String, String> {
         let (commit_builder, cid) =
-            block_on(async { self.repo.add_raw(&key, data).await }).map_err(|e| e.to_string())?;
+            block_on(async { self.repo.add_raw(&rpath, data).await }).map_err(|e| e.to_string())?;
         // このcrypto interfaceはホストが実装する
         let sig = crypto::sign(&commit_builder.bytes());
         // Commitを確定
@@ -78,16 +75,40 @@ impl HostRepo {
         Ok(true)
     }
 
-    fn get_record(&mut self, rpath: String) -> Result<String, String> {
+    fn get_cid(&mut self, rpath: String) -> Result<String, String> {
+        let mut tree = self.repo.tree();
+        let raw_cid = block_on(async { tree.get(&rpath).await });
+        let cid = match raw_cid {
+            Ok(v) => v,
+            Err(e) => return Err(e.to_string()),
+        };
+        Ok(cid.unwrap().to_string())
+    }
+
+    fn get_record(&mut self, rpath: String) -> Result<repo::GetResult, String> {
         let record: Option<String> =
             block_on(async { self.repo.get_raw(&rpath).await }).map_err(|e| e.to_string())?;
         let data = record.ok_or("Record not found")?;
-        Ok(data)
+        Ok(repo::GetResult { rpath, data })
     }
 
-    fn get_records(&mut self, nsid: String) -> Result<Vec<String>, String> {
+    fn get_records(&mut self, nsid: String) -> Result<Vec<repo::GetResult>, String> {
         let mut tree = self.repo.tree();
         let stream = block_on(async { tree.entries_prefixed(&nsid).try_collect().await });
+        let keys: Vec<(String, Cid)> = match stream {
+            Ok(v) => v,
+            Err(e) => return Err(e.to_string()),
+        };
+        let records = keys
+            .iter()
+            .map(|k| self.get_record(k.0.clone()))
+            .collect::<Result<_, _>>()?;
+        Ok(records)
+    }
+
+    fn all_records(&mut self) -> Result<Vec<repo::GetResult>, String> {
+        let mut tree = self.repo.tree();
+        let stream = block_on(async { tree.entries().try_collect().await });
         let keys: Vec<(String, Cid)> = match stream {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
@@ -109,8 +130,8 @@ struct GuestRepoImpl {
 }
 
 impl GuestRepo for GuestRepoImpl {
-    fn create(&self, nsid: String, data: String) -> Result<String, String> {
-        self.inner.borrow_mut().create(nsid, data)
+    fn create(&self, rpath: String, data: String) -> Result<String, String> {
+        self.inner.borrow_mut().create(rpath, data)
     }
 
     fn update(&self, rpath: String, data: String) -> Result<String, String> {
@@ -121,12 +142,20 @@ impl GuestRepo for GuestRepoImpl {
         self.inner.borrow_mut().delete(rpath)
     }
 
-    fn get_record(&self, rpath: String) -> Result<String, String> {
+    fn get_cid(&self, rpath: String) -> Result<String, String> {
+        self.inner.borrow_mut().get_cid(rpath)
+    }
+
+    fn get_record(&self, rpath: String) -> Result<repo::GetResult, String> {
         self.inner.borrow_mut().get_record(rpath)
     }
 
-    fn get_records(&self, nsid: String) -> Result<Vec<String>, String> {
+    fn get_records(&self, nsid: String) -> Result<Vec<repo::GetResult>, String> {
         self.inner.borrow_mut().get_records(nsid)
+    }
+
+    fn all_records(&self) -> Result<Vec<repo::GetResult>, String> {
+        self.inner.borrow_mut().all_records()
     }
 
     fn get_root(&self) -> Result<String, String> {

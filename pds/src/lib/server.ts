@@ -15,7 +15,11 @@ import { createLibp2p } from "libp2p";
 import type { Logger } from "pino";
 import { z } from "zod";
 import type { Repo } from "../../public/interfaces/polka-repository-repo.js";
-import { getRecordSchema, getRecordsSchema } from "../@types/schema.js";
+import {
+	getCidSchema,
+	getRecordSchema,
+	getRecordsSchema,
+} from "../@types/schema.js";
 
 export async function startServer(repo: Repo, did: string, logger: Logger) {
 	const app = new Hono();
@@ -27,6 +31,112 @@ export async function startServer(repo: Repo, did: string, logger: Logger) {
 	app.get("/health", (c) => {
 		return c.json({ status: "ok" });
 	});
+
+	app.post("/all", (c) => {
+		if (!repo) {
+			logger.warn(
+				{
+					type: "repo.not_initialized",
+				},
+				"Repository not initialized",
+			);
+			return c.json(
+				{ error: "Repository not initialized. Please call /init first." },
+				400,
+			);
+		}
+
+		try {
+			const records = repo.allRecords();
+			logger.info(
+				{
+					type: "repo.operation.complete",
+				},
+				`Records retrieved`,
+			);
+			const parsed = records.map((record) => {
+				return { rpath: record.rpath, data: JSON.parse(record.data) };
+			});
+			return c.json(parsed);
+		} catch (error) {
+			logger.error(
+				{
+					error:
+						error instanceof Error
+							? {
+									message: error.message,
+									stack: error.stack,
+									name: error.name,
+								}
+							: error,
+					type: "repo.operation.error",
+				},
+				`Failed to get record: ${error instanceof Error ? error.message : String(error)}`,
+			);
+			return c.json({ error: String(error) }, 500);
+		}
+	});
+
+	app.post(
+		"/cid",
+		validator("json", (value, c) => {
+			const parsed = getCidSchema.safeParse(value);
+			if (!parsed.success) {
+				logger.warn(
+					{
+						errors: z.treeifyError(parsed.error),
+					},
+					"Get record schema validation failed",
+				);
+				return c.text("Invalid Schema!", 401);
+			}
+
+			return parsed.data;
+		}),
+		(c) => {
+			const rpath = c.req.valid("json").rpath;
+
+			if (!repo) {
+				logger.warn(
+					{
+						type: "repo.not_initialized",
+					},
+					"Repository not initialized",
+				);
+				return c.json(
+					{ error: "Repository not initialized. Please call /init first." },
+					400,
+				);
+			}
+
+			try {
+				const cid = repo.getCid(rpath);
+				logger.info(
+					{
+						type: "repo.operation.complete",
+					},
+					`Cid retrieved: ${rpath}`,
+				);
+				return c.json({ cid });
+			} catch (error) {
+				logger.error(
+					{
+						error:
+							error instanceof Error
+								? {
+										message: error.message,
+										stack: error.stack,
+										name: error.name,
+									}
+								: error,
+						type: "repo.operation.error",
+					},
+					`Failed to get record ${rpath}: ${error instanceof Error ? error.message : String(error)}`,
+				);
+				return c.json({ error: String(error) }, 500);
+			}
+		},
+	);
 
 	app.post(
 		"/get",
@@ -68,7 +178,7 @@ export async function startServer(repo: Repo, did: string, logger: Logger) {
 					},
 					`Record retrieved: ${rpath}`,
 				);
-				return c.json(record);
+				return c.json({ rpath: record.rpath, data: JSON.parse(record.data) });
 			} catch (error) {
 				logger.error(
 					{
@@ -84,7 +194,6 @@ export async function startServer(repo: Repo, did: string, logger: Logger) {
 					},
 					`Failed to get record ${rpath}: ${error instanceof Error ? error.message : String(error)}`,
 				);
-
 				return c.json({ error: String(error) }, 500);
 			}
 		},
@@ -122,14 +231,17 @@ export async function startServer(repo: Repo, did: string, logger: Logger) {
 			}
 
 			try {
-				const record = repo.getRecords(nsid);
+				const records = repo.getRecords(nsid);
 				logger.info(
 					{
 						type: "repo.operation.complete",
 					},
 					`Records retrieved: ${nsid}`,
 				);
-				return c.json(record);
+				const parsed = records.map((record) => {
+					return { rpath: record.rpath, data: JSON.parse(record.data) };
+				});
+				return c.json(parsed);
 			} catch (error) {
 				logger.error(
 					{
