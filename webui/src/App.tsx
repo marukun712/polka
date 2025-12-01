@@ -92,11 +92,14 @@ const App: Component = () => {
 			setState("client", client);
 
 			const [profileResult, allRecordsResult] = await Promise.all([
-				client
-					.getRecord("polka.profile/self")
-					.catch(() => ({ rpath: "polka.profile/self", data: null })),
-				client.allRecords().catch(() => []),
+				client.getRecord("polka.profile/self").catch((e) => {
+					throw new Error(e);
+				}),
+				client.allRecords().catch((e) => {
+					throw new Error(e);
+				}),
 			]);
+			console.log(profileResult, allRecordsResult);
 
 			if (profileResult.data) {
 				setState("profile", profileResult.data as Profile);
@@ -105,6 +108,7 @@ const App: Component = () => {
 			const tree = buildTree(allRecordsResult as RecordData[]);
 			setState("treeRoot", tree);
 		} catch (error) {
+			console.error(error);
 			setState("error", error instanceof Error ? error.message : String(error));
 		} finally {
 			setState("loading", false);

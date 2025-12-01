@@ -37,7 +37,7 @@ export class Client {
 			await node.dial(multiaddr(relay));
 			// pdsに接続
 			await node.dial(ma);
-			console.log("Protocols:", node.getProtocols());
+			console.log("Connections:", node.getConnections());
 		} catch (err) {
 			console.error("Failed to dial server:", err);
 			throw err;
@@ -48,7 +48,7 @@ export class Client {
 
 	public static async createDirect(pdsAddr: string) {
 		const node = await createLibp2p({
-			transports: [webRTC(), webSockets()],
+			transports: [webRTC(), webSockets(), circuitRelayTransport()],
 			connectionEncrypters: [noise()],
 			streamMuxers: [yamux()],
 			services: { http: http(), identify: identify() },

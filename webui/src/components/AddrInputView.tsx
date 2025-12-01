@@ -22,7 +22,7 @@ export const AddrInputView: Component<{
 	return (
 		<div class="flex items-center justify-center min-h-screen p-4">
 			<div class="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
-				<h1 class="text-3xl font-bold text-gray-900 mb-2">Polka PDS Viewer</h1>
+				<h1 class="text-3xl font-bold text-gray-900 mb-2">polka PDS Viewer</h1>
 				<p class="text-gray-600 mb-6">
 					Enter a multiaddr to connect to a PDS server
 				</p>

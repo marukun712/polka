@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import * as TID from "@atcute/tid";
 import { app } from "electron";
 import { pino } from "pino";
 import type { Repo } from "../public/interfaces/polka-repository-repo.js";
@@ -42,6 +43,35 @@ app.whenReady().then(async () => {
 				name: "alice",
 				icon: "https://images.goodsmile.info/cgm/images/product/20150729/5151/34832/large/670a8dc4945a19eb616ea7575abe5e95.jpg",
 				description: "hello world",
+			}),
+		);
+		repo.create(
+			`polka.post/${TID.now()}`,
+			JSON.stringify({
+				version: 0.1,
+				content: "hello world",
+			}),
+		);
+		repo.create(
+			`polka.post/${TID.now()}`,
+			JSON.stringify({
+				version: 0.1,
+				content: "test",
+			}),
+		);
+		repo.create(
+			`polka.blog/${TID.now()}`,
+			JSON.stringify({
+				version: 0.1,
+				content: `
+        # テスト投稿
+        - テスト
+        - テスト 
+        - テスト
+        
+        ## 見出し2
+        ### 見出し3
+        `,
 			}),
 		);
 	}

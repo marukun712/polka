@@ -4,9 +4,9 @@ import { circuitRelayTransport } from "@libp2p/circuit-relay-v2";
 import { http } from "@libp2p/http";
 import { fetchServer } from "@libp2p/http-server";
 import { identify } from "@libp2p/identify";
+import { tcp } from "@libp2p/tcp";
 import { webRTC } from "@libp2p/webrtc";
 import { webSockets } from "@libp2p/websockets";
-import { multiaddr } from "@multiformats/multiaddr";
 import { Hono } from "hono";
 import { validator } from "hono/validator";
 import { createLibp2p } from "libp2p";
@@ -262,8 +262,10 @@ export async function startServer(repo: Repo, did: string, logger: Logger) {
 	);
 
 	const server = await createLibp2p({
-		addresses: { listen: ["/p2p-circuit"] },
-		transports: [webRTC(), webSockets(), circuitRelayTransport()],
+		addresses: {
+			listen: ["/p2p-circuit", "/ip4/0.0.0.0/tcp/0", "/ip4/0.0.0.0/tcp/0/ws"],
+		},
+		transports: [webRTC(), tcp(), webSockets(), circuitRelayTransport()],
 		connectionEncrypters: [noise()],
 		streamMuxers: [yamux()],
 		services: {
@@ -276,16 +278,10 @@ export async function startServer(repo: Repo, did: string, logger: Logger) {
 	});
 
 	await server.start();
-	// relayに接続
-	await server.dial(
-		multiaddr(
-			"/ip4/127.0.0.1/tcp/8000/ws/p2p/12D3KooWRLf1YA6ZqzYh94BaSxfcr2jGDtvrzE4giyMiroec4NCk",
-		),
-	);
 
 	logger.info({
 		type: "server.started",
-		id: server.peerId,
+		addr: server.getMultiaddrs(),
 		did,
 		repoInitialized: true,
 	});
