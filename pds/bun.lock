@@ -27,6 +27,7 @@
         "@multiformats/multiaddr": "^13.0.1",
         "@noble/curves": "^2.0.1",
         "@noble/secp256k1": "^3.0.0",
+        "@types/varint": "^6.0.3",
         "@types/ws": "^8.18.1",
         "blockstore-fs": "^3.0.2",
         "electron": "^39.2.4",
@@ -37,6 +38,7 @@
         "pino": "^10.1.0",
         "pino-pretty": "^13.1.2",
         "tsup": "^8.5.1",
+        "varint": "^6.0.0",
         "ws": "^8.18.3",
         "zod": "^4.1.12",
       },
@@ -523,6 +525,8 @@
     "@types/sinonjs__fake-timers": ["@types/sinonjs__fake-timers@15.0.1", "", {}, "sha512-Ko2tjWJq8oozHzHV+reuvS5KYIRAokHnGbDwGh/J64LntgpbuylF74ipEL24HCyRjf9FOlBiBHWBR1RlVKsI1w=="],
 
     "@types/stack-utils": ["@types/stack-utils@2.0.3", "", {}, "sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw=="],
+
+    "@types/varint": ["@types/varint@6.0.3", "", { "dependencies": { "@types/node": "*" } }, "sha512-DHukoGWdJ2aYkveZJTB2rN2lp6m7APzVsoJQ7j/qy1fQxyamJTPD5xQzCMoJ2Qtgn0mE3wWeNOpbTyBFvF+dyA=="],
 
     "@types/ws": ["@types/ws@8.18.1", "", { "dependencies": { "@types/node": "*" } }, "sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg=="],
 

@@ -44,6 +44,7 @@
 		"@multiformats/multiaddr": "^13.0.1",
 		"@noble/curves": "^2.0.1",
 		"@noble/secp256k1": "^3.0.0",
+		"@types/varint": "^6.0.3",
 		"@types/ws": "^8.18.1",
 		"blockstore-fs": "^3.0.2",
 		"electron": "^39.2.4",
@@ -54,6 +55,7 @@
 		"pino": "^10.1.0",
 		"pino-pretty": "^13.1.2",
 		"tsup": "^8.5.1",
+		"varint": "^6.0.0",
 		"ws": "^8.18.3",
 		"zod": "^4.1.12"
 	}
