@@ -1,6 +1,5 @@
 import {
 	accessSync,
-	createReadStream,
 	existsSync,
 	mkdirSync,
 	readFileSync,
@@ -12,7 +11,7 @@ import { sha256 as createHash } from "@noble/hashes/sha2.js";
 import { CID } from "multiformats";
 import * as Digest from "multiformats/hashes/digest";
 import { sha256 } from "multiformats/hashes/sha2";
-import * as varint from "varint";
+import varint from "varint";
 import { NextToLast, type ShardingStrategy } from "./sharding.js";
 
 export const SHA2_256 = sha256.code;
@@ -96,9 +95,9 @@ export class CarSyncStore {
 		// DAG-CBORでエンコードする
 		const headerEncoded = encode(header);
 		// ヘッダーの長さを可変長整数でエンコードする
-		const unsignedVarint: Uint8Array = varint.encode(headerEncoded.length);
+		const unsignedVarint = varint.encode(headerEncoded.length);
 		//ファイルの書き込み
-		writeFileSync(this.path, unsignedVarint, { flag: "a" });
+		writeFileSync(this.path, Buffer.from(unsignedVarint));
 		writeFileSync(this.path, headerEncoded, { flag: "a" });
 	}
 
@@ -123,15 +122,21 @@ export class CarSyncStore {
 		while (offset < data.length) {
 			// ブロック長
 			const blockLen = varint.decode(data, offset);
+			if (!varint.decode.bytes) {
+				throw new Error("Invalid header length");
+			}
 			offset += varint.decode.bytes;
 
 			// CID
-			const cid = CID.decode(data.slice(offset));
-			offset += cid.bytes.length;
+			const slice = data.subarray(offset);
+			const [cid, remainder] = CID.decodeFirst(slice);
 
-			// ブロック内容
+			// 読み取った CID の長さだけ offset を進める
+			offset += slice.length - remainder.length;
+
+			// ブロック内容を取り出す
 			const contentLen = blockLen - cid.bytes.length;
-			const content = data.slice(offset, offset + contentLen);
+			const content = remainder.subarray(0, contentLen);
 
 			// SHA-256検証
 			if (cid.multihash.code === 0x12) {
@@ -164,9 +169,9 @@ export class CarSyncStore {
 		// cidとコンテンツのbytes
 		const buf: Uint8Array = new Uint8Array([...cid.bytes, ...contents]);
 		// cid + コンテンツの長さを可変長整数でエンコード
-		const unsignedVarint: Uint8Array = varint.encode(buf.length);
+		const unsignedVarint = varint.encode(buf.length);
 		// 先に長さとcidを書き込み
-		writeFileSync(this.path, unsignedVarint, { flag: "a" });
+		writeFileSync(this.path, Buffer.from(unsignedVarint), { flag: "a" });
 		writeFileSync(this.path, cid.bytes, { flag: "a" });
 		// 現在のブロックの開始位置を保存
 		const offset = readFileSync(this.path).length;
@@ -184,14 +189,12 @@ export class CarSyncStore {
 			throw new CidNotFound();
 		}
 		out.length = 0;
-		// streamで読み取り
-		const stream = createReadStream(this.path, {
-			start: block.offset,
-			end: block.offset + block.length,
-		});
-		stream.on("data", (chunk) => {
-			out.push(chunk as Buffer);
-		});
+		const data = readFileSync(this.path);
+		const content = new Uint8Array(data).slice(
+			block.offset,
+			block.offset + block.length,
+		);
+		out.push(content);
 	}
 
 	getRoots() {
@@ -199,7 +202,7 @@ export class CarSyncStore {
 	}
 }
 
-const store = new CarSyncStore("./store/repo.car", []);
+export const store = new CarSyncStore("./store/repo.car", []);
 
 export function readBlock(cid: Uint8Array) {
 	const parsed = CID.decode(cid);

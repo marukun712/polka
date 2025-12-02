@@ -5,4 +5,5 @@ export default defineConfig({
 	format: ["esm"],
 	target: "esnext",
 	dts: true,
+	clean: true,
 });

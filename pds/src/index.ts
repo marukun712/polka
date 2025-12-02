@@ -1,11 +1,10 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import * as TID from "@atcute/tid";
 import { app } from "electron";
 import { pino } from "pino";
 import type { Repo } from "../public/interfaces/polka-repository-repo.js";
 import { repo as wasm } from "../public/repo.js";
+import { store } from "./lib/blockstore.js";
 import { getDid, setupCrypto } from "./lib/crypto.js";
-import { startServer } from "./lib/server.js";
 
 app.whenReady().then(async () => {
 	const logger = pino({
@@ -22,10 +21,9 @@ app.whenReady().then(async () => {
 	const did = await getDid();
 
 	let repo: Repo;
-	const rootPath = "./store/blocks/root.txt";
-
-	if (existsSync(rootPath)) {
-		const root = readFileSync(rootPath, "utf-8");
+	const root = store.getRoots()[0]?.toString();
+	console.log(root);
+	if (root) {
 		repo = wasm.open(did, root);
 	} else {
 		logger.info(
@@ -76,7 +74,6 @@ app.whenReady().then(async () => {
 		);
 	}
 
-	const root = repo.getRoot();
-	writeFileSync(rootPath, root);
-	await startServer(repo, did, logger);
+	console.log(repo.allRecords());
+	console.log(repo.getRoot());
 });
