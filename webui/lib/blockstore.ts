@@ -1,10 +1,10 @@
-import { accessSync, existsSync, readFileSync, writeFileSync } from "node:fs";
-import { decode, encode } from "@ipld/dag-cbor";
+import { decode } from "@ipld/dag-cbor";
 import { sha256 as createHash } from "@noble/hashes/sha2.js";
 import { CID } from "multiformats";
 import * as Digest from "multiformats/hashes/digest";
 import { sha256 } from "multiformats/hashes/sha2";
 import varint from "varint";
+import { store } from "./../../pds/src/lib/blockstore";
 
 export const SHA2_256 = sha256.code;
 
@@ -24,36 +24,19 @@ export type ErrorType = CidNotFound | UnsupportedHash;
 
 // ATProtoはCAR v1を使っているらしいので、v1を使うことにするCAR
 export class CarSyncStore {
-	private path: string;
+	private file: Uint8Array;
 	private roots: CID[];
 	private index: Map<string, { offset: number; length: number }>;
 
-	constructor(path: string, roots: CID[]) {
-		this.path = path;
+	constructor(file: Uint8Array, roots: CID[]) {
+		this.file = file;
 		this.roots = roots;
 		this.index = new Map<string, { offset: number; length: number }>();
-		if (existsSync(path)) {
-			accessSync(this.path);
-			this.open();
-		} else {
-			this.create();
-		}
-	}
-
-	create() {
-		// CAR V1 ヘッダー
-		const header = { version: 1, roots: this.roots };
-		// DAG-CBORでエンコードする
-		const headerEncoded = encode(header);
-		// ヘッダーの長さを可変長整数でエンコードする
-		const unsignedVarint = varint.encode(headerEncoded.length);
-		//ファイルの書き込み
-		writeFileSync(this.path, Buffer.from(unsignedVarint));
-		writeFileSync(this.path, headerEncoded, { flag: "a" });
+		this.open();
 	}
 
 	open() {
-		const data: Uint8Array = readFileSync(this.path);
+		const data = this.file;
 		let offset = 0;
 
 		// ヘッダー長を読み取る
@@ -105,32 +88,8 @@ export class CarSyncStore {
 		}
 	}
 
-	writeBlock(codec: number, hash: number, contents: Uint8Array): Uint8Array {
-		if (hash !== SHA2_256) {
-			throw new UnsupportedHash(hash);
-		}
-		// コンテンツからcidを算出
-		const digest = createHash(contents);
-		const encoded = Digest.create(SHA2_256, digest);
-		const cid = CID.create(1, codec, encoded);
-		// そのcidがすでにcarに含まれていればエラー
-		if (this.index.has(cid.toString())) {
-			throw new Error("CID already exists");
-		}
-		// cidとコンテンツのbytes
-		const buf: Uint8Array = new Uint8Array([...cid.bytes, ...contents]);
-		// cid + コンテンツの長さを可変長整数でエンコード
-		const unsignedVarint = varint.encode(buf.length);
-		// 先に長さとcidを書き込み
-		writeFileSync(this.path, Buffer.from(unsignedVarint), { flag: "a" });
-		writeFileSync(this.path, cid.bytes, { flag: "a" });
-		// 現在のブロックの開始位置を保存
-		const offset = readFileSync(this.path).length;
-		// 次にcid + コンテンツを書き込み
-		writeFileSync(this.path, contents, { flag: "a" });
-		// ブロックの開始地点と長さをindexに保存
-		this.index.set(cid.toString(), { offset: offset, length: contents.length });
-		return cid.bytes;
+	writeBlock(_codec: number, _hash: number, _contents: Uint8Array): Uint8Array {
+		throw new Error("Webui is read-only");
 	}
 
 	readBlock(cid: CID, out: Uint8Array[]) {
@@ -140,7 +99,7 @@ export class CarSyncStore {
 			throw new CidNotFound();
 		}
 		out.length = 0;
-		const data = readFileSync(this.path);
+		const data = this.file;
 		const content = new Uint8Array(data).slice(
 			block.offset,
 			block.offset + block.length,
@@ -153,9 +112,10 @@ export class CarSyncStore {
 	}
 }
 
-export const store = new CarSyncStore("./store/repo.car", []);
-
 export function readBlock(cid: Uint8Array) {
+	if (!store) {
+		throw new Error("Store is not initialized");
+	}
 	const parsed = CID.decode(cid);
 	const out: Uint8Array[] = [];
 	store.readBlock(parsed, out);
@@ -163,5 +123,8 @@ export function readBlock(cid: Uint8Array) {
 }
 
 export function writeBlock(codec: number, hash: number, contents: Uint8Array) {
+	if (!store) {
+		throw new Error("Store is not initialized");
+	}
 	return store.writeBlock(Number(codec), Number(hash), contents);
 }
