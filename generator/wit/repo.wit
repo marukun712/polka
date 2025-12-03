@@ -14,7 +14,6 @@ interface blockstore {
 
 interface crypto {
   sign: func(bytes: list<u8>) -> list<u8>;
-  get-did: func(did: string, cid: string) -> string;
 }
 
 interface repo {
