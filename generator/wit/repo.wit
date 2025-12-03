@@ -39,8 +39,6 @@ interface repo {
 }
 
 world repository {
-  include wasi:cli/imports@0.2.0;
-
   import blockstore;
   import crypto;
   export repo;

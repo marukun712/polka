@@ -1,25 +1,44 @@
 {
-  "name": "postui",
-  "version": "0.1.0",
-  "description": "",
-  "type": "module",
-  "scripts": {
-    "start": "vite",
-    "dev": "vite",
-    "build": "vite build",
-    "serve": "vite preview",
-    "tauri": "tauri"
-  },
-  "license": "MIT",
-  "dependencies": {
-    "solid-js": "^1.9.3",
-    "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-opener": "^2"
-  },
-  "devDependencies": {
-    "typescript": "~5.6.2",
-    "vite": "^6.0.3",
-    "vite-plugin-solid": "^2.11.0",
-    "@tauri-apps/cli": "^2"
-  }
+	"name": "postui",
+	"version": "0.1.0",
+	"description": "",
+	"type": "module",
+	"scripts": {
+		"start": "vite",
+		"dev": "vite",
+		"build": "vite build",
+		"serve": "vite preview",
+		"tauri": "tauri",
+		"format": "biome format ./",
+		"format:fix": "biome format --write ./",
+		"lint": "biome lint ./",
+		"lint:fix": "biome lint --write ./",
+		"check": "biome check ./",
+		"check:fix": "biome check --write ./",
+		"transpile": "bunx jco transpile wasm/repo.wasm -o dist/transpiled --instantiation=async"
+	},
+	"license": "MIT",
+	"dependencies": {
+		"@atproto/crypto": "^0.4.5",
+		"@bytecodealliance/jco": "^1.15.4",
+		"@bytecodealliance/preview2-shim": "^0.17.5",
+		"@ipld/dag-cbor": "^9.2.5",
+		"@noble/curves": "^2.0.1",
+		"@noble/hashes": "^2.0.1",
+		"@tauri-apps/api": "^2",
+		"@tauri-apps/plugin-fs": "~2",
+		"@tauri-apps/plugin-opener": "^2",
+		"@tauri-apps/plugin-stronghold": "~2",
+		"@types/varint": "^6.0.3",
+		"multiformats": "^13.4.1",
+		"solid-js": "^1.9.3",
+		"varint": "^6.0.0"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.8",
+		"@tauri-apps/cli": "^2.9.5",
+		"typescript": "~5.6.2",
+		"vite": "^6.0.3",
+		"vite-plugin-solid": "^2.11.0"
+	}
 }
