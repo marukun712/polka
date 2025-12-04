@@ -29,7 +29,6 @@
 		"@tauri-apps/api": "^2",
 		"@tauri-apps/plugin-fs": "~2",
 		"@tauri-apps/plugin-opener": "^2",
-		"@tauri-apps/plugin-stronghold": "~2",
 		"@types/varint": "^6.0.3",
 		"multiformats": "^13.4.1",
 		"solid-icons": "^1.1.0",

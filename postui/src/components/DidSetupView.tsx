@@ -36,7 +36,7 @@ export const DidSetupView: Component<DidSetupViewProps> = (props) => {
 
 				<div class="mb-6 p-4 bg-yellow-50 border-2 border-yellow-400 rounded-lg">
 					<p class="text-sm font-bold text-yellow-900 mb-2 flex items-center">
-						⚠️ IMPORTANT: Save your private key!
+						IMPORTANT: Save your private key!
 					</p>
 					<div class="bg-white p-3 rounded border border-yellow-300 mb-2">
 						<p class="text-xs text-gray-600 mb-1">Private Key (hex):</p>

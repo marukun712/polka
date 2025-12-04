@@ -22,7 +22,6 @@ function App() {
 	const [generatedPrivateKey, setGeneratedPrivateKey] = createSignal("");
 
 	const [client, setClient] = createSignal<Client | null>(null);
-	const [_records, setRecords] = createSignal<GetResult[]>([]);
 	const [treeRoot, setTreeRoot] = createSignal<TreeNode | null>(null);
 
 	const handleExistingAccount = async (did: string, sk: string) => {
@@ -66,12 +65,6 @@ function App() {
 			const c = await Client.init(sk, did);
 			setClient(c);
 			const allRecords = c.repo.allRecords();
-			setRecords(
-				allRecords.map((r: GetResult) => ({
-					rpath: r.rpath,
-					data: r.data,
-				})),
-			);
 
 			const tree = buildTree(allRecords);
 			setTreeRoot(tree);
@@ -103,13 +96,16 @@ function App() {
 			records: [],
 			isExpanded: true,
 		};
+
 		for (const record of records) {
 			if (record.rpath === "polka.profile/self") continue;
 			const [nsid, id] = record.rpath.split("/");
 			if (!nsid || !id) continue;
+
 			const segments = nsid.split(".");
 			let currentNode = root;
 			let pathSoFar = "";
+
 			for (const segment of segments) {
 				pathSoFar = pathSoFar ? `${pathSoFar}.${segment}` : segment;
 				let child = currentNode.children.find((c) => c.name === segment);
@@ -125,12 +121,15 @@ function App() {
 				}
 				currentNode = child;
 			}
+
 			let parsedData: Record<string, unknown> = {};
+
 			try {
 				parsedData = JSON.parse(record.data);
 			} catch {
 				parsedData = {};
 			}
+
 			currentNode.records.push({
 				rpath: record.rpath,
 				data: parsedData,
@@ -179,15 +178,7 @@ function App() {
 		try {
 			const c = client();
 			if (!c) throw new Error("Client not initialized");
-
 			const allRecords = c.repo.allRecords();
-			setRecords(
-				allRecords.map((r: GetResult) => ({
-					rpath: r.rpath,
-					data: r.data,
-				})),
-			);
-			// TreeNode 構造を再構築
 			const tree = buildTree(allRecords);
 			setTreeRoot(tree);
 		} catch {
