@@ -9,7 +9,7 @@ import { DidInputView } from "./components/DidInputView";
 import { DidSetupView } from "./components/DidSetupView";
 import { ErrorView } from "./components/ErrorView";
 import { LoadingView } from "./components/LoadingView";
-import { RecordEditorView } from "./components/RecordEditorView";
+import { RecordsTreeView, type TreeNode } from "./components/RecordsTreeView";
 
 function App() {
 	const [step, setStep] = createSignal<"input" | "setup" | "editor">("input");
@@ -22,7 +22,8 @@ function App() {
 	const [generatedPrivateKey, setGeneratedPrivateKey] = createSignal("");
 
 	const [client, setClient] = createSignal<Client | null>(null);
-	const [records, setRecords] = createSignal<GetResult[]>([]);
+	const [_records, setRecords] = createSignal<GetResult[]>([]);
+	const [treeRoot, setTreeRoot] = createSignal<TreeNode | null>(null);
 
 	const handleExistingAccount = async (did: string, sk: string) => {
 		setLoading(true);
@@ -71,6 +72,10 @@ function App() {
 					data: r.data,
 				})),
 			);
+
+			const tree = buildTree(allRecords);
+			setTreeRoot(tree);
+
 			setStep("editor");
 		} catch (err) {
 			throw new Error(`Failed to initialize client: ${err}`);
@@ -90,12 +95,56 @@ function App() {
 		}
 	};
 
+	const buildTree = (records: GetResult[]): TreeNode => {
+		const root: TreeNode = {
+			name: "root",
+			fullPath: "",
+			children: [],
+			records: [],
+			isExpanded: true,
+		};
+		for (const record of records) {
+			if (record.rpath === "polka.profile/self") continue;
+			const [nsid, id] = record.rpath.split("/");
+			if (!nsid || !id) continue;
+			const segments = nsid.split(".");
+			let currentNode = root;
+			let pathSoFar = "";
+			for (const segment of segments) {
+				pathSoFar = pathSoFar ? `${pathSoFar}.${segment}` : segment;
+				let child = currentNode.children.find((c) => c.name === segment);
+				if (!child) {
+					child = {
+						name: segment,
+						fullPath: pathSoFar,
+						children: [],
+						records: [],
+						isExpanded: false,
+					};
+					currentNode.children.push(child);
+				}
+				currentNode = child;
+			}
+			let parsedData: Record<string, unknown> = {};
+			try {
+				parsedData = JSON.parse(record.data);
+			} catch {
+				parsedData = {};
+			}
+			currentNode.records.push({
+				rpath: record.rpath,
+				data: parsedData,
+			});
+		}
+		return root;
+	};
+
 	const handleRetry = () => {
 		setError("");
 		setStep("input");
 	};
 
-	const handleSaveRecord = (
+	const _handleSaveRecord = (
 		rpath: string,
 		jsonData: string,
 		isExisting: boolean,
@@ -115,7 +164,7 @@ function App() {
 		}
 	};
 
-	const handleDeleteRecord = (rpath: string) => {
+	const _handleDeleteRecord = (rpath: string) => {
 		try {
 			const c = client();
 			if (!c) throw new Error("Client not initialized");
@@ -138,6 +187,9 @@ function App() {
 					data: r.data,
 				})),
 			);
+			// TreeNode 構造を再構築
+			const tree = buildTree(allRecords);
+			setTreeRoot(tree);
 		} catch {
 			setError("Failed to refresh records");
 		}
@@ -159,23 +211,23 @@ function App() {
 								onNewAccount={handleNewAccount}
 							/>
 						)}
-						{step() === "setup" && (
-							<DidSetupView
-								didWeb={didWeb()}
-								didDocument={didDocument()}
-								privateKey={generatedPrivateKey()}
-								onBack={() => setStep("input")}
-								onContinue={handleContinueFromSetup}
-							/>
+						{step() === "setup" && didDocument() && (
+							<Show when={didDocument()}>
+								{(d) => (
+									<DidSetupView
+										didWeb={didWeb()}
+										didDocument={d()}
+										privateKey={generatedPrivateKey()}
+										onBack={() => setStep("input")}
+										onContinue={handleContinueFromSetup}
+									/>
+								)}
+							</Show>
 						)}
 						{step() === "editor" && (
-							<RecordEditorView
-								didWeb={didWeb()}
-								records={records()}
-								onSave={handleSaveRecord}
-								onDelete={handleDeleteRecord}
-								onRefresh={refreshRecords}
-							/>
+							<div class="max-w-6xl mx-auto">
+								<RecordsTreeView root={treeRoot()} />
+							</div>
 						)}
 					</>
 				)}
