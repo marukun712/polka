@@ -64,6 +64,10 @@
             pkgs.wit-bindgen
             rust
           ];
+          shellHook = ''
+            export ELECTRON_EXEC_PATH="${pkgs.electron}/bin/electron"
+            export ELECTRON_SKIP_BINARY_DOWNLOAD="1"
+          '';
         };
       }
     );

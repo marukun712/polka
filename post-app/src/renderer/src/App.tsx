@@ -64,7 +64,7 @@ function App(): JSX.Element {
     try {
       const c = await Client.init(sk, did)
       setClient(c)
-      const allRecords = c.repo.allRecords()
+      const allRecords = await c.allRecords()
 
       const tree = buildTree(allRecords)
       setTreeRoot(tree)
@@ -143,15 +143,19 @@ function App(): JSX.Element {
     setStep('input')
   }
 
-  const handleSaveRecord = (rpath: string, jsonData: string, isExisting: boolean): void => {
+  const handleSaveRecord = async (
+    rpath: string,
+    jsonData: string,
+    isExisting: boolean
+  ): Promise<void> => {
     try {
       JSON.parse(jsonData)
       const c = client()
       if (!c) throw new Error('Client not initialized')
       if (isExisting) {
-        c.repo.update(rpath, jsonData)
+        await c.update(rpath, jsonData)
       } else {
-        c.repo.create(rpath, jsonData)
+        await c.create(rpath, jsonData)
       }
       refreshRecords()
     } catch {
@@ -159,22 +163,22 @@ function App(): JSX.Element {
     }
   }
 
-  const handleDeleteRecord = (rpath: string): void => {
+  const handleDeleteRecord = async (rpath: string): Promise<void> => {
     try {
       const c = client()
       if (!c) throw new Error('Client not initialized')
-      c.repo.delete(rpath)
+      await c.delete(rpath)
       refreshRecords()
     } catch {
       setError('Failed to delete record')
     }
   }
 
-  const refreshRecords = (): void => {
+  const refreshRecords = async (): Promise<void> => {
     try {
       const c = client()
       if (!c) throw new Error('Client not initialized')
-      const allRecords = c.repo.allRecords()
+      const allRecords = await c.allRecords()
       const tree = buildTree(allRecords)
       setTreeRoot(tree)
     } catch {
@@ -208,8 +212,99 @@ function App(): JSX.Element {
               />
             </Show>
             <Show when={treeRoot() && step() === 'editor'}>
-              <div class="max-w-6xl mx-auto">
+              <div class="max-w-6xl mx-auto space-y-6">
                 <RecordsTreeView root={treeRoot()!} />
+
+                <div class="bg-white rounded-lg shadow p-6">
+                  <h2 class="text-xl font-bold mb-4">Create/Update Record</h2>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      const formData = new FormData(e.currentTarget)
+                      const rpath = formData.get('rpath') as string
+                      const data = formData.get('data') as string
+                      const isExisting = formData.get('isExisting') === 'on'
+                      handleSaveRecord(rpath, data, isExisting)
+                      e.currentTarget.reset()
+                    }}
+                    class="space-y-4"
+                  >
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Record Path (e.g., polka.post/abc123)
+                      </label>
+                      <input
+                        type="text"
+                        name="rpath"
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="polka.post/abc123"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">JSON Data</label>
+                      <textarea
+                        name="data"
+                        required
+                        rows="4"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                        placeholder='{"title": "Hello", "content": "World"}'
+                      />
+                    </div>
+                    <div class="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="isExisting"
+                        id="isExisting"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label for="isExisting" class="ml-2 block text-sm text-gray-700">
+                        Update existing record
+                      </label>
+                    </div>
+                    <button
+                      type="submit"
+                      class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      Save Record
+                    </button>
+                  </form>
+                </div>
+
+                <div class="bg-white rounded-lg shadow p-6">
+                  <h2 class="text-xl font-bold mb-4">Delete Record</h2>
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault()
+                      const formData = new FormData(e.currentTarget)
+                      const rpath = formData.get('rpath') as string
+                      if (confirm(`Are you sure you want to delete "${rpath}"?`)) {
+                        handleDeleteRecord(rpath)
+                        e.currentTarget.reset()
+                      }
+                    }}
+                    class="space-y-4"
+                  >
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Record Path to Delete
+                      </label>
+                      <input
+                        type="text"
+                        name="rpath"
+                        required
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
+                        placeholder="polka.post/abc123"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      class="w-full bg-red-600 text-white py-2 px-4 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    >
+                      Delete Record
+                    </button>
+                  </form>
+                </div>
               </div>
             </Show>
           </>
