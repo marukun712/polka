@@ -1,7 +1,11 @@
 use atrium_crypto::keypair::Secp256k1Keypair;
+use atrium_repo::blockstore::{AsyncBlockStoreRead, CarStore};
+use cid::Cid;
+use std::io::Cursor;
+use tauri::async_runtime::block_on;
+use tokio::fs::File;
 use wasmtime::component::Instance;
 
-#[allow(unused)]
 struct Repo {
     instance: Instance,
 }
@@ -23,6 +27,16 @@ impl Repo {
         };
         let mut linker = wasmtime::component::Linker::new(&engine);
 
+        let file = match block_on(async { File::open("path").await }) {
+            Ok(b) => b,
+            Err(e) => return Err(e.to_string()),
+        };
+
+        let mut bs = match block_on(async { CarStore::create(file).await }) {
+            Ok(b) => b,
+            Err(e) => return Err(e.to_string()),
+        };
+
         linker
             .root()
             .func_wrap("sign", move |_store, (data,): (Vec<u8>,)| {
@@ -39,6 +53,20 @@ impl Repo {
                     Err(e) => return Err(wasmtime::Error::msg(e.to_string())),
                 };
                 Ok((sig,))
+            });
+
+        linker
+            .root()
+            .func_new_async("read-block", move |_store, (cid,): (Vec<u8>,)| {
+                let cid = match Cid::read_bytes(Cursor::new(cid)) {
+                    Ok(b) => b,
+                    Err(e) => return Err(wasmtime::Error::msg(e.to_string())),
+                };
+                let data = match block_on(async { bs.read_block(cid).await }) {
+                    Ok(b) => b,
+                    Err(e) => return Err(wasmtime::Error::msg(e.to_string())),
+                };
+                Ok((data,))
             });
 
         let instance = match linker.instantiate(&mut store, &component) {
