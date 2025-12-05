@@ -134,10 +134,6 @@ export class CarSyncStore {
 		const digest = createHash(contents);
 		const encoded = Digest.create(SHA2_256, digest);
 		const cid = CID.create(1, codec, encoded);
-		// すでに存在するCIDはエラー
-		if (this.index.has(cid.toString())) {
-			throw new Error("CID already exists");
-		}
 		// セクションは | varint | CID | contents | の形式で構成される
 		const blockBuffer = Buffer.from(contents);
 		const cidBuffer = Buffer.from(cid.bytes);

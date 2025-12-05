@@ -5,36 +5,52 @@ import { now } from "@atcute/tid";
 import { WASIShim } from "@bytecodealliance/preview2-shim/instantiation";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
+import { config } from "dotenv";
 import Enquirer from "enquirer";
 import { CID } from "multiformats";
 import type { Repo } from "./dist/transpiled/interfaces/polka-repository-repo.js";
 import { instantiate } from "./dist/transpiled/repo.js";
 import { CarSyncStore } from "./lib/blockstore.ts";
 import { generate } from "./lib/crypto.ts";
+import {
+	cloneRepository,
+	commitAndPush,
+	existsRepository,
+	generateCommitMessage,
+	POLKA_CAR_PATH,
+	POLKA_REPO_PATH,
+	pullRepository,
+} from "./lib/git.ts";
 import { generateDidDocument, resolve } from "./lib/identity.ts";
+
+config();
 
 const { prompt } = Enquirer;
 
 let repo: Repo;
 let store: CarSyncStore;
 
-const ws = new WebSocket("ws://localhost:8080");
+const ws = new WebSocket("ws://localhost:3000/ws/");
 
 async function main() {
 	try {
-		// ステップ1 ドメインを入力
-		const { domain } = await prompt<{ domain: string }>({
-			type: "input",
-			name: "domain",
-			message: "Enter your domain:",
-			required: true,
-			result: (value) => value.trim(),
-		});
+		let domain = process.env.POLKA_DOMAIN;
+		if (!domain) {
+			const result = await prompt<{ domain: string }>({
+				type: "input",
+				name: "domain",
+				message: "Enter your domain:",
+				required: true,
+				result: (value) => value.trim(),
+			});
+			domain = result.domain;
+		}
 
 		// ステップ2 ドメインを解決して、既に登録されているか確認
 		let didKey = "";
 		let sk = "";
 		let isRegistered = false;
+
 		try {
 			const doc = await resolve(domain);
 			if (doc.didKey && doc.target) {
@@ -94,6 +110,29 @@ async function main() {
 			}
 		}
 
+		// メインのリモートを取得
+		let remoteUrl = process.env.POLKA_MAIN_REMOTE;
+		if (!remoteUrl) {
+			const result = await prompt<{ remoteUrl: string }>({
+				type: "input",
+				name: "remoteUrl",
+				message: "Enter your Git remote SSH URL:",
+				required: true,
+				result: (value) => value.trim(),
+			});
+			remoteUrl = result.remoteUrl;
+		}
+
+		if (!existsRepository(POLKA_REPO_PATH)) {
+			console.log("Cloning repository...");
+			await cloneRepository(remoteUrl);
+			console.log("Repository cloned!");
+		} else {
+			console.log("Pulling latest changes...");
+			await pullRepository();
+			console.log("Repository updated!");
+		}
+
 		// 解決出来たら、repoをinit
 		repo = await init(sk, didKey);
 		console.log("Repo initialized successfully!");
@@ -108,6 +147,7 @@ async function main() {
 				required: true,
 				result: (value) => value.trim(),
 			});
+
 			const nsid = "polka.post";
 			const rpath = `${nsid}/${now()}`;
 			const data = JSON.stringify({ content: text });
@@ -118,13 +158,21 @@ async function main() {
 			const root = repo.getRoot();
 			store.updateHeaderRoots([CID.parse(root)]);
 
+			const { tag } = await prompt<{ tag: string }>({
+				type: "input",
+				name: "tag",
+				message: "Enter tag:",
+				required: false,
+				result: (value) => value.trim(),
+			});
+
 			// wsに広告
 			const ad = {
 				did: `did:web:${domain}`,
 				nsid: nsid,
 				rpath: rpath,
 				ptr: null,
-				tag: ["杉浦綾乃"],
+				tag: tag ? [tag] : [],
 			};
 
 			// 署名する
@@ -137,6 +185,15 @@ async function main() {
 
 			// 広告をwsに送る
 			ws.send(JSON.stringify(adSigned));
+
+			try {
+				const commitMessage = generateCommitMessage();
+				console.log("Committing and pushing...");
+				await commitAndPush(commitMessage);
+				console.log("Committed and pushed!");
+			} catch (error) {
+				console.error("Failed to commit/push:", (error as Error).message);
+			}
 		}
 	} catch (e) {
 		console.log(e);
@@ -151,8 +208,7 @@ async function init(sk: string, didKey: string) {
 		mkdirSync(join(homedir(), ".polka"));
 	}
 
-	// ~/.polka/repo.carを読み込む
-	const path = join(homedir(), ".polka/repo.car");
+	const path = POLKA_CAR_PATH;
 	store = new CarSyncStore(path);
 
 	// WASMのロード

@@ -27,11 +27,14 @@
 		"@ipld/dag-cbor": "^9.2.5",
 		"@noble/curves": "^2.0.1",
 		"@noble/hashes": "^2.0.1",
+		"@types/nodegit": "^0.28.9",
 		"@types/varint": "^6.0.3",
 		"did-resolver": "^4.1.0",
+		"dotenv": "^17.2.3",
 		"enquirer": "^2.4.1",
 		"inquirer": "^13.0.2",
 		"multiformats": "^13.4.1",
+		"nodegit": "^0.27.0",
 		"varint": "^6.0.0",
 		"web-did-resolver": "^2.0.32"
 	}
