@@ -1,0 +1,28 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Metadata {
+  id    String @id @default(uuid())
+  did   String
+  nsid  String
+  rpath String
+  ptr   String
+  tag   Tag[]
+  sig   String
+}
+
+model Tag {
+  id       String     @id @default(uuid())
+  name     String     @unique
+  metadata Metadata[]
+}
