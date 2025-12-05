@@ -1,38 +1,28 @@
 import type { Repo } from "../dist/transpiled/interfaces/polka-repository-repo.js";
 import { repo as wasm } from "../dist/transpiled/repo.js";
 import { CarSyncStore } from "./blockstore.js";
-import { generate } from "./crypto.js";
+import { resolve } from "./identity.js";
 
 let store: CarSyncStore;
 
-async function generateDidDocument(did: string) {
-	const key = await generate();
-	return {
-		"@context": [
-			"https://www.w3.org/ns/did/v1",
-			"https://w3id.org/security/suites/jws-2020/v1",
-		],
-		id: did,
-		authentication: [key.did],
-		service: [
-			{
-				id: `${did}#polkaRepo`,
-				type: "polkaRepo",
-				serviceEndpoint: "https://bar.example.com",
-			},
-		],
-	};
-}
-
 export class Client {
 	repo: Repo;
-	bs: CarSyncStore;
 
-	constructor(did: string) {
-		const doc = generateDidDocument(did);
-		this.repo = wasm.open(did, root);
-		store = new CarSyncStore(path, []);
-		this.bs = store;
+	constructor(repo: Repo) {
+		this.repo = repo;
+	}
+
+	static async init(did: string) {
+		const doc = await resolve(did);
+		const path = doc.target;
+		const res = await fetch(path);
+		const file = await res.arrayBuffer();
+		store = new CarSyncStore(new Uint8Array(file));
+		store.updateIndex();
+		const roots = store.getRoots();
+		if (!roots[0]) throw new Error("Root not found.");
+		const repo = wasm.open(doc.didKey, roots[0].toString());
+		return new Client(repo);
 	}
 
 	public getRecord(rpath: string) {

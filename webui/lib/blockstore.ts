@@ -4,7 +4,6 @@ import { CID } from "multiformats";
 import * as Digest from "multiformats/hashes/digest";
 import { sha256 } from "multiformats/hashes/sha2";
 import varint from "varint";
-import { store } from "./../../pds/src/lib/blockstore";
 
 export const SHA2_256 = sha256.code;
 
@@ -28,15 +27,15 @@ export class CarSyncStore {
 	private roots: CID[];
 	private index: Map<string, { offset: number; length: number }>;
 
-	constructor(file: Uint8Array, roots: CID[]) {
+	constructor(file: Uint8Array) {
 		this.file = file;
-		this.roots = roots;
+		this.roots = [];
 		this.index = new Map<string, { offset: number; length: number }>();
-		this.open();
 	}
 
-	open() {
-		const data = this.file;
+	updateIndex() {
+		this.index.clear();
+		const data: Uint8Array = this.file;
 		let offset = 0;
 
 		// ヘッダー長を読み取る
@@ -60,18 +59,14 @@ export class CarSyncStore {
 				throw new Error("Invalid header length");
 			}
 			offset += varint.decode.bytes;
-
 			// CID
 			const slice = data.subarray(offset);
 			const [cid, remainder] = CID.decodeFirst(slice);
-
 			// 読み取った CID の長さだけ offset を進める
 			offset += slice.length - remainder.length;
-
 			// ブロック内容を取り出す
 			const contentLen = blockLen - cid.bytes.length;
 			const content = remainder.subarray(0, contentLen);
-
 			// SHA-256検証
 			if (cid.multihash.code === 0x12) {
 				const digest = createHash(content);
@@ -81,15 +76,10 @@ export class CarSyncStore {
 					throw new Error("Invalid block hash");
 				}
 			}
-
 			// index登録
 			this.index.set(cid.toString(), { offset, length: contentLen });
 			offset += contentLen;
 		}
-	}
-
-	writeBlock(_codec: number, _hash: number, _contents: Uint8Array): Uint8Array {
-		throw new Error("Webui is read-only");
 	}
 
 	readBlock(cid: CID, out: Uint8Array[]) {
@@ -110,21 +100,4 @@ export class CarSyncStore {
 	getRoots() {
 		return this.roots;
 	}
-}
-
-export function readBlock(cid: Uint8Array) {
-	if (!store) {
-		throw new Error("Store is not initialized");
-	}
-	const parsed = CID.decode(cid);
-	const out: Uint8Array[] = [];
-	store.readBlock(parsed, out);
-	return out[0];
-}
-
-export function writeBlock(codec: number, hash: number, contents: Uint8Array) {
-	if (!store) {
-		throw new Error("Store is not initialized");
-	}
-	return store.writeBlock(Number(codec), Number(hash), contents);
 }

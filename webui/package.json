@@ -29,6 +29,7 @@
 	"dependencies": {
 		"@atproto/crypto": "^0.4.4",
 		"@bytecodealliance/jco": "^1.15.3",
+		"@bytecodealliance/preview2-shim": "^0.17.5",
 		"@chainsafe/libp2p-noise": "^17.0.0",
 		"@chainsafe/libp2p-quic": "^1.1.3",
 		"@chainsafe/libp2p-yamux": "^8.0.1",
