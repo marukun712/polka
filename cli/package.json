@@ -28,6 +28,7 @@
 		"@noble/curves": "^2.0.1",
 		"@noble/hashes": "^2.0.1",
 		"@types/varint": "^6.0.3",
+		"did-resolver": "^4.1.0",
 		"enquirer": "^2.4.1",
 		"inquirer": "^13.0.2",
 		"multiformats": "^13.4.1",

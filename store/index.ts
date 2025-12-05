@@ -1,6 +1,9 @@
+import { config } from "dotenv";
 import { WebSocketServer } from "ws";
 import z from "zod";
-import { PrismaClient } from "./generated/prisma/client";
+import { PrismaClient } from "./generated/prisma/client.ts";
+
+config();
 
 const prisma = new PrismaClient();
 
@@ -8,9 +11,9 @@ const schema = z.object({
 	did: z.string(),
 	nsid: z.string(),
 	rpath: z.string(),
-	ptr: z.string(),
-	tag: z.string(),
 	sig: z.string(),
+	tag: z.array(z.string()),
+	ptr: z.string().nullable().optional(),
 });
 
 const port = Number(process.env.PORT) || 8080;
@@ -27,14 +30,21 @@ wss.on("connection", (ws) => {
 				ptr: parsed.data.ptr,
 				nsid: parsed.data.nsid,
 				tag: {
-					create: {
-						name: parsed.data.tag,
-					},
+					connectOrCreate: parsed.data.tag.map((tag) => ({
+						where: {
+							name: tag,
+						},
+						create: {
+							name: tag,
+						},
+					})),
 				},
 				sig: parsed.data.sig,
 			},
 		});
+		const stored = await prisma.metadata.findMany();
+		console.log(stored);
 	});
 });
 
-console.log(`polka Store started on portws://localhost:${port}`);
+console.log(`polka Store started on ws://localhost:${port}`);
