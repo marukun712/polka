@@ -14,15 +14,10 @@ import {
 
 const App: Component = () => {
 	const params = new URLSearchParams(window.location.search);
-	const pdsAddr = params.get("addr");
-	const relayAddr = params.get("relay");
-	const peerId = params.get("peer");
+	const domain = params.get("domain");
 
 	const [state, setState] = createStore({
-		pdsAddr: pdsAddr ? decodeURIComponent(pdsAddr) : "",
-		relayAddr: relayAddr ? decodeURIComponent(relayAddr) : "",
-		peerId: peerId ? decodeURIComponent(peerId) : "",
-		useRelay: !!(relayAddr && peerId),
+		domain: domain ? decodeURIComponent(domain) : "",
 		client: null as Client | null,
 		profile: null as Profile | null,
 		treeRoot: null as TreeNode | null,
@@ -31,7 +26,7 @@ const App: Component = () => {
 	});
 
 	onMount(() => {
-		if (state.useRelay ? state.relayAddr && state.peerId : state.pdsAddr) {
+		if (state.domain) {
 			initializeAndFetch();
 		}
 	});
@@ -86,26 +81,25 @@ const App: Component = () => {
 		setState("error", "");
 
 		try {
-			const client = state.useRelay
-				? await Client.create(state.relayAddr, state.peerId)
-				: await Client.createDirect(state.pdsAddr);
+			const client = await Client.init(state.domain);
 			setState("client", client);
 
-			const [profileResult, allRecordsResult] = await Promise.all([
-				client.getRecord("polka.profile/self").catch((e) => {
-					throw new Error(e);
-				}),
-				client.allRecords().catch((e) => {
-					throw new Error(e);
-				}),
-			]);
+			const profileResult = await client.getRecord("polka.profile/self");
+			const allRecordsResult = await client.allRecords();
 			console.log(profileResult, allRecordsResult);
 
 			if (profileResult.data) {
-				setState("profile", profileResult.data as Profile);
+				setState("profile", JSON.parse(profileResult.data));
 			}
 
-			const tree = buildTree(allRecordsResult as RecordData[]);
+			const tree = buildTree(
+				allRecordsResult.map((result) => {
+					return {
+						rpath: result.rpath,
+						data: JSON.parse(result.data),
+					};
+				}),
+			);
 			setState("treeRoot", tree);
 		} catch (error) {
 			console.error(error);
@@ -115,34 +109,18 @@ const App: Component = () => {
 		}
 	};
 
-	const handleAddrSubmit = (
-		addr: string,
-		useRelay: boolean,
-		relayAddr?: string,
-	) => {
-		if (useRelay && relayAddr) {
-			const encodedRelay = encodeURIComponent(relayAddr);
-			const encodedPeer = encodeURIComponent(addr);
-			window.location.href = `?relay=${encodedRelay}&peer=${encodedPeer}`;
-		} else {
-			const encodedAddr = encodeURIComponent(addr);
-			window.location.href = `?addr=${encodedAddr}`;
-		}
+	const handleDomainSubmit = (domain: string) => {
+		const encodedDomain = encodeURIComponent(domain);
+		window.location.href = `?domain=${encodedDomain}`;
 	};
 
 	return (
 		<div class="min-h-screen bg-gray-50">
-			<Show
-				when={
-					!(state.useRelay ? state.relayAddr && state.peerId : state.pdsAddr)
-				}
-			>
-				<AddrInputView onSubmit={handleAddrSubmit} />
+			<Show when={!state.domain}>
+				<AddrInputView onSubmit={handleDomainSubmit} />
 			</Show>
 
-			<Show
-				when={state.useRelay ? state.relayAddr && state.peerId : state.pdsAddr}
-			>
+			<Show when={state.domain}>
 				<div class="max-w-6xl mx-auto p-4 md:p-6">
 					<div class="mb-4">
 						<button
@@ -152,7 +130,7 @@ const App: Component = () => {
 							}}
 							class="text-blue-600 hover:text-blue-800 transition-colors"
 						>
-							← Connect to Different PDS
+							← View Different Repository
 						</button>
 					</div>
 

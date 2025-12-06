@@ -4,6 +4,7 @@ import { CID } from "multiformats";
 import * as Digest from "multiformats/hashes/digest";
 import { sha256 } from "multiformats/hashes/sha2";
 import varint from "varint";
+import { store } from "./client";
 
 export const SHA2_256 = sha256.code;
 
@@ -100,4 +101,22 @@ export class CarSyncStore {
 	getRoots() {
 		return this.roots;
 	}
+}
+
+export function readBlock(cid: Uint8Array) {
+	if (!store) {
+		throw new Error("Store is not initialized");
+	}
+	const parsed = CID.decode(cid);
+	const out: Uint8Array[] = [];
+	store.readBlock(parsed, out);
+	return out[0];
+}
+
+export function writeBlock(
+	_codec: number,
+	_hash: number,
+	_contents: Uint8Array,
+) {
+	throw new Error("Not implemented");
 }

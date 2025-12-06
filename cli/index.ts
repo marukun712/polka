@@ -8,7 +8,10 @@ import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
 import { config } from "dotenv";
 import Enquirer from "enquirer";
 import { CID } from "multiformats";
-import type { Repo } from "./dist/transpiled/interfaces/polka-repository-repo.js";
+import type {
+	GetResult,
+	Repo,
+} from "./dist/transpiled/interfaces/polka-repository-repo.js";
 import { instantiate } from "./dist/transpiled/repo.js";
 import { CarSyncStore } from "./lib/blockstore.ts";
 import { generate } from "./lib/crypto.ts";
@@ -137,6 +140,57 @@ async function main() {
 		repo = await init(sk, didKey);
 		console.log("Repo initialized successfully!");
 		console.log(repo.allRecords());
+
+		let profile: GetResult | null = null;
+
+		try {
+			profile = repo.getRecord("polka.profile/self");
+		} catch {}
+
+		// プロフィールをセット
+		if (!profile) {
+			const name = await prompt<{ name: string }>({
+				type: "input",
+				name: "name",
+				message: "Enter your name:",
+				required: true,
+				result: (value) => value.trim(),
+			});
+
+			const description = await prompt<{ description: string }>({
+				type: "input",
+				name: "description",
+				message: "Enter your description:",
+				required: true,
+				result: (value) => value.trim(),
+			});
+
+			const icon = await prompt<{ icon: string }>({
+				type: "input",
+				name: "icon",
+				message: "Enter your icon URL:",
+				required: true,
+				result: (value) => value.trim(),
+			});
+
+			const data = JSON.stringify({
+				name: name.name,
+				description: description.description,
+				icon: icon.icon,
+			});
+			repo.create("polka.profile/self", data);
+			const root = repo.getRoot();
+			store.updateHeaderRoots([CID.parse(root)]);
+
+			try {
+				const commitMessage = generateCommitMessage();
+				console.log("Committing and pushing...");
+				await commitAndPush(commitMessage);
+				console.log("Committed and pushed!");
+			} catch (error) {
+				console.error("Failed to commit/push:", (error as Error).message);
+			}
+		}
 
 		// メッセージを送信する
 		while (true) {

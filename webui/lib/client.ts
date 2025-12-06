@@ -3,7 +3,7 @@ import { repo as wasm } from "../dist/transpiled/repo.js";
 import { CarSyncStore } from "./blockstore.js";
 import { resolve } from "./identity.js";
 
-let store: CarSyncStore;
+export let store: CarSyncStore;
 
 export class Client {
 	repo: Repo;

@@ -4,6 +4,7 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
+		"start": "node index.ts",
 		"format": "biome format ./",
 		"format:fix": "biome format --write ./",
 		"lint": "biome lint ./",
