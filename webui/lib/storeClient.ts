@@ -13,11 +13,19 @@ export interface PostMetadata {
 const STORE_SERVER_URL = "http://localhost:8000";
 
 export async function fetchPosts(): Promise<PostMetadata[]> {
-	const response = await fetch(
-		`${STORE_SERVER_URL}/metadata/filter?nsid=polka.post`,
-	);
+	const response = await fetch(`${STORE_SERVER_URL}/filter?nsid=polka.post`);
 	if (!response.ok) {
 		throw new Error(`Failed to fetch posts: ${response.statusText}`);
+	}
+	return response.json();
+}
+
+export async function searchPostsByTag(tag: string): Promise<PostMetadata[]> {
+	const response = await fetch(
+		`${STORE_SERVER_URL}/search?tag=${encodeURIComponent(tag)}`,
+	);
+	if (!response.ok) {
+		throw new Error(`Failed to search posts: ${response.statusText}`);
 	}
 	return response.json();
 }

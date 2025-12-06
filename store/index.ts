@@ -91,25 +91,7 @@ app.get(
 );
 
 app.get(
-	"/metadata/by-did",
-	zValidator(
-		"query",
-		z.object({
-			did: z.string(),
-		}),
-	),
-	async (c) => {
-		const { did } = c.req.valid("query");
-		const rows = await prisma.metadata.findMany({
-			where: { did },
-			include: { tag: true },
-		});
-		return c.json(rows);
-	},
-);
-
-app.get(
-	"/metadata/by-tag",
+	"/search",
 	zValidator(
 		"query",
 		z.object({
@@ -131,7 +113,7 @@ app.get(
 );
 
 app.get(
-	"/metadata/filter",
+	"/filter",
 	zValidator(
 		"query",
 		z.object({

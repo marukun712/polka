@@ -20,6 +20,8 @@ export const TimelineView: Component = () => {
 	const [wsStatus, setWsStatus] =
 		createSignal<ConnectionStatus>("disconnected");
 
+	const [searchInput, setSearchInput] = createSignal("");
+
 	const loadPostProfile = async (post: TimelinePost, index: number) => {
 		setState("posts", index, "profileLoading", true);
 		try {
@@ -168,26 +170,59 @@ export const TimelineView: Component = () => {
 		}
 	};
 
+	const handleSearch = () => {
+		const tag = searchInput().trim();
+		if (tag) {
+			window.location.href = `/timeline?tag=${encodeURIComponent(tag)}`;
+		}
+	};
+
 	return (
 		<div class="min-h-screen bg-gray-50">
 			<div class="max-w-4xl mx-auto p-4 md:p-6">
-				<div class="mb-6 flex justify-between items-center">
-					<div>
-						<h1 class="text-3xl font-bold text-gray-900 mb-2">タイムライン</h1>
-						<div class="flex items-center gap-2">
-							<div class={`w-2 h-2 rounded-full ${getStatusColor()}`} />
-							<span class="text-sm text-gray-600">{getStatusText()}</span>
+				<div class="mb-6">
+					<div class="flex justify-between items-center mb-4">
+						<div>
+							<h1 class="text-3xl font-bold text-gray-900 mb-2">
+								タイムライン
+							</h1>
+							<div class="flex items-center gap-2">
+								<div class={`w-2 h-2 rounded-full ${getStatusColor()}`} />
+								<span class="text-sm text-gray-600">{getStatusText()}</span>
+							</div>
 						</div>
+						<button
+							type="button"
+							onClick={() => {
+								window.location.href = "/";
+							}}
+							class="text-blue-600 hover:text-blue-800 transition-colors"
+						>
+							← ホームへ戻る
+						</button>
 					</div>
-					<button
-						type="button"
-						onClick={() => {
-							window.location.href = "/";
-						}}
-						class="text-blue-600 hover:text-blue-800 transition-colors"
-					>
-						← ホームへ戻る
-					</button>
+					<div class="flex gap-2 items-center">
+						<input
+							type="text"
+							value={searchInput()}
+							onInput={(e) => setSearchInput(e.currentTarget.value)}
+							onKeyPress={(e) => {
+								if (e.key === "Enter" && searchInput().trim()) {
+									handleSearch();
+								}
+							}}
+							placeholder="タグで検索..."
+							class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+						/>
+						<button
+							type="button"
+							onClick={handleSearch}
+							disabled={!searchInput().trim()}
+							class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+						>
+							検索
+						</button>
+					</div>
 				</div>
 
 				<Show when={state.loading}>

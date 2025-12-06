@@ -11,6 +11,7 @@ import {
 	RecordsTreeView,
 	type TreeNode,
 } from "./components/RecordsTreeView";
+import { TagSearchView } from "./components/TagSearchView";
 import { TimelineView } from "./components/TimelineView";
 
 const App: Component = () => {
@@ -19,6 +20,7 @@ const App: Component = () => {
 
 	const params = new URLSearchParams(window.location.search);
 	const domain = params.get("domain");
+	const searchTag = isTimelinePage ? params.get("tag") : null;
 
 	const [state, setState] = createStore({
 		domain: domain ? decodeURIComponent(domain) : "",
@@ -120,7 +122,18 @@ const App: Component = () => {
 	return (
 		<div class="min-h-screen bg-gray-50">
 			<Show when={isTimelinePage}>
-				<TimelineView />
+				<Show when={searchTag} fallback={<TimelineView />}>
+					{(t) => {
+						return (
+							<TagSearchView
+								tag={t()}
+								onBack={() => {
+									window.location.href = "/timeline";
+								}}
+							/>
+						);
+					}}
+				</Show>
 			</Show>
 
 			<Show when={!isTimelinePage}>

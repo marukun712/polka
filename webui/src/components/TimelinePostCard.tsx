@@ -84,9 +84,16 @@ export const TimelinePostCard: Component<{ post: TimelinePost }> = (props) => {
 				<Show when={props.post.tag.length > 0}>
 					<div class="flex gap-1 flex-wrap">
 						{props.post.tag.map((t) => (
-							<span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+							<a
+								href={`/timeline?tag=${encodeURIComponent(t.name)}`}
+								class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full hover:bg-blue-200 transition-colors cursor-pointer"
+								onClick={(e) => {
+									e.preventDefault();
+									window.location.href = `/timeline?tag=${encodeURIComponent(t.name)}`;
+								}}
+							>
 								#{t.name}
-							</span>
+							</a>
 						))}
 					</div>
 				</Show>
