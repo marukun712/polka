@@ -11,8 +11,12 @@ import {
 	RecordsTreeView,
 	type TreeNode,
 } from "./components/RecordsTreeView";
+import { TimelineView } from "./components/TimelineView";
 
 const App: Component = () => {
+	const path = window.location.pathname;
+	const isTimelinePage = path === "/timeline";
+
 	const params = new URLSearchParams(window.location.search);
 	const domain = params.get("domain");
 
@@ -81,12 +85,11 @@ const App: Component = () => {
 		setState("error", "");
 
 		try {
-			const client = await Client.init(state.domain);
+			const client = await Client.init(`did:web:${state.domain}`);
 			setState("client", client);
 
 			const profileResult = await client.getRecord("polka.profile/self");
 			const allRecordsResult = await client.allRecords();
-			console.log(profileResult, allRecordsResult);
 
 			if (profileResult.data) {
 				setState("profile", JSON.parse(profileResult.data));
@@ -116,42 +119,57 @@ const App: Component = () => {
 
 	return (
 		<div class="min-h-screen bg-gray-50">
-			<Show when={!state.domain}>
-				<AddrInputView onSubmit={handleDomainSubmit} />
+			<Show when={isTimelinePage}>
+				<TimelineView />
 			</Show>
 
-			<Show when={state.domain}>
-				<div class="max-w-6xl mx-auto p-4 md:p-6">
-					<div class="mb-4">
-						<button
-							type="button"
-							onClick={() => {
-								window.location.href = "/";
-							}}
-							class="text-blue-600 hover:text-blue-800 transition-colors"
-						>
-							← View Different Repository
-						</button>
+			<Show when={!isTimelinePage}>
+				<Show when={!state.domain}>
+					<AddrInputView onSubmit={handleDomainSubmit} />
+				</Show>
+
+				<Show when={state.domain}>
+					<div class="max-w-6xl mx-auto p-4 md:p-6">
+						<div class="mb-4 flex justify-between items-center">
+							<button
+								type="button"
+								onClick={() => {
+									window.location.href = "/";
+								}}
+								class="text-blue-600 hover:text-blue-800 transition-colors"
+							>
+								← View Different Repository
+							</button>
+							<button
+								type="button"
+								onClick={() => {
+									window.location.href = "/timeline";
+								}}
+								class="text-blue-600 hover:text-blue-800 transition-colors"
+							>
+								タイムライン →
+							</button>
+						</div>
+
+						<Show when={state.loading}>
+							<LoadingView />
+						</Show>
+
+						<Show when={state.error}>
+							<ErrorView error={state.error} onRetry={initializeAndFetch} />
+						</Show>
+
+						<Show when={!state.loading && !state.error}>
+							<Show when={state.profile}>
+								<ProfileCard profile={state.profile} />
+							</Show>
+
+							<Show when={state.treeRoot}>
+								<RecordsTreeView root={state.treeRoot} />
+							</Show>
+						</Show>
 					</div>
-
-					<Show when={state.loading}>
-						<LoadingView />
-					</Show>
-
-					<Show when={state.error}>
-						<ErrorView error={state.error} onRetry={initializeAndFetch} />
-					</Show>
-
-					<Show when={!state.loading && !state.error}>
-						<Show when={state.profile}>
-							<ProfileCard profile={state.profile} />
-						</Show>
-
-						<Show when={state.treeRoot}>
-							<RecordsTreeView root={state.treeRoot} />
-						</Show>
-					</Show>
-				</div>
+				</Show>
 			</Show>
 		</div>
 	);

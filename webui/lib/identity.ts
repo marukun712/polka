@@ -1,5 +1,6 @@
 import { Resolver } from "did-resolver";
 import { getResolver } from "web-did-resolver";
+import { Client } from "./client";
 
 const webResolver = getResolver();
 
@@ -7,8 +8,7 @@ const didResolver = new Resolver({
 	...webResolver,
 });
 
-export async function resolve(domain: string) {
-	const did = `did:web:${domain}`;
+export async function resolve(did: string) {
 	const res = await didResolver.resolve(did);
 	if (!res.didDocument) throw new Error("Failed to resolve did");
 	const keyring = res.didDocument.verificationMethod;
@@ -33,4 +33,9 @@ export async function resolve(domain: string) {
 		didKey,
 		target,
 	};
+}
+
+export async function resolveRecord(did: string, rpath: string) {
+	const client = await Client.init(did);
+	return client.getRecord(rpath);
 }

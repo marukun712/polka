@@ -3,6 +3,7 @@ import { createNodeWebSocket } from "@hono/node-ws";
 import { zValidator } from "@hono/zod-validator";
 import { config } from "dotenv";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import type { WSContext } from "hono/ws";
 import WebSocket from "ws";
 import z from "zod";
@@ -24,6 +25,7 @@ const adSchema = z.object({
 });
 
 const app = new Hono();
+app.use("*", cors());
 
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 
