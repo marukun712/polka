@@ -45,6 +45,8 @@
             pkgs.wit-bindgen
             pkgs.prisma-engines
             pkgs.prisma
+            pkgs.electron
+            pkgs.glib
             rust
           ];
         };
@@ -54,6 +56,8 @@
           export PRISMA_QUERY_ENGINE_BINARY="${pkgs.prisma-engines}/bin/query-engine"
           export PRISMA_QUERY_ENGINE_LIBRARY="${pkgs.prisma-engines}/lib/libquery_engine.node"
           export PRISMA_FMT_BINARY="${pkgs.prisma-engines}/bin/prisma-fmt"
+          export ELECTRON_EXEC_PATH="${pkgs.electron}/bin/electron"
+          export ELECTRON_SKIP_BINARY_DOWNLOAD="1"
         '';
       }
     );
