@@ -22,8 +22,7 @@ export class UnsupportedHash extends Error {
 
 export type ErrorType = CidNotFound | UnsupportedHash;
 
-// ATProtoはCAR v1を使っているらしいので、v1を使うことにするCAR
-export class CarSyncStore {
+export class ReadOnlyCarSyncStore {
 	private file: Uint8Array;
 	private roots: CID[];
 	private index: Map<string, { offset: number; length: number }>;

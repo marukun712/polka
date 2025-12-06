@@ -1,11 +1,14 @@
+import { now } from "@atcute/tid";
 import type { Component } from "solid-js";
 import { createSignal, For, onMount, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import { resolveRecord } from "../../lib/identity";
 import type { PostMetadata } from "../../lib/storeClient";
 import { connectToRelay, fetchPosts } from "../../lib/storeClient";
+import { polkaIPC } from "../lib/ipc";
 import { ErrorView } from "./ErrorView";
 import { LoadingView } from "./LoadingView";
+import { PostComposer } from "./PostComposer";
 import { type TimelinePost, TimelinePostCard } from "./TimelinePostCard";
 
 type ConnectionStatus = "connected" | "connecting" | "disconnected";
@@ -177,6 +180,49 @@ export const TimelineView: Component = () => {
 		}
 	};
 
+	const handlePostSubmit = async (text: string, tags: string[]) => {
+		// localStorageからドメインと秘密鍵を取得
+		const domain = localStorage.getItem("userDomain");
+		const secretKey = localStorage.getItem("userSecretKey");
+
+		if (!domain || !secretKey) {
+			throw new Error(
+				"セッション情報が見つかりません。セットアップからやり直してください。",
+			);
+		}
+
+		const rpath = `polka.post/${now()}`;
+		const data = JSON.stringify({ content: text });
+
+		// 1. Repoに保存
+		const createResult = await polkaIPC.repo.createRecord(rpath, data);
+		if (!createResult.success) {
+			throw new Error(createResult.error || "Failed to create record");
+		}
+
+		// 2. Git commit & push
+		const commitResult = await polkaIPC.git.commitAndPush();
+		if (!commitResult.success) {
+			throw new Error(commitResult.error || "Failed to commit and push");
+		}
+
+		// 3. Advertisement作成・署名・WebSocket送信
+		const ad = {
+			did: `did:web:${domain}`,
+			nsid: "polka.post",
+			rpath,
+			ptr: null,
+			tag: tags,
+		};
+
+		const publishResult = await polkaIPC.relay.publishPost(ad, secretKey);
+		if (!publishResult.success) {
+			throw new Error(publishResult.error || "Failed to publish post");
+		}
+
+		// WebSocketでechoを受信するので、UIは自動更新される
+	};
+
 	return (
 		<div class="min-h-screen bg-gray-50">
 			<div class="max-w-4xl mx-auto p-4 md:p-6">
@@ -224,6 +270,9 @@ export const TimelineView: Component = () => {
 						</button>
 					</div>
 				</div>
+
+				{/* Post composer */}
+				<PostComposer onSubmit={handlePostSubmit} />
 
 				<Show when={state.loading}>
 					<LoadingView />

@@ -13,10 +13,12 @@ import {
 } from "./components/RecordsTreeView";
 import { TagSearchView } from "./components/TagSearchView";
 import { TimelineView } from "./components/TimelineView";
+import { SetupWizard } from "./views/SetupWizard";
 
 const App: Component = () => {
 	const path = window.location.pathname;
 	const isTimelinePage = path === "/timeline";
+	const isSetupPage = path === "/setup";
 
 	const params = new URLSearchParams(window.location.search);
 	const domain = params.get("domain");
@@ -32,6 +34,12 @@ const App: Component = () => {
 	});
 
 	onMount(() => {
+		// セットアップ完了チェック
+		const setupCompleted = localStorage.getItem("setupCompleted");
+		if (!setupCompleted && !isSetupPage) {
+			window.location.href = "/setup";
+			return;
+		}
 		if (state.domain) {
 			initializeAndFetch();
 		}
@@ -45,20 +53,15 @@ const App: Component = () => {
 			records: [],
 			isExpanded: true,
 		};
-
 		for (const record of records) {
 			if (record.rpath === "polka.profile/self") continue;
-
 			const [nsid, id] = record.rpath.split("/");
 			if (!nsid || !id) continue;
-
 			const segments = nsid.split(".");
 			let currentNode = root;
 			let pathSoFar = "";
-
 			for (const segment of segments) {
 				pathSoFar = pathSoFar ? `${pathSoFar}.${segment}` : segment;
-
 				let child = currentNode.children.find((c) => c.name === segment);
 				if (!child) {
 					child = {
@@ -72,31 +75,25 @@ const App: Component = () => {
 				}
 				currentNode = child;
 			}
-
 			currentNode.records.push({
 				rpath: record.rpath,
 				data: record.data,
 			});
 		}
-
 		return root;
 	};
 
 	const initializeAndFetch = async () => {
 		setState("loading", true);
 		setState("error", "");
-
 		try {
 			const client = await Client.init(`did:web:${state.domain}`);
 			setState("client", client);
-
 			const profileResult = await client.getRecord("polka.profile/self");
 			const allRecordsResult = await client.allRecords();
-
 			if (profileResult.data) {
 				setState("profile", JSON.parse(profileResult.data));
 			}
-
 			const tree = buildTree(
 				allRecordsResult.map((result) => {
 					return {
@@ -121,7 +118,11 @@ const App: Component = () => {
 
 	return (
 		<div class="min-h-screen bg-gray-50">
-			<Show when={isTimelinePage}>
+			<Show when={isSetupPage}>
+				<SetupWizard />
+			</Show>
+
+			<Show when={isTimelinePage && !isSetupPage}>
 				<Show when={searchTag} fallback={<TimelineView />}>
 					{(t) => {
 						return (
@@ -136,7 +137,7 @@ const App: Component = () => {
 				</Show>
 			</Show>
 
-			<Show when={!isTimelinePage}>
+			<Show when={!isTimelinePage && !isSetupPage}>
 				<Show when={!state.domain}>
 					<AddrInputView onSubmit={handleDomainSubmit} />
 				</Show>

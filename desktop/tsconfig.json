@@ -1,29 +1,33 @@
 {
-  "compilerOptions": {
-    // Environment setup & latest features
-    "lib": ["ESNext"],
-    "target": "ESNext",
-    "module": "Preserve",
-    "moduleDetection": "force",
-    "jsx": "react-jsx",
-    "allowJs": true,
+	"compilerOptions": {
+		// Environment setup & latest features
+		"lib": ["ESNext", "DOM"],
+		"target": "ESNext",
+		"module": "Preserve",
+		"moduleDetection": "force",
+		"jsx": "preserve",
+		"allowJs": true,
+		"jsxImportSource": "solid-js",
 
-    // Bundler mode
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "noEmit": true,
+		"outDir": "./dist",
+		"rootDir": "./",
 
-    // Best practices
-    "strict": true,
-    "skipLibCheck": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUncheckedIndexedAccess": true,
-    "noImplicitOverride": true,
+		// Bundler mode
+		"moduleResolution": "bundler",
+		"verbatimModuleSyntax": true,
 
-    // Some stricter flags (disabled by default)
-    "noUnusedLocals": false,
-    "noUnusedParameters": false,
-    "noPropertyAccessFromIndexSignature": false
-  }
+		// Best practices
+		"strict": true,
+		"skipLibCheck": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"noImplicitOverride": true,
+
+		// Some stricter flags (disabled by default)
+		"noUnusedLocals": false,
+		"noUnusedParameters": false,
+		"noPropertyAccessFromIndexSignature": false
+	},
+	"include": ["index.ts", "main/**/*", "preload.ts", "api/**/*"],
+	"exclude": ["ui"]
 }
