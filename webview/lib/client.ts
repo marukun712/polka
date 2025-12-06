@@ -1,5 +1,5 @@
-import type { Repo } from "../dist/transpiled/interfaces/polka-repository-repo.js";
-import { repo as wasm } from "../dist/transpiled/repo.js";
+import type { Repo } from "../wasm/transpiled/interfaces/polka-repository-repo.js";
+import { repo as wasm } from "../wasm/transpiled/repo.js";
 import { CarSyncStore } from "./blockstore.js";
 import { resolve } from "./identity.js";
 

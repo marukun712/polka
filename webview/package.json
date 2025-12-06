@@ -14,7 +14,7 @@
 		"lint:fix": "biome lint --write ./",
 		"check": "biome check ./",
 		"check:fix": "biome check --write ./",
-		"transpile": "bunx jco transpile wasm/repo.wasm -o dist/transpiled --map polka:repository/blockstore=../../lib/blockstore.ts polka:repository/crypto=../../lib/crypto.ts"
+		"transpile": "bunx jco transpile wasm/repo.wasm -o wasm/transpiled --map polka:repository/blockstore=../../lib/blockstore.ts polka:repository/crypto=../../lib/crypto.ts"
 	},
 	"license": "MIT",
 	"devDependencies": {
