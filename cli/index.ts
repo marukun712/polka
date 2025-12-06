@@ -33,7 +33,7 @@ const { prompt } = Enquirer;
 let repo: Repo;
 let store: CarSyncStore;
 
-const ws = new WebSocket("ws://localhost:3000/ws/");
+const ws = new WebSocket("ws://localhost:8000/ws/");
 
 async function main() {
 	try {

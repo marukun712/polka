@@ -9,6 +9,9 @@ import z from "zod";
 import { PrismaClient } from "./generated/prisma/client.ts";
 
 config();
+
+const port = Number(process.env.PORT) || 8000;
+
 const prisma = new PrismaClient();
 
 const adSchema = z.object({
@@ -25,6 +28,8 @@ const app = new Hono();
 const { injectWebSocket, upgradeWebSocket } = createNodeWebSocket({ app });
 
 const relayClients: Set<WSContext<WebSocket>> = new Set();
+
+app.get("/", (c) => c.text("This is polka store server."));
 
 app.get(
 	"/ws/",
@@ -146,9 +151,9 @@ app.get(
 	},
 );
 
-const server = serve(app);
+const server = serve({ fetch: app.fetch, port });
 injectWebSocket(server);
 
 console.log("Server started");
-console.log("WebSocket: ws://localhost:3000/ws/");
-console.log("HTTP: http://localhost:3000");
+console.log(`WebSocket: ws://localhost:${port}/ws/`);
+console.log(`HTTP: http://localhost:${port}`);
