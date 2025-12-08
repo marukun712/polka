@@ -1,9 +1,9 @@
 import type { Repo } from "../wasm/transpiled/interfaces/polka-repository-repo.js";
 import { repo as wasm } from "../wasm/transpiled/repo.js";
-import { CarSyncStore } from "./blockstore.js";
+import { ReadOnlyStore } from "./blockstore.js";
 import { resolve } from "./identity.js";
 
-export let store: CarSyncStore;
+export let store: ReadOnlyStore;
 
 export class Client {
 	repo: Repo;
@@ -17,7 +17,7 @@ export class Client {
 		const path = doc.target;
 		const res = await fetch(path);
 		const file = await res.arrayBuffer();
-		store = new CarSyncStore(new Uint8Array(file));
+		store = new ReadOnlyStore(new Uint8Array(file));
 		store.updateIndex();
 		const roots = store.getRoots();
 		if (!roots[0]) throw new Error("Root not found.");

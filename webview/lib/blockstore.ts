@@ -22,8 +22,7 @@ export class UnsupportedHash extends Error {
 
 export type ErrorType = CidNotFound | UnsupportedHash;
 
-// ATProtoはCAR v1を使っているらしいので、v1を使うことにするCAR
-export class CarSyncStore {
+export class ReadOnlyStore {
 	private file: Uint8Array;
 	private roots: CID[];
 	private index: Map<string, { offset: number; length: number }>;
@@ -113,10 +112,6 @@ export function readBlock(cid: Uint8Array) {
 	return out[0];
 }
 
-export function writeBlock(
-	_codec: number,
-	_hash: number,
-	_contents: Uint8Array,
-) {
+export function writeBlock() {
 	throw new Error("Not implemented");
 }

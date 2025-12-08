@@ -1,3 +1,3 @@
-export function sign(_bytes: Uint8Array) {
+export function sign() {
 	throw new Error("Not implemented");
 }

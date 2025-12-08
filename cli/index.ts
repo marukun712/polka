@@ -126,6 +126,7 @@ async function main() {
 			remoteUrl = result.remoteUrl;
 		}
 
+		// リポジトリをクローンかpull
 		if (!existsRepository(POLKA_REPO_PATH)) {
 			console.log("Cloning repository...");
 			await cloneRepository(remoteUrl);
@@ -182,6 +183,7 @@ async function main() {
 			const root = repo.getRoot();
 			store.updateHeaderRoots([CID.parse(root)]);
 
+			// コミット
 			try {
 				const commitMessage = generateCommitMessage();
 				console.log("Committing and pushing...");
@@ -240,6 +242,7 @@ async function main() {
 			// 広告をwsに送る
 			ws.send(JSON.stringify(adSigned));
 
+			// コミット
 			try {
 				const commitMessage = generateCommitMessage();
 				console.log("Committing and pushing...");
