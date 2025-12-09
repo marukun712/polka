@@ -7,6 +7,7 @@ import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hexToBytes } from "@noble/hashes/utils.js";
 import { config } from "dotenv";
 import Enquirer from "enquirer";
+import keytar from "keytar";
 import { CID } from "multiformats";
 import type {
 	GetResult,
@@ -49,7 +50,6 @@ async function main() {
 
 		// ステップ2 ドメインを解決して、既に登録されているか確認
 		let didKey = "";
-		let sk = "";
 		let isRegistered = false;
 
 		try {
@@ -63,15 +63,19 @@ async function main() {
 
 		// 登録されていれば
 		if (isRegistered) {
-			// 秘密鍵を入力
-			const { inputSk } = await prompt<{ inputSk: string }>({
-				type: "password",
-				name: "inputSk",
-				message: "Please input your sk:",
-				required: true,
-				result: (value) => value.trim(),
-			});
-			sk = inputSk;
+			const sk = await keytar.getPassword("polka", "user");
+			if (!sk) {
+				// 秘密鍵を入力
+				const { inputSk } = await prompt<{ inputSk: string }>({
+					type: "password",
+					name: "inputSk",
+					message: "Please input your sk to save OS Keyring:",
+					required: true,
+					result: (value) => value.trim(),
+				});
+				await keytar.setPassword("polka", "user", inputSk);
+				console.log(`\nYour private key saved in OS Keyring.`);
+			}
 		} else {
 			// 登録されていなければ
 			console.log(`\nYour did:web cannot be resolved.`);
@@ -82,12 +86,12 @@ async function main() {
 			// 新しい鍵を生成
 			const keyPair = await generate();
 			didKey = keyPair.did;
-			sk = keyPair.sk;
+			await keytar.setPassword("polka", "user", keyPair.sk);
 
 			// didドキュメントを生成
 			const doc = generateDidDocument(domain, didKey);
 			console.log(JSON.stringify(doc, null, 2));
-			console.log(`\nYour private key is:\n${sk}\n\nPlease keep it safe.`);
+			console.log(`\nYour private key saved in OS Keyring.`);
 
 			// ファイルをアップロードする指示を出し、解決できるまで待機
 			while (true) {
@@ -134,6 +138,9 @@ async function main() {
 			await pullRepository();
 			console.log("Repository updated!");
 		}
+
+		const sk = await keytar.getPassword("polka", "user");
+		if (!sk) throw new Error("Please save private key first.");
 
 		// 解決出来たら、repoをinit
 		repo = await init(sk, didKey);
