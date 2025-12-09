@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { now } from "@atcute/tid";
 import { WASIShim } from "@bytecodealliance/preview2-shim/instantiation";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
-import { bytesToHex, hexToBytes } from "@noble/hashes/utils.js";
+import { hexToBytes } from "@noble/hashes/utils.js";
 import { config } from "dotenv";
 import Enquirer from "enquirer";
 import { CID } from "multiformats";
@@ -32,8 +32,6 @@ const { prompt } = Enquirer;
 
 let repo: Repo;
 let store: CarSyncStore;
-
-const ws = new WebSocket("ws://localhost:8000/ws/");
 
 async function main() {
 	try {
@@ -213,34 +211,6 @@ async function main() {
 			repo.create(rpath, data);
 			const root = repo.getRoot();
 			store.updateHeaderRoots([CID.parse(root)]);
-
-			const { tag } = await prompt<{ tag: string }>({
-				type: "input",
-				name: "tag",
-				message: "Enter tag:",
-				required: false,
-				result: (value) => value.trim(),
-			});
-
-			// wsに広告
-			const ad = {
-				did: `did:web:${domain}`,
-				nsid: nsid,
-				rpath: rpath,
-				ptr: null,
-				tag: tag ? [tag] : [],
-			};
-
-			// 署名する
-			const adBytes = new TextEncoder().encode(JSON.stringify(ad));
-			const sig = secp256k1.sign(adBytes, hexToBytes(sk));
-			const adSigned = {
-				...ad,
-				sig: bytesToHex(sig),
-			};
-
-			// 広告をwsに送る
-			ws.send(JSON.stringify(adSigned));
 
 			// コミット
 			try {

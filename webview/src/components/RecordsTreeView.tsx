@@ -16,9 +16,7 @@ export interface RecordData {
 	data: Record<string, unknown>;
 }
 
-export const RecordsTreeView: Component<{ root: TreeNode | null }> = (
-	props,
-) => {
+export const RecordsTreeView: Component<{ root: TreeNode }> = (props) => {
 	if (props.root) {
 		const hasContent =
 			props.root.children.length > 0 || props.root.records.length > 0;

@@ -14,7 +14,7 @@
 		"lint:fix": "biome lint --write ./",
 		"check": "biome check ./",
 		"check:fix": "biome check --write ./",
-		"transpile": "bunx jco transpile wasm/repo.wasm -o wasm/transpiled --map polka:repository/blockstore=../../lib/blockstore.ts polka:repository/crypto=../../lib/crypto.ts"
+		"transpile": "bunx jco transpile wasm/repo.wasm -o public --instantiation=async"
 	},
 	"license": "MIT",
 	"devDependencies": {
@@ -52,6 +52,7 @@
 		"solid-icons": "^1.1.0",
 		"solid-js": "^1.9.9",
 		"varint": "^6.0.0",
-		"web-did-resolver": "^2.0.31"
+		"web-did-resolver": "^2.0.31",
+		"zod": "^4.1.13"
 	}
 }

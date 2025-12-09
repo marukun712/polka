@@ -11,22 +11,28 @@ import {
 	RecordsTreeView,
 	type TreeNode,
 } from "./components/RecordsTreeView";
-import { TagSearchView } from "./components/TagSearchView";
+import { type Post, postSchema } from "./components/TimelinePostCard";
 import { TimelineView } from "./components/TimelineView";
 
 const App: Component = () => {
-	const path = window.location.pathname;
-	const isTimelinePage = path === "/timeline";
-
 	const params = new URLSearchParams(window.location.search);
 	const domain = params.get("domain");
-	const searchTag = isTimelinePage ? params.get("tag") : null;
+	const ls = params.get("ls") === "true";
 
-	const [state, setState] = createStore({
+	const [state, setState] = createStore<{
+		domain: string;
+		client: Client | null;
+		profile: Profile | null;
+		treeRoot: TreeNode | null;
+		posts: Post[] | null;
+		loading: boolean;
+		error: string;
+	}>({
 		domain: domain ? decodeURIComponent(domain) : "",
-		client: null as Client | null,
-		profile: null as Profile | null,
-		treeRoot: null as TreeNode | null,
+		client: null,
+		profile: null,
+		posts: null,
+		treeRoot: null,
 		loading: false,
 		error: "",
 	});
@@ -97,15 +103,36 @@ const App: Component = () => {
 				setState("profile", JSON.parse(profileResult.data));
 			}
 
-			const tree = buildTree(
-				allRecordsResult.map((result) => {
+			if (ls) {
+				const tree = buildTree(
+					allRecordsResult.map((result) => {
+						return {
+							rpath: result.rpath,
+							data: JSON.parse(result.data),
+						};
+					}),
+				);
+				setState("treeRoot", tree);
+			} else {
+				const postsResult = await client.getRecords("polka.post");
+				const posts = postsResult.map((result) => {
 					return {
 						rpath: result.rpath,
 						data: JSON.parse(result.data),
 					};
-				}),
-			);
-			setState("treeRoot", tree);
+				});
+				const parsed = posts
+					.map((post) => {
+						const success = postSchema.safeParse(post);
+						if (!success.success) {
+							console.error("Invalid post data:", post.data);
+							return null;
+						}
+						return success.data;
+					})
+					.filter((post) => post !== null);
+				setState("posts", parsed);
+			}
 		} catch (error) {
 			console.error(error);
 			setState("error", error instanceof Error ? error.message : String(error));
@@ -121,68 +148,57 @@ const App: Component = () => {
 
 	return (
 		<div class="min-h-screen bg-gray-50">
-			<Show when={isTimelinePage}>
-				<Show when={searchTag} fallback={<TimelineView />}>
-					{(t) => {
-						return (
-							<TagSearchView
-								tag={t()}
-								onBack={() => {
-									window.location.href = "/timeline";
-								}}
-							/>
-						);
-					}}
-				</Show>
+			<Show when={!state.domain}>
+				<AddrInputView onSubmit={handleDomainSubmit} />
 			</Show>
 
-			<Show when={!isTimelinePage}>
-				<Show when={!state.domain}>
-					<AddrInputView onSubmit={handleDomainSubmit} />
-				</Show>
-
-				<Show when={state.domain}>
-					<div class="max-w-6xl mx-auto p-4 md:p-6">
-						<div class="mb-4 flex justify-between items-center">
-							<button
-								type="button"
-								onClick={() => {
-									window.location.href = "/";
-								}}
-								class="text-blue-600 hover:text-blue-800 transition-colors"
-							>
-								← View Different Repository
-							</button>
-							<button
-								type="button"
-								onClick={() => {
-									window.location.href = "/timeline";
-								}}
-								class="text-blue-600 hover:text-blue-800 transition-colors"
-							>
-								タイムライン →
-							</button>
-						</div>
-
-						<Show when={state.loading}>
-							<LoadingView />
-						</Show>
-
-						<Show when={state.error}>
-							<ErrorView error={state.error} onRetry={initializeAndFetch} />
-						</Show>
-
-						<Show when={!state.loading && !state.error}>
-							<Show when={state.profile}>
-								<ProfileCard profile={state.profile} />
-							</Show>
-
-							<Show when={state.treeRoot}>
-								<RecordsTreeView root={state.treeRoot} />
-							</Show>
-						</Show>
+			<Show when={state.domain}>
+				<div class="max-w-6xl mx-auto p-4 md:p-6">
+					<div class="mb-4 flex justify-between items-center">
+						<button
+							type="button"
+							onClick={() => {
+								window.location.href = "/";
+							}}
+							class="text-blue-600 hover:text-blue-800 transition-colors"
+						>
+							View Different Repository
+						</button>
 					</div>
-				</Show>
+
+					<Show when={state.loading}>
+						<LoadingView />
+					</Show>
+
+					<Show when={state.error}>
+						<ErrorView error={state.error} onRetry={initializeAndFetch} />
+					</Show>
+
+					<Show when={!state.loading && !state.error}>
+						<Show when={state.profile}>
+							{(p) => <ProfileCard profile={p()} />}
+						</Show>
+						<Show when={ls}>
+							<Show when={state.treeRoot}>
+								{(r) => <RecordsTreeView root={r()} />}
+							</Show>
+						</Show>
+						<Show when={!ls}>
+							{" "}
+							<Show
+								when={
+									state.posts && state.profile
+										? { posts: state.posts, profile: state.profile }
+										: null
+								}
+							>
+								{(p) => (
+									<TimelineView posts={p().posts} profile={p().profile} />
+								)}
+							</Show>
+						</Show>{" "}
+					</Show>
+				</div>
 			</Show>
 		</div>
 	);
