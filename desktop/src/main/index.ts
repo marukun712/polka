@@ -2,6 +2,15 @@ import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import {
+  initRepository,
+  createRecord,
+  updateRecord,
+  deleteRecord,
+  gitCommitAndPush,
+  type IpcResult
+} from './lib/repository'
+import { generateCommitMessage } from './lib/git'
 
 function createWindow(): void {
   // Create the browser window.
@@ -49,8 +58,60 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // IPC test
-  ipcMain.on('ping', () => console.log('pong'))
+  // Repository IPC handlers
+  ipcMain.handle('repo:init', async (_event, didKey: string): Promise<IpcResult> => {
+    try {
+      await initRepository(didKey)
+      return { success: true, data: null }
+    } catch {
+      return {
+        success: false,
+        error: 'An error has occured.'
+      }
+    }
+  })
+
+  ipcMain.handle('repo:create', async (_event, rpath: string, data: string): Promise<IpcResult> => {
+    try {
+      const cid = createRecord(rpath, data)
+      const commitMessage = generateCommitMessage()
+      await gitCommitAndPush(commitMessage)
+      return { success: true, data: cid }
+    } catch {
+      return {
+        success: false,
+        error: 'An error has occured.'
+      }
+    }
+  })
+
+  ipcMain.handle('repo:update', async (_event, rpath: string, data: string): Promise<IpcResult> => {
+    try {
+      const cid = updateRecord(rpath, data)
+      const commitMessage = generateCommitMessage()
+      await gitCommitAndPush(commitMessage)
+      return { success: true, data: cid }
+    } catch {
+      return {
+        success: false,
+        error: 'An error has occured.'
+      }
+    }
+  })
+
+  ipcMain.handle('repo:delete', async (_event, rpath: string): Promise<IpcResult> => {
+    try {
+      const result = deleteRecord(rpath)
+      const commitMessage = generateCommitMessage()
+      await gitCommitAndPush(commitMessage)
+      return { success: true, data: result }
+    } catch {
+      return {
+        success: false,
+        error: 'An error has occured.'
+      }
+    }
+  })
 
   createWindow()
 

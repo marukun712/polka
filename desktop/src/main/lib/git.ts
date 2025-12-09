@@ -9,10 +9,6 @@ function sh(cmd: string, cwd = POLKA_REPO_PATH): Buffer {
   return execSync(cmd, { cwd, stdio: 'inherit' })
 }
 
-export function cloneRepository(remoteUrl: string): void {
-  sh(`git clone ${remoteUrl} ${POLKA_REPO_PATH}`, process.cwd())
-}
-
 export function pullRepository(path: string = POLKA_REPO_PATH): void {
   sh(`git pull origin main`, path)
 }
