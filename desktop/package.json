@@ -21,10 +21,17 @@
     "build:linux": "electron-vite build && electron-builder --linux"
   },
   "dependencies": {
+    "@atproto/crypto": "^0.4.5",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
+    "@ipld/dag-cbor": "^9.2.5",
+    "@noble/hashes": "^2.0.1",
     "@tailwindcss/vite": "^4.1.17",
-    "tailwindcss": "^4.1.17"
+    "@types/varint": "^6.0.3",
+    "multiformats": "^13.4.1",
+    "tailwindcss": "^4.1.17",
+    "varint": "^6.0.0",
+    "web-did-resolver": "^2.0.32"
   },
   "devDependencies": {
     "@biomejs/biome": "2.3.8",
