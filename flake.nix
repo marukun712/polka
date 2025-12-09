@@ -47,6 +47,8 @@
             pkgs.prisma
             pkgs.electron
             pkgs.glib
+            pkgs.libsecret
+            pkgs.gnome-keyring
             rust
           ];
         };

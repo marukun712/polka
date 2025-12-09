@@ -10,8 +10,6 @@ const loader = async (path: string) => {
 	return await WebAssembly.compile(new Uint8Array(await buf.arrayBuffer()));
 };
 
-export let store: ReadOnlyStore;
-
 export class Client {
 	repo: Repo;
 
@@ -30,7 +28,7 @@ export class Client {
 		const wasm = await instantiate(loader, {
 			// @ts-expect-error
 			"polka:repository/crypto": {
-				sign: (_bytes: Uint8Array) => {
+				sign: () => {
 					throw new Error("Not implemented");
 				},
 			},

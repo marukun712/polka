@@ -184,7 +184,6 @@ const App: Component = () => {
 							</Show>
 						</Show>
 						<Show when={!ls}>
-							{" "}
 							<Show
 								when={
 									state.posts && state.profile
@@ -196,7 +195,7 @@ const App: Component = () => {
 									<TimelineView posts={p().posts} profile={p().profile} />
 								)}
 							</Show>
-						</Show>{" "}
+						</Show>
 					</Show>
 				</div>
 			</Show>
