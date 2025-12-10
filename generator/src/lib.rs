@@ -1,6 +1,5 @@
 mod repository;
 mod wasip2_store;
-use std::{cell::RefCell, str::FromStr};
 
 use crate::repository::exports::polka::repository::repo::{GuestRepo, Repo};
 use crate::repository::polka::repository::crypto;
@@ -10,6 +9,7 @@ use cid::Cid;
 use futures::TryStreamExt;
 use futures::executor::block_on;
 use repository::exports::polka::repository::repo;
+use std::{cell::RefCell, str::FromStr};
 use wasip2_store::Wasip2Blockstore;
 
 struct HostRepo {
@@ -190,6 +190,16 @@ impl repository::exports::polka::repository::repo::Guest for Component {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
+        let commit = repo.commit();
+        match parse_did_key(&did) {
+            Ok((alg, pub_key)) => {
+                match Verifier::default().verify(alg, &pub_key, &commit.bytes(), &commit.sig()) {
+                    Ok(_) => (),
+                    Err(e) => return Err(e.to_string()),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        }
         let guest_repo = GuestRepoImpl {
             inner: RefCell::new(HostRepo { repo, did }),
         };
@@ -209,6 +219,16 @@ impl repository::exports::polka::repository::repo::Guest for Component {
             Ok(v) => v,
             Err(e) => return Err(e.to_string()),
         };
+        let commit = repo.commit();
+        match parse_did_key(&did) {
+            Ok((alg, pub_key)) => {
+                match Verifier::default().verify(alg, &pub_key, &commit.bytes(), &commit.sig()) {
+                    Ok(_) => (),
+                    Err(e) => return Err(e.to_string()),
+                }
+            }
+            Err(e) => return Err(e.to_string()),
+        }
         let guest_repo = GuestRepoImpl {
             inner: RefCell::new(HostRepo { repo, did }),
         };
