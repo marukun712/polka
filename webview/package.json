@@ -46,6 +46,7 @@
 		"@libp2p/webtransport": "^6.0.11",
 		"@noble/curves": "^2.0.1",
 		"@noble/hashes": "^2.0.1",
+		"@solidjs/router": "^0.15.4",
 		"@types/varint": "^6.0.3",
 		"libp2p": "^3.1.2",
 		"multiformats": "^13.4.1",
