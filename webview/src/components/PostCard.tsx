@@ -11,10 +11,24 @@ export default function PostCard({
 	return (
 		<article>
 			<header>
-				<strong>{profile.name}</strong>{" "}
-				<small>{extractTimestamp(post.rpath)}</small>
+				<hgroup>
+					<div style="display: flex; align-items: center; gap: 1rem;">
+						<img
+							src={profile.icon}
+							alt={profile.name}
+							style="border-radius: 50%; width: 48px; height: 48px; object-fit: cover; margin: 0;"
+						/>
+						<div>
+							<strong>{profile.name}</strong>
+							<br />
+							<small>
+								<time>{extractTimestamp(post.rpath)}</time>
+							</small>
+						</div>
+					</div>
+				</hgroup>
 			</header>
-			<p>{post.data.content}</p>
+			{post.data.content}
 		</article>
 	);
 }

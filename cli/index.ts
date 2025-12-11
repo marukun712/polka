@@ -4,6 +4,7 @@ import Enquirer from "enquirer";
 import keytar from "keytar";
 import { CID } from "multiformats";
 import { init } from "./daemon.ts";
+import type { GetResult } from "./dist/transpiled/interfaces/polka-repository-repo";
 import { generate } from "./lib/crypto.ts";
 import {
 	cloneRepository,
@@ -35,12 +36,17 @@ async function main() {
 
 		// ステップ2 ドメインを解決して、既に登録されているか確認
 		let isRegistered = true;
-
-		let { didKey, target } = await resolve(domain);
-		if (didKey && target) {
-			console.log("Your did:web can be solved.");
-			isRegistered = true;
-		} else {
+		let didKey: string = "";
+		try {
+			const doc = await resolve(domain);
+			if (doc.didKey && doc.target) {
+				console.log("Your did:web can be solved.");
+				isRegistered = true;
+				didKey = doc.didKey;
+			} else {
+				isRegistered = false;
+			}
+		} catch {
 			isRegistered = false;
 		}
 
@@ -130,7 +136,10 @@ async function main() {
 		console.log("Repo initialized successfully!");
 		console.log(repo.allRecords());
 
-		const profile = repo.getRecord("polka.profile/self");
+		let profile: GetResult | null = null;
+		try {
+			profile = repo.getRecord("polka.profile/self");
+		} catch {}
 
 		// プロフィールをセット
 		if (!profile) {

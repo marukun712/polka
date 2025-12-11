@@ -2,28 +2,37 @@ import { useSearchParams } from "@solidjs/router";
 import { type Component, createResource, Show } from "solid-js";
 import { postSchema, profileSchema } from "../@types/types";
 import { RepoReader } from "../lib/client";
+import { DaemonClient } from "../lib/daemon";
 import PostCard from "./components/PostCard";
+import PostForm from "./components/PostForm";
 
 const fetchRepo = async (did: string) => {
 	const reader = await RepoReader.init(did);
 	const profile = await reader.getRecord("polka.profile/self");
 	const posts = await reader.getRecords("polka.post");
-	console.log(posts);
+
 	const parsedProfile = profileSchema.safeParse(JSON.parse(profile.data));
 	if (!parsedProfile.success) {
 		console.error("Failed to parse profile:", parsedProfile.error);
 		return;
 	}
-	const parsedPosts = postSchema.array().safeParse(
-		posts.map((post) => {
-			return { rpath: post.rpath, data: JSON.parse(post.data) };
-		}),
-	);
-	if (!parsedPosts.success) {
-		console.error("Failed to parse posts:", parsedPosts.error);
-		return;
-	}
-	return { profile: parsedProfile.data, posts: parsedPosts.data };
+
+	const parsedPosts = posts
+		.map((post) => {
+			try {
+				return postSchema.safeParse({
+					rpath: post.rpath,
+					data: JSON.parse(post.data),
+				}).data;
+			} catch (e) {
+				console.error(e);
+				return null;
+			}
+		})
+		.filter((post) => post !== null && post !== undefined);
+
+	const daemon = await DaemonClient.init(did);
+	return { profile: parsedProfile.data, posts: parsedPosts, daemon };
 };
 
 const Profile: Component = () => {
@@ -37,7 +46,7 @@ const Profile: Component = () => {
 
 	return (
 		<main class="container">
-			<Show when={repo()} fallback={<div>Loading...</div>}>
+			<Show when={repo()} fallback={<article aria-busy="true"></article>}>
 				{(r) => (
 					<>
 						<article>
@@ -63,6 +72,18 @@ const Profile: Component = () => {
 								</p>
 							</footer>
 						</article>
+
+						<Show when={r().daemon} fallback={<div></div>}>
+							{(d) => {
+								return (
+									<PostForm
+										onSubmit={(data) =>
+											d().create("polka.post", JSON.stringify(data))
+										}
+									/>
+								);
+							}}
+						</Show>
 
 						<article>
 							<header>

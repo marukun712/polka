@@ -5,12 +5,21 @@ export class DaemonClient {
 		this.url = url;
 	}
 
-	static async init() {
-		const res = await fetch("http://localhost:3030/health");
-		if (!res.ok) {
+	static async init(did: string) {
+		try {
+			const res = await fetch("http://localhost:3030/health");
+			if (!res.ok) {
+				return null;
+			}
+			const didRes = await fetch("http://localhost:3030/did");
+			const json = await didRes.json();
+			if (json.did !== did) {
+				return null;
+			}
+			return new DaemonClient("http://localhost:3030/");
+		} catch {
 			return null;
 		}
-		return new DaemonClient("http://localhost:3030/");
 	}
 
 	async create(nsid: string, data: string) {
