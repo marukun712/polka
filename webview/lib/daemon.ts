@@ -14,7 +14,7 @@ export class DaemonClient {
 	}
 
 	async create(nsid: string, data: string) {
-		const res = await fetch(`${this.url}/record`, {
+		const res = await fetch(new URL("record", this.url), {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ nsid, data }),
@@ -23,7 +23,7 @@ export class DaemonClient {
 	}
 
 	async update(rpath: string, data: string) {
-		const res = await fetch(`${this.url}/record`, {
+		const res = await fetch(new URL("record", this.url), {
 			method: "PUT",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ rpath, data }),
@@ -32,7 +32,8 @@ export class DaemonClient {
 	}
 
 	async delete(rpath: string) {
-		const res = await fetch(`${this.url}/record`, {
+		console.log(rpath);
+		const res = await fetch(new URL("record", this.url), {
 			method: "DELETE",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ rpath }),

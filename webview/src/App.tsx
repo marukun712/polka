@@ -2,6 +2,7 @@ import type { Component } from "solid-js";
 import { onMount, Show } from "solid-js";
 import { createStore } from "solid-js/store";
 import { RepoReader } from "../lib/client";
+import { DaemonClient } from "../lib/daemon";
 import { AddrInputView } from "./components/AddrInputView";
 import { ErrorView } from "./components/ErrorView";
 import { LoadingView } from "./components/LoadingView";
@@ -22,19 +23,25 @@ const App: Component = () => {
 	const [state, setState] = createStore<{
 		domain: string;
 		client: RepoReader | null;
+		daemonClient: DaemonClient | null;
+		daemonDid: string | null;
 		profile: Profile | null;
 		treeRoot: TreeNode | null;
 		posts: Post[] | null;
 		loading: boolean;
 		error: string;
+		isOwner: boolean;
 	}>({
 		domain: domain ? decodeURIComponent(domain) : "",
 		client: null,
+		daemonClient: null,
+		daemonDid: null,
 		profile: null,
 		posts: null,
 		treeRoot: null,
 		loading: false,
 		error: "",
+		isOwner: false,
 	});
 
 	onMount(() => {
@@ -96,6 +103,24 @@ const App: Component = () => {
 			const client = await RepoReader.init(`did:web:${state.domain}`);
 			setState("client", client);
 
+			// DaemonClient初期化
+			const daemonClient = await DaemonClient.init();
+			setState("daemonClient", daemonClient);
+
+			// DID確認
+			if (daemonClient) {
+				try {
+					const res = await fetch(`${daemonClient.url}did`);
+					const { did } = await res.json();
+					setState("daemonDid", did);
+
+					const currentDid = `did:web:${state.domain}`;
+					setState("isOwner", did === currentDid);
+				} catch (error) {
+					console.error("Failed to fetch daemon DID:", error);
+				}
+			}
+
 			const profileResult = await client.getRecord("polka.profile/self");
 			const allRecordsResult = await client.allRecords();
 
@@ -138,6 +163,74 @@ const App: Component = () => {
 			setState("error", error instanceof Error ? error.message : String(error));
 		} finally {
 			setState("loading", false);
+		}
+	};
+
+	const refreshPosts = async (): Promise<void> => {
+		if (!state.client) return;
+		setState("loading", true);
+		try {
+			const postsResult = await state.client.getRecords("polka.post");
+			const posts = postsResult.map((result) => {
+				return {
+					rpath: result.rpath,
+					data: JSON.parse(result.data),
+				};
+			});
+			const parsed = posts
+				.map((post) => {
+					const success = postSchema.safeParse(post);
+					if (!success.success) {
+						console.error("Invalid post data:", post.data);
+						return null;
+					}
+					return success.data;
+				})
+				.filter((post) => post !== null);
+			setState("posts", parsed);
+		} catch (error) {
+			console.error("Failed to refresh posts:", error);
+			setState("error", error instanceof Error ? error.message : String(error));
+		} finally {
+			setState("loading", false);
+		}
+	};
+
+	const handleCreatePost = async (content: string): Promise<void> => {
+		if (!state.daemonClient) return;
+		try {
+			const data = JSON.stringify({ content });
+			await state.daemonClient.create("polka.post", data);
+			await refreshPosts();
+		} catch (error) {
+			console.error("Failed to create post:", error);
+			setState("error", error instanceof Error ? error.message : String(error));
+		}
+	};
+
+	const handleUpdatePost = async (
+		rpath: string,
+		content: string,
+	): Promise<void> => {
+		if (!state.daemonClient) return;
+		try {
+			const data = JSON.stringify({ content });
+			await state.daemonClient.update(rpath, data);
+			await refreshPosts();
+		} catch (error) {
+			console.error("Failed to update post:", error);
+			setState("error", error instanceof Error ? error.message : String(error));
+		}
+	};
+
+	const handleDeletePost = async (rpath: string): Promise<void> => {
+		if (!state.daemonClient) return;
+		try {
+			await state.daemonClient.delete(rpath);
+			await refreshPosts();
+		} catch (error) {
+			console.error("Failed to delete post:", error);
+			setState("error", error instanceof Error ? error.message : String(error));
 		}
 	};
 
@@ -192,7 +285,14 @@ const App: Component = () => {
 								}
 							>
 								{(p) => (
-									<TimelineView posts={p().posts} profile={p().profile} />
+									<TimelineView
+										posts={p().posts}
+										profile={p().profile}
+										isOwner={state.isOwner}
+										onCreatePost={handleCreatePost}
+										onUpdatePost={handleUpdatePost}
+										onDeletePost={handleDeletePost}
+									/>
 								)}
 							</Show>
 						</Show>

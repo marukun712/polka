@@ -9,6 +9,7 @@ import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hexToBytes } from "@noble/hashes/utils.js";
 import { config } from "dotenv";
 import { Hono } from "hono";
+import { cors } from "hono/cors";
 import keytar from "keytar";
 import { CID } from "multiformats";
 import z from "zod";
@@ -28,14 +29,22 @@ import { resolve } from "./lib/identity.ts";
 config();
 
 class polkaDaemon {
+	domain: string;
 	repo: Repo;
 	store: CarSyncStore;
 	server: Hono;
 
-	constructor(repo: Repo, store: CarSyncStore) {
+	constructor(domain: string, repo: Repo, store: CarSyncStore) {
+		this.domain = domain;
 		this.repo = repo;
 		this.store = store;
 		this.server = new Hono();
+
+		this.server.use(
+			cors({
+				origin: ["http://localhost:3000"],
+			}),
+		);
 
 		this.server.post(
 			"/record",
@@ -85,6 +94,7 @@ class polkaDaemon {
 		);
 
 		this.server.get("/health", (c) => c.json({ ok: true }));
+		this.server.get("/did", (c) => c.json({ did: `did:web:${this.domain}` }));
 
 		const port = Number(process.env.PORT) || 3030;
 
@@ -161,7 +171,7 @@ class polkaDaemon {
 		console.log("Repo initialized successfully!");
 
 		const { repo, store } = await init(sk, doc.didKey);
-		return new polkaDaemon(repo, store);
+		return new polkaDaemon(domain, repo, store);
 	}
 }
 
