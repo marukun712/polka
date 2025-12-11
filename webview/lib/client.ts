@@ -10,7 +10,7 @@ const loader = async (path: string) => {
 	return await WebAssembly.compile(new Uint8Array(await buf.arrayBuffer()));
 };
 
-export class Client {
+export class RepoReader {
 	repo: Repo;
 
 	constructor(repo: Repo) {
@@ -50,7 +50,7 @@ export class Client {
 		const roots = store.getRoots();
 		if (!roots[0]) throw new Error("Root not found.");
 		const repo = wasm.repo.open(doc.didKey, roots[0].toString());
-		return new Client(repo);
+		return new RepoReader(repo);
 	}
 
 	public getRecord(rpath: string) {

@@ -1,7 +1,7 @@
 import type { Component } from "solid-js";
 import { onMount, Show } from "solid-js";
 import { createStore } from "solid-js/store";
-import { Client } from "../lib/client";
+import { RepoReader } from "../lib/client";
 import { AddrInputView } from "./components/AddrInputView";
 import { ErrorView } from "./components/ErrorView";
 import { LoadingView } from "./components/LoadingView";
@@ -21,7 +21,7 @@ const App: Component = () => {
 
 	const [state, setState] = createStore<{
 		domain: string;
-		client: Client | null;
+		client: RepoReader | null;
 		profile: Profile | null;
 		treeRoot: TreeNode | null;
 		posts: Post[] | null;
@@ -93,7 +93,7 @@ const App: Component = () => {
 		setState("error", "");
 
 		try {
-			const client = await Client.init(`did:web:${state.domain}`);
+			const client = await RepoReader.init(`did:web:${state.domain}`);
 			setState("client", client);
 
 			const profileResult = await client.getRecord("polka.profile/self");

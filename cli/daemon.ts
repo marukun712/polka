@@ -86,7 +86,10 @@ class polkaDaemon {
 
 		this.server.get("/health", (c) => c.json({ ok: true }));
 
-		serve({ fetch: this.server.fetch, port: 3030 });
+		const port = Number(process.env.PORT) || 3030;
+
+		serve({ fetch: this.server.fetch, port: port });
+		console.log(`polka daemon is listening on ${port}`);
 	}
 
 	async commit() {
