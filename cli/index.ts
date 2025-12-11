@@ -1,27 +1,15 @@
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
 import { now } from "@atcute/tid";
-import { WASIShim } from "@bytecodealliance/preview2-shim/instantiation";
-import { secp256k1 } from "@noble/curves/secp256k1.js";
-import { hexToBytes } from "@noble/hashes/utils.js";
 import { config } from "dotenv";
 import Enquirer from "enquirer";
 import keytar from "keytar";
 import { CID } from "multiformats";
-import type {
-	GetResult,
-	Repo,
-} from "./dist/transpiled/interfaces/polka-repository-repo.js";
-import { instantiate } from "./dist/transpiled/repo.js";
-import { CarSyncStore } from "./lib/blockstore.ts";
+import { init } from "./daemon.ts";
 import { generate } from "./lib/crypto.ts";
 import {
 	cloneRepository,
 	commitAndPush,
 	existsRepository,
 	generateCommitMessage,
-	POLKA_CAR_PATH,
 	POLKA_REPO_PATH,
 	pullRepository,
 } from "./lib/git.ts";
@@ -30,9 +18,6 @@ import { generateDidDocument, resolve } from "./lib/identity.ts";
 config();
 
 const { prompt } = Enquirer;
-
-let repo: Repo;
-let store: CarSyncStore;
 
 async function main() {
 	try {
@@ -49,17 +34,15 @@ async function main() {
 		}
 
 		// ステップ2 ドメインを解決して、既に登録されているか確認
-		let didKey = "";
-		let isRegistered = false;
+		let isRegistered = true;
 
-		try {
-			const doc = await resolve(domain);
-			if (doc.didKey && doc.target) {
-				console.log("Your did:web can be solved.");
-				didKey = doc.didKey;
-				isRegistered = true;
-			}
-		} catch {}
+		let { didKey, target } = await resolve(domain);
+		if (didKey && target) {
+			console.log("Your did:web can be solved.");
+			isRegistered = true;
+		} else {
+			isRegistered = false;
+		}
 
 		// 登録されていれば
 		if (isRegistered) {
@@ -143,15 +126,11 @@ async function main() {
 		if (!sk) throw new Error("Please save private key first.");
 
 		// 解決出来たら、repoをinit
-		repo = await init(sk, didKey);
+		const { repo, store } = await init(sk, didKey);
 		console.log("Repo initialized successfully!");
 		console.log(repo.allRecords());
 
-		let profile: GetResult | null = null;
-
-		try {
-			profile = repo.getRecord("polka.profile/self");
-		} catch {}
+		const profile = repo.getRecord("polka.profile/self");
 
 		// プロフィールをセット
 		if (!profile) {
@@ -232,62 +211,6 @@ async function main() {
 	} catch (e) {
 		console.log(e);
 		process.exit(1);
-	}
-}
-
-// repoをinitする
-async function init(sk: string, didKey: string) {
-	// ~/.polkaがあるか確認
-	if (!existsSync(join(homedir(), ".polka"))) {
-		mkdirSync(join(homedir(), ".polka"));
-	}
-
-	const path = POLKA_CAR_PATH;
-	store = new CarSyncStore(path);
-
-	// WASMのロード
-	const loader = async (path: string) => {
-		const buf = readFileSync(`./dist/transpiled/${path}`);
-		return await WebAssembly.compile(new Uint8Array(buf));
-	};
-
-	// importする関数をバインド
-	const wasm = await instantiate(loader, {
-		//@ts-expect-error
-		"polka:repository/crypto": {
-			sign: (bytes: Uint8Array) => {
-				const skBytes = hexToBytes(sk);
-				const sig = secp256k1.sign(bytes, skBytes);
-				return sig;
-			},
-		},
-		"polka:repository/blockstore": {
-			readBlock: (cid: Uint8Array) => {
-				const parsed = CID.decode(cid);
-				const out: Uint8Array[] = [];
-				store.readBlock(parsed, out);
-				if (!out[0]) throw new Error("Block not found.");
-				return out[0];
-			},
-			writeBlock: (codec: bigint, hash: bigint, contents: Uint8Array) => {
-				return store.writeBlock(Number(codec), Number(hash), contents);
-			},
-		},
-		...new WASIShim().getImportObject<"0.2.6">(),
-	});
-
-	// repoを開く
-	if (existsSync(path)) {
-		store.updateIndex();
-		const roots = store.getRoots();
-		if (!roots[0]) throw new Error("Root not found.");
-		return wasm.repo.open(didKey, roots[0].toString());
-	} else {
-		store.create();
-		const repo = wasm.repo.create(didKey);
-		const root = repo.getRoot();
-		store.updateHeaderRoots([CID.parse(root)]);
-		return repo;
 	}
 }
 

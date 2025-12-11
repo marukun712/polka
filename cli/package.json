@@ -25,6 +25,8 @@
 		"@atproto/crypto": "^0.4.5",
 		"@bytecodealliance/jco": "^1.15.4",
 		"@bytecodealliance/preview2-shim": "^0.17.5",
+		"@hono/node-server": "^1.19.7",
+		"@hono/zod-validator": "^0.7.5",
 		"@ipld/dag-cbor": "^9.2.5",
 		"@noble/curves": "^2.0.1",
 		"@noble/hashes": "^2.0.1",
@@ -37,6 +39,7 @@
 		"keytar": "^7.9.0",
 		"multiformats": "^13.4.1",
 		"varint": "^6.0.0",
-		"web-did-resolver": "^2.0.32"
+		"web-did-resolver": "^2.0.32",
+		"zod": "^4.1.13"
 	}
 }
