@@ -3,12 +3,6 @@ import dagre from "cytoscape-dagre";
 import { onMount } from "solid-js";
 import type { Post } from "../../@types/types";
 
-type tagDocs = {
-	layer: number;
-	nodeId: string;
-	children: string[];
-};
-
 cytoscape.use(dagre);
 export default function GraphComponent({
 	posts,
@@ -20,95 +14,50 @@ export default function GraphComponent({
 	let container!: HTMLDivElement;
 
 	onMount(() => {
-		const elements: ElementDefinition[] = [
+		const elements: Set<ElementDefinition> = new Set([
 			{ data: { id: "root", label: root, type: "tag" } },
-		];
+		]);
 
-		const parentToChild: { parent: string; child: string }[] = [];
-		const parents = new Set<string>();
-		const children = new Set<string>();
-		const layers = new Map<number, Set<string>>();
-		const docs = new Map<string, tagDocs>();
+		const parentChildrenMap = new Map<string, Set<string>>();
+		const roots = new Set<string>();
 
 		// 親になっているタグ、子になっているタグを集計
 		posts.forEach((post: Post) => {
 			const tags = post.data.tags;
 			if (tags) {
 				tags.forEach((_: string, i: number) => {
-					if (tags[i - 1] !== undefined) {
-						parentToChild.push({ parent: tags[i - 1], child: tags[i] });
-						parents.add(tags[i - 1]);
-						children.add(tags[i]);
+					const parent = tags[i - 1];
+					if (parent !== undefined) {
+						const children = parentChildrenMap.get(parent) ?? new Set<string>();
+						parentChildrenMap.set(parent, children.add(tags[i]));
+					} else {
+						roots.add(tags[i]); // 親がないものはRoot
 					}
 				});
 			}
 		});
 
-		// 親Setだけにあって子Setにないものがroot tag
-		function difference(a: Set<string>, b: Set<string>): Set<string> {
-			const result = new Set<string>();
-			for (const x of a) {
-				if (!b.has(x)) result.add(x);
-			}
-			return result;
-		}
-		const roots = difference(parents, children);
-
-		let currentParents = [...roots];
-		let num = 0;
-		while (currentParents.length > 0) {
-			const nextParents: string[] = [];
-			currentParents.forEach((parent) => {
-				const id = crypto.randomUUID();
-				const children = parentToChild
-					.filter((rel) => rel.parent === parent)
-					.map((rel) => rel.child);
-				docs.set(parent, { layer: num, nodeId: id, children });
-				nextParents.push(...children);
-			});
-			layers.set(num, new Set(nextParents));
-			currentParents = nextParents;
-			num++;
-		}
-
-		for (const doc of docs.entries()) {
-			if (doc[1].layer === 0) {
-				elements.push({
+		for (const map of parentChildrenMap.entries()) {
+			map[1].forEach((node) => {
+				elements.add({
 					data: {
-						source: "root",
-						target: doc[0],
-					},
-				});
-			}
-
-			elements.push({
-				data: {
-					id: doc[0],
-					label: doc[0],
-					type: "tag",
-				},
-			});
-
-			doc[1].children.forEach((child) => {
-				elements.push({
-					data: {
-						id: child,
-						label: child,
+						id: node,
+						label: node,
 						type: "tag",
 					},
 				});
 
-				elements.push({
+				elements.add({
 					data: {
-						source: doc[0],
-						target: child,
+						source: map[0],
+						target: node,
 					},
 				});
 			});
 		}
 
 		posts.forEach((post: Post) => {
-			elements.push({
+			elements.add({
 				data: {
 					id: post.rpath,
 					label: post.data.content,
@@ -116,7 +65,7 @@ export default function GraphComponent({
 				},
 			});
 
-			elements.push({
+			elements.add({
 				data: {
 					source: post.data.tags?.pop(),
 					target: post.rpath,
@@ -124,9 +73,26 @@ export default function GraphComponent({
 			});
 		});
 
+		roots.forEach((root) => {
+			elements.add({
+				data: {
+					id: root,
+					label: root,
+					type: "tag",
+				},
+			});
+
+			elements.add({
+				data: {
+					source: "root",
+					target: root,
+				},
+			});
+		});
+
 		cytoscape({
-			container: container,
-			elements: elements,
+			container,
+			elements: [...elements.values()],
 			style: [
 				{
 					selector: "node",
@@ -145,10 +111,7 @@ export default function GraphComponent({
 				},
 				{
 					selector: 'node[type="tag"]',
-					style: {
-						"background-color": "#4A90E2",
-						shape: "roundrectangle",
-					},
+					style: { "background-color": "#4A90E2", shape: "roundrectangle" },
 				},
 				{
 					selector: 'node[type="post"]',
@@ -158,6 +121,8 @@ export default function GraphComponent({
 						width: "50px",
 						height: "50px",
 						"font-size": "10px",
+						"text-valign": "bottom",
+						"text-margin-y": 5,
 					},
 				},
 				{
@@ -171,11 +136,9 @@ export default function GraphComponent({
 					},
 				},
 			],
-			layout: {
-				name: "dagre",
-			},
+			layout: { name: "dagre" },
 		});
 	});
 
-	return <div ref={container} style="width:100vh; height:100vh;"></div>;
+	return <div ref={container} style="width:100%; height:50vh;"></div>;
 }
