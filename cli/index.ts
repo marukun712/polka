@@ -171,6 +171,8 @@ async function main() {
 				name: name.name,
 				description: description.description,
 				icon: icon.icon,
+				updatedAt: new Date(),
+				followsCount: 0,
 			});
 			repo.create("polka.profile/self", data);
 			const root = repo.getRoot();
@@ -199,7 +201,7 @@ async function main() {
 
 			const nsid = "polka.post";
 			const rpath = `${nsid}/${now()}`;
-			const data = JSON.stringify({ content: text });
+			const data = JSON.stringify({ content: text, updatedAt: new Date() });
 
 			// repoに保存
 			console.log(rpath, data);

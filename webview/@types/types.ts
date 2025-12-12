@@ -5,12 +5,22 @@ export const profileSchema = z
 		name: z.string(),
 		description: z.string(),
 		icon: z.string(),
+		banner: z.string().optional(),
+		followsCount: z.number(),
+		updatedAt: z.string(),
 	})
 	.strict();
 
 export const postDataSchema = z.object({
 	content: z.string().min(1),
-	links: z.array(z.string().min(1)).optional(),
+	updatedAt: z.date(),
+});
+
+export const topicSchema = z.object({
+	parents: z.string().array(),
+	name: z.string(),
+	posts: z.string().array(),
+	updatedAt: z.date(),
 });
 
 export const postSchema = z
