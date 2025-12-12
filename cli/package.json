@@ -10,7 +10,7 @@
 		"lint:fix": "biome lint --write ./",
 		"check": "biome check ./",
 		"check:fix": "biome check --write ./",
-		"transpile": "bunx jco transpile wasm/repo.wasm -o dist/transpiled --instantiation=async",
+		"transpile": "npx jco transpile wasm/repo.wasm -o dist/transpiled --instantiation=async",
 		"start": "node index.ts",
 		"daemon": "node daemon.ts"
 	},

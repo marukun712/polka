@@ -1,6 +1,6 @@
 import { useSearchParams } from "@solidjs/router";
 import { type Component, createResource, Show } from "solid-js";
-import { postSchema, profileSchema } from "../@types/types";
+import { type PostData, postSchema, profileSchema } from "../@types/types";
 import { RepoReader } from "../lib/client";
 import { DaemonClient } from "../lib/daemon";
 import GraphComponent from "./components/Graph";
@@ -48,7 +48,31 @@ const Profile: Component = () => {
 		return <div>Please input did.</div>;
 	}
 
-	const [repo] = createResource(did, fetchRepo);
+	const [repo, { refetch }] = createResource(did, fetchRepo);
+
+	const onUpdate = async (
+		daemon: DaemonClient,
+		data: PostData,
+		rpath: string,
+	) => {
+		try {
+			await daemon.update(rpath, JSON.stringify(data));
+			await daemon.commit();
+			refetch();
+		} catch (e) {
+			console.error("Failed to update post:", e);
+		}
+	};
+
+	const onDelete = async (daemon: DaemonClient, rpath: string) => {
+		try {
+			await daemon.delete(rpath);
+			await daemon.commit();
+			refetch();
+		} catch (e) {
+			console.error("Failed to delete post:", e);
+		}
+	};
 
 	return (
 		<main class="container">
@@ -80,26 +104,42 @@ const Profile: Component = () => {
 						</article>
 
 						<Show when={r().daemon} fallback={<div></div>}>
-							{(d) => {
-								return (
+							{(d) => (
+								<>
 									<PostForm
 										onSubmit={async (data, rpath) => {
 											await d().create(rpath, JSON.stringify(data));
 											await d().commit();
+											refetch();
 										}}
 									/>
-								);
-							}}
+
+									<GraphComponent posts={r().posts} root={r().profile.name} />
+
+									<article>
+										<header></header>
+										{r().posts.map((post) => (
+											<PostCard
+												post={post}
+												profile={r().profile}
+												onUpdate={(tag, text) =>
+													onUpdate(
+														d(),
+														{
+															tags: tag,
+															content: text,
+															updatedAt: new Date().toISOString(),
+														},
+														post.rpath,
+													)
+												}
+												onDelete={() => onDelete(d(), post.rpath)}
+											/>
+										))}
+									</article>
+								</>
+							)}
 						</Show>
-
-						<GraphComponent posts={r().posts} root={r().profile.name} />
-
-						<article>
-							<header></header>
-							{r().posts.map((post) => (
-								<PostCard post={post} profile={r().profile} />
-							))}
-						</article>
 					</>
 				)}
 			</Show>
