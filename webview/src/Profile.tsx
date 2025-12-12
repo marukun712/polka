@@ -1,5 +1,8 @@
 import { useSearchParams } from "@solidjs/router";
-import { type Component, createResource, Show } from "solid-js";
+import Graph from "graphology";
+import forceAtlas2 from "graphology-layout-forceatlas2";
+import Sigma from "sigma";
+import { type Component, createEffect, createResource, Show } from "solid-js";
 import { postSchema, profileSchema } from "../@types/types";
 import { RepoReader } from "../lib/client";
 import { DaemonClient } from "../lib/daemon";
@@ -44,6 +47,29 @@ const Profile: Component = () => {
 
 	const [repo] = createResource(did, fetchRepo);
 
+	let graphEl!: HTMLDivElement;
+
+	createEffect(() => {
+		const r = repo();
+		if (!r) return;
+
+		const graph = new Graph();
+		r.posts.forEach((post) => {
+			post.data.links?.forEach((link) => {
+				try {
+					graph.mergeNode(post.rpath, { x: Math.random(), y: Math.random() });
+					graph.mergeNode(link, { x: Math.random(), y: Math.random() });
+					graph.mergeEdge(post.rpath, link);
+				} catch {}
+			});
+		});
+
+		new Sigma(graph, graphEl);
+		forceAtlas2.assign(graph, {
+			iterations: 200,
+		});
+	});
+
 	return (
 		<main class="container">
 			<Show when={repo()} fallback={<article aria-busy="true"></article>}>
@@ -85,10 +111,10 @@ const Profile: Component = () => {
 							}}
 						</Show>
 
+						<div ref={graphEl} style="width: 100vh; height: 50vh;"></div>
+
 						<article>
-							<header>
-								<h2>投稿</h2>
-							</header>
+							<header></header>
 							{r().posts.map((post) => (
 								<PostCard post={post} profile={r().profile} />
 							))}
