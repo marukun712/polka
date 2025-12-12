@@ -1,16 +1,15 @@
 import { useSearchParams } from "@solidjs/router";
-import Graph from "graphology";
-import forceAtlas2 from "graphology-layout-forceatlas2";
-import Sigma from "sigma";
-import { type Component, createEffect, createResource, Show } from "solid-js";
+import { type Component, createResource, Show } from "solid-js";
 import { postSchema, profileSchema } from "../@types/types";
 import { RepoReader } from "../lib/client";
 import { DaemonClient } from "../lib/daemon";
+import GraphComponent from "./components/Graph";
 import PostCard from "./components/PostCard";
 import PostForm from "./components/PostForm";
 
 const fetchRepo = async (did: string) => {
 	const reader = await RepoReader.init(did);
+	console.log(await reader.allRecords());
 	const profile = await reader.getRecord("polka.profile/self");
 	const posts = await reader.getRecords("polka.post");
 
@@ -35,7 +34,11 @@ const fetchRepo = async (did: string) => {
 		.filter((post) => post !== null && post !== undefined);
 
 	const daemon = await DaemonClient.init(did);
-	return { profile: parsedProfile.data, posts: parsedPosts, daemon };
+	return {
+		profile: parsedProfile.data,
+		posts: parsedPosts,
+		daemon,
+	};
 };
 
 const Profile: Component = () => {
@@ -46,29 +49,6 @@ const Profile: Component = () => {
 	}
 
 	const [repo] = createResource(did, fetchRepo);
-
-	let graphEl!: HTMLDivElement;
-
-	createEffect(() => {
-		const r = repo();
-		if (!r) return;
-
-		const graph = new Graph();
-		r.posts.forEach((post) => {
-			post.data.links?.forEach((link) => {
-				try {
-					graph.mergeNode(post.rpath, { x: Math.random(), y: Math.random() });
-					graph.mergeNode(link, { x: Math.random(), y: Math.random() });
-					graph.mergeEdge(post.rpath, link);
-				} catch {}
-			});
-		});
-
-		new Sigma(graph, graphEl);
-		forceAtlas2.assign(graph, {
-			iterations: 200,
-		});
-	});
 
 	return (
 		<main class="container">
@@ -94,7 +74,7 @@ const Profile: Component = () => {
 
 							<footer>
 								<p>
-									<strong>piyopiyo nodes</strong> フォロー中
+									<strong>1 nodes</strong> フォロー中
 								</p>
 							</footer>
 						</article>
@@ -103,15 +83,16 @@ const Profile: Component = () => {
 							{(d) => {
 								return (
 									<PostForm
-										onSubmit={(data) =>
-											d().create("polka.post", JSON.stringify(data))
-										}
+										onSubmit={async (data, rpath) => {
+											await d().create(rpath, JSON.stringify(data));
+											await d().commit();
+										}}
 									/>
 								);
 							}}
 						</Show>
 
-						<div ref={graphEl} style="width: 100vh; height: 50vh;"></div>
+						<GraphComponent posts={r().posts} root={r().profile.name} />
 
 						<article>
 							<header></header>

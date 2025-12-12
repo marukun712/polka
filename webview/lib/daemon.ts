@@ -22,11 +22,11 @@ export class DaemonClient {
 		}
 	}
 
-	async create(nsid: string, data: string) {
+	async create(rpath: string, data: string) {
 		const res = await fetch(new URL("record", this.url), {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ nsid, data }),
+			body: JSON.stringify({ rpath, data }),
 		});
 		return await res.json();
 	}
@@ -46,6 +46,13 @@ export class DaemonClient {
 			method: "DELETE",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ rpath }),
+		});
+		return await res.json();
+	}
+
+	async commit() {
+		const res = await fetch(new URL("commit", this.url), {
+			method: "POST",
 		});
 		return await res.json();
 	}

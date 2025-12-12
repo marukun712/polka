@@ -7,20 +7,14 @@ export const profileSchema = z
 		icon: z.string(),
 		banner: z.string().optional(),
 		followsCount: z.number(),
-		updatedAt: z.string(),
+		updatedAt: z.iso.datetime(),
 	})
 	.strict();
 
 export const postDataSchema = z.object({
 	content: z.string().min(1),
-	updatedAt: z.date(),
-});
-
-export const topicSchema = z.object({
-	parents: z.string().array(),
-	name: z.string(),
-	posts: z.string().array(),
-	updatedAt: z.date(),
+	tags: z.string().array().optional(),
+	updatedAt: z.iso.datetime(),
 });
 
 export const postSchema = z

@@ -1,27 +1,41 @@
+import { now } from "@atcute/tid";
 import { createSignal } from "solid-js";
 import { type PostData, postDataSchema } from "../../@types/types";
 
 export default function PostForm({
 	onSubmit,
 }: {
-	onSubmit: (post: PostData) => void;
+	onSubmit: (post: PostData, rpath: string) => void;
 }) {
 	const [text, setText] = createSignal("");
-	const [links, setLinks] = createSignal<string[]>([]);
+	const [tag, setTag] = createSignal("");
 
 	return (
 		<form
 			onSubmit={(e) => {
 				e.preventDefault();
-				const data = JSON.stringify({ content: text(), links: links() });
-				const parsed = postDataSchema.safeParse(JSON.parse(data));
+
+				const rpath = `polka.post/${now()}`;
+				const tags = tag().split("/");
+
+				const data: PostData = {
+					content: text(),
+					updatedAt: new Date().toISOString(),
+				};
+
+				if (tags.length > 0) {
+					data.tags = tags;
+				}
+
+				const parsed = postDataSchema.safeParse(data);
 				if (!parsed.success) {
 					console.error("Failed to parse post:", parsed.error);
 					return;
 				}
-				onSubmit(parsed.data);
+
+				onSubmit(parsed.data, rpath);
 				setText("");
-				setLinks([]);
+				setTag("");
 			}}
 		>
 			<input
@@ -32,9 +46,9 @@ export default function PostForm({
 			/>
 			<input
 				type="text"
-				value={links()}
-				placeholder="Enter links separated by commas..."
-				onInput={(e) => setLinks(e.currentTarget.value.split(","))}
+				value={tag()}
+				placeholder="Enter your tags..."
+				onInput={(e) => setTag(e.currentTarget.value)}
 			/>
 			<button type="submit">Post</button>
 		</form>

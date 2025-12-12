@@ -1,7 +1,6 @@
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { now } from "@atcute/tid";
 import { WASIShim } from "@bytecodealliance/preview2-shim/instantiation";
 import { serve } from "@hono/node-server";
 import { zValidator } from "@hono/zod-validator";
@@ -51,13 +50,13 @@ class polkaDaemon {
 			zValidator(
 				"json",
 				z.object({
-					nsid: z.string().min(1),
+					rpath: z.string().min(1),
 					data: z.string(),
 				}),
 			),
 			async (c) => {
-				const { nsid, data } = c.req.valid("json");
-				const result = await this.create(nsid, data);
+				const { rpath, data } = c.req.valid("json");
+				const result = await this.create(rpath, data);
 				return c.json({ ok: true, message: result }, 201);
 			},
 		);
@@ -93,6 +92,11 @@ class polkaDaemon {
 			},
 		);
 
+		this.server.post("/commit", async (c) => {
+			await this.commit();
+			return c.json({ ok: true }, 200);
+		});
+
 		this.server.get("/health", (c) => c.json({ ok: true }));
 		this.server.get("/did", (c) => c.json({ did: `did:web:${this.domain}` }));
 
@@ -113,14 +117,16 @@ class polkaDaemon {
 		}
 	}
 
-	async create(nsid: string, data: string) {
-		const rpath = `${nsid}/${now()}`;
+	async create(rpath: string, data: string) {
 		console.log(rpath, data);
-		this.repo.create(rpath, data);
+		try {
+			this.repo.getRecord(rpath);
+			this.repo.update(rpath, data);
+		} catch {
+			this.repo.create(rpath, data);
+		}
 		const root = this.repo.getRoot();
 		this.store.updateHeaderRoots([CID.parse(root)]);
-
-		return await this.commit();
 	}
 
 	async update(rpath: string, data: string) {
@@ -128,8 +134,6 @@ class polkaDaemon {
 		this.repo.update(rpath, data);
 		const root = this.repo.getRoot();
 		this.store.updateHeaderRoots([CID.parse(root)]);
-
-		return await this.commit();
 	}
 
 	async delete(rpath: string) {
@@ -137,8 +141,6 @@ class polkaDaemon {
 		this.repo.delete(rpath);
 		const root = this.repo.getRoot();
 		this.store.updateHeaderRoots([CID.parse(root)]);
-
-		return await this.commit();
 	}
 
 	static async start() {

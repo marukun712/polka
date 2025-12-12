@@ -36,7 +36,6 @@
 		"dotenv": "^17.2.3",
 		"enquirer": "^2.4.1",
 		"hono": "^4.10.7",
-		"inquirer": "^13.0.2",
 		"keytar": "^7.9.0",
 		"multiformats": "^13.4.1",
 		"varint": "^6.0.0",

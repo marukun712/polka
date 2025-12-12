@@ -179,7 +179,7 @@ async function main() {
 				name: name.name,
 				description: description.description,
 				icon: icon.icon,
-				updatedAt: new Date(),
+				updatedAt: new Date().toISOString(),
 				followsCount: 0,
 			});
 			repo.create("polka.profile/self", data);
