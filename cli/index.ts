@@ -1,7 +1,6 @@
 import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { now } from "@atcute/tid";
 import { WASIShim } from "@bytecodealliance/preview2-shim/instantiation";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hexToBytes } from "@noble/hashes/utils.js";
@@ -195,37 +194,8 @@ async function main() {
 			} catch (error) {
 				console.error("Failed to commit/push:", (error as Error).message);
 			}
-		}
 
-		// メッセージを送信する
-		while (true) {
-			const { text } = await prompt<{ text: string }>({
-				type: "input",
-				name: "text",
-				message: "Enter your post:",
-				required: true,
-				result: (value) => value.trim(),
-			});
-
-			const nsid = "polka.post";
-			const rpath = `${nsid}/${now()}`;
-			const data = JSON.stringify({ content: text, updatedAt: new Date() });
-
-			// repoに保存
-			console.log(rpath, data);
-			repo.create(rpath, data);
-			const root = repo.getRoot();
-			store.updateHeaderRoots([CID.parse(root)]);
-
-			// コミット
-			try {
-				const commitMessage = generateCommitMessage();
-				console.log("Committing and pushing...");
-				await commitAndPush(commitMessage);
-				console.log("Committed and pushed!");
-			} catch (error) {
-				console.error("Failed to commit/push:", (error as Error).message);
-			}
+			console.log("Setup complete!");
 		}
 	} catch (e) {
 		console.log(e);
