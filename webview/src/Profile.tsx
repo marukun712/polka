@@ -178,9 +178,15 @@ const ProfilePage: Component = () => {
 											<h1>Posts: {node()}</h1>
 										</Show>
 									</header>
-									{filtered().map((post) => (
-										<PostCard post={post} profile={r().profile} />
-									))}
+									{filtered()
+										.sort(
+											(a, b) =>
+												new Date(b.data.updatedAt).getTime() -
+												new Date(a.data.updatedAt).getTime(),
+										)
+										.map((post) => (
+											<PostCard post={post} profile={r().profile} />
+										))}
 								</article>
 							}
 						>
@@ -191,24 +197,30 @@ const ProfilePage: Component = () => {
 											<h1>Posts: {node()}</h1>
 										</Show>
 									</header>
-									{filtered().map((post) => (
-										<PostCard
-											post={post}
-											profile={r().profile}
-											onUpdate={(tag, text) =>
-												onUpdate(
-													d(),
-													{
-														tags: tag,
-														content: text,
-														updatedAt: new Date().toISOString(),
-													},
-													post.rpath,
-												)
-											}
-											onDelete={() => onDelete(d(), post.rpath)}
-										/>
-									))}
+									{filtered()
+										.sort(
+											(a, b) =>
+												new Date(b.data.updatedAt).getTime() -
+												new Date(a.data.updatedAt).getTime(),
+										)
+										.map((post) => (
+											<PostCard
+												post={post}
+												profile={r().profile}
+												onUpdate={(tag, text) =>
+													onUpdate(
+														d(),
+														{
+															tags: tag,
+															content: text,
+															updatedAt: new Date().toISOString(),
+														},
+														post.rpath,
+													)
+												}
+												onDelete={() => onDelete(d(), post.rpath)}
+											/>
+										))}
 								</article>
 							)}
 						</Show>

@@ -1,6 +1,5 @@
 import { Show } from "solid-js";
 import type { Post, Profile } from "../../@types/types";
-import { extractTimestamp } from "../../utils/tid";
 import PostEdit from "./PostEdit";
 
 export default function PostCard({
@@ -28,7 +27,7 @@ export default function PostCard({
 							<strong>{profile.name}</strong>
 							<br />
 							<small>
-								<time>{extractTimestamp(post.rpath)}</time>
+								<time>{new Date(post.data.updatedAt).toLocaleString()}</time>
 							</small>
 						</div>
 					</div>
