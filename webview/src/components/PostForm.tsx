@@ -4,11 +4,14 @@ import { type PostData, postDataSchema } from "../../@types/types";
 
 export default function PostForm({
 	onSubmit,
+	tag,
+	insertTag,
 }: {
 	onSubmit: (post: PostData, rpath: string) => void;
+	tag: () => string;
+	insertTag: (tag: string) => void;
 }) {
 	const [text, setText] = createSignal("");
-	const [tag, setTag] = createSignal("");
 
 	return (
 		<form
@@ -35,7 +38,7 @@ export default function PostForm({
 
 				onSubmit(parsed.data, rpath);
 				setText("");
-				setTag("");
+				insertTag("");
 			}}
 		>
 			<input
@@ -48,7 +51,7 @@ export default function PostForm({
 				type="text"
 				value={tag()}
 				placeholder="Enter your tags..."
-				onInput={(e) => setTag(e.currentTarget.value)}
+				onInput={(e) => insertTag(e.currentTarget.value)}
 			/>
 			<button type="submit">Post</button>
 		</form>

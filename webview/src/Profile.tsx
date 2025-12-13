@@ -1,6 +1,17 @@
 import { useSearchParams } from "@solidjs/router";
-import { type Component, createResource, Show } from "solid-js";
-import { type PostData, postSchema, profileSchema } from "../@types/types";
+import {
+	type Component,
+	createEffect,
+	createResource,
+	createSignal,
+	Show,
+} from "solid-js";
+import {
+	type Post,
+	type PostData,
+	postSchema,
+	profileSchema,
+} from "../@types/types";
 import { RepoReader } from "../lib/client";
 import { DaemonClient } from "../lib/daemon";
 import GraphComponent from "./components/Graph";
@@ -49,6 +60,10 @@ const Profile: Component = () => {
 	}
 
 	const [repo, { refetch }] = createResource(did, fetchRepo);
+	const [tag, insertTag] = createSignal("");
+	const [filtered, setFiltered] = createSignal<Post[]>([]);
+	const [children, selectChildren] = createSignal<string[]>([]);
+	const [node, selectNode] = createSignal<string>("root");
 
 	const onUpdate = async (
 		daemon: DaemonClient,
@@ -73,6 +88,12 @@ const Profile: Component = () => {
 			console.error("Failed to delete post:", e);
 		}
 	};
+
+	createEffect(() => {
+		const filtered =
+			repo()?.posts.filter((post) => children().includes(post.rpath)) ?? [];
+		setFiltered(filtered);
+	});
 
 	return (
 		<main class="container">
@@ -112,13 +133,26 @@ const Profile: Component = () => {
 											await d().commit();
 											refetch();
 										}}
+										tag={tag}
+										insertTag={insertTag}
 									/>
 
-									<GraphComponent posts={r().posts} root={r().profile.name} />
+									<GraphComponent
+										posts={r().posts}
+										root={r().profile.name}
+										node={node}
+										selectNode={selectNode}
+										insertTag={insertTag}
+										selectChildren={selectChildren}
+									/>
 
 									<article>
-										<header></header>
-										{r().posts.map((post) => (
+										<header>
+											<Show when={node() !== "root"}>
+												<h1>Posts: {node()}</h1>
+											</Show>
+										</header>
+										{filtered().map((post) => (
 											<PostCard
 												post={post}
 												profile={r().profile}

@@ -1,15 +1,23 @@
 import cytoscape, { type ElementDefinition } from "cytoscape";
 import dagre from "cytoscape-dagre";
-import { onMount } from "solid-js";
+import { createEffect, onMount } from "solid-js";
 import type { Post } from "../../@types/types";
 
 cytoscape.use(dagre);
 export default function GraphComponent({
 	posts,
 	root,
+	node,
+	selectNode,
+	insertTag,
+	selectChildren,
 }: {
 	posts: Post[];
 	root: string;
+	insertTag: (tag: string) => void;
+	node: () => string;
+	selectNode: (id: string) => void;
+	selectChildren: (paths: string[]) => void;
 }) {
 	let container!: HTMLDivElement;
 
@@ -20,6 +28,7 @@ export default function GraphComponent({
 
 		const parentChildrenMap = new Map<string, Set<string>>();
 		const roots = new Set<string>();
+		const parents = new Set<string>();
 
 		// 親になっているタグ、子になっているタグを集計
 		posts.forEach((post: Post) => {
@@ -29,12 +38,18 @@ export default function GraphComponent({
 					const parent = tags[i - 1];
 					if (parent !== undefined) {
 						const children = parentChildrenMap.get(parent) ?? new Set<string>();
-						parentChildrenMap.set(parent, children.add(tags[i]));
+						children.add(tags[i]);
+						parents.add(tags[i]);
+						parentChildrenMap.set(parent, children);
 					} else {
-						roots.add(tags[i]); // 親がないものはRoot
+						roots.add(tags[i]);
 					}
 				});
 			}
+		});
+
+		parents.forEach((parent) => {
+			roots.delete(parent);
 		});
 
 		for (const map of parentChildrenMap.entries()) {
@@ -90,7 +105,19 @@ export default function GraphComponent({
 			});
 		});
 
-		cytoscape({
+		function collectChildPosts(cy: cytoscape.Core, tagId: string) {
+			const tagNode = cy.getElementById(tagId);
+
+			if (tagNode.empty()) return [];
+
+			const posts = tagNode
+				.successors('node[type="post"]')
+				.map((n) => n.data());
+
+			return posts;
+		}
+
+		const cy = cytoscape({
 			container,
 			elements: [...elements.values()],
 			style: [
@@ -137,6 +164,21 @@ export default function GraphComponent({
 				},
 			],
 			layout: { name: "dagre" },
+		});
+
+		createEffect(() => {
+			const pathList = collectChildPosts(cy, node());
+			const paths = pathList.map((post) => post.id as string);
+			selectChildren(paths);
+		});
+
+		cy.on("click", "node", (e) => {
+			const id = e.target.data("id");
+			const type = e.target.data("type");
+			if (type === "tag") {
+				selectNode(id);
+				if (id !== "root") insertTag(id);
+			}
 		});
 	});
 
