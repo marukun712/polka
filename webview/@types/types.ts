@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+export const refSchema = z.object({
+	did: z.string().min(1),
+	rpath: z.string().min(1),
+});
+
 export const profileSchema = z
 	.object({
 		name: z.string(),
@@ -24,6 +29,22 @@ export const postSchema = z
 	})
 	.strict();
 
+export const linkDataSchema = z.object({
+	ref: refSchema,
+	tags: z.string().array().optional(),
+	updatedAt: z.iso.datetime(),
+});
+
+export const linkSchema = z
+	.object({
+		rpath: z.string(),
+		data: linkDataSchema,
+	})
+	.strict();
+
 export type Profile = z.infer<typeof profileSchema>;
 export type Post = z.infer<typeof postSchema>;
 export type PostData = z.infer<typeof postDataSchema>;
+export type Link = z.infer<typeof linkSchema>;
+export type LinkData = z.infer<typeof linkDataSchema>;
+export type Ref = z.infer<typeof refSchema>;

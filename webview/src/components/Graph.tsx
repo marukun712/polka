@@ -1,11 +1,23 @@
 import cytoscape, { type ElementDefinition } from "cytoscape";
 import dagre from "cytoscape-dagre";
 import { createEffect, onMount } from "solid-js";
-import type { Post } from "../../@types/types";
+import type { Link, Post } from "../../@types/types";
+
+function collectChildPosts(cy: cytoscape.Core, tagId: string) {
+	const tagNode = cy.getElementById(tagId);
+
+	if (tagNode.empty()) return [];
+
+	const posts = tagNode.successors('node[type="post"]').map((n) => n.data());
+
+	return posts;
+}
 
 cytoscape.use(dagre);
+
 export default function GraphComponent({
 	posts,
+	links,
 	root,
 	node,
 	selectNode,
@@ -13,6 +25,7 @@ export default function GraphComponent({
 	selectChildren,
 }: {
 	posts: Post[];
+	links: Link[];
 	root: string;
 	insertTag: (tag: string) => void;
 	node: () => string;
@@ -76,7 +89,7 @@ export default function GraphComponent({
 			elements.add({
 				data: {
 					id: post.rpath,
-					label: post.data.content,
+					label: post.rpath,
 					type: "post",
 				},
 			});
@@ -91,6 +104,29 @@ export default function GraphComponent({
 				data: {
 					source: lastTag,
 					target: post.rpath,
+				},
+			});
+		});
+
+		links.forEach((link: Link) => {
+			elements.add({
+				data: {
+					id: link.rpath,
+					label: link.rpath,
+					type: "link",
+				},
+			});
+
+			const tags = link.data.tags ?? [];
+			const lastTag =
+				tags.length > 0 && tags[tags.length - 1].trim() !== ""
+					? tags[tags.length - 1]
+					: "root";
+
+			elements.add({
+				data: {
+					source: lastTag,
+					target: link.rpath,
 				},
 			});
 		});
@@ -111,18 +147,6 @@ export default function GraphComponent({
 				},
 			});
 		});
-
-		function collectChildPosts(cy: cytoscape.Core, tagId: string) {
-			const tagNode = cy.getElementById(tagId);
-
-			if (tagNode.empty()) return [];
-
-			const posts = tagNode
-				.successors('node[type="post"]')
-				.map((n) => n.data());
-
-			return posts;
-		}
 
 		const cy = cytoscape({
 			container,
@@ -146,6 +170,18 @@ export default function GraphComponent({
 				{
 					selector: 'node[type="tag"]',
 					style: { "background-color": "#4A90E2", shape: "roundrectangle" },
+				},
+				{
+					selector: 'node[type="link"]',
+					style: {
+						"background-color": "#FFFF00",
+						shape: "triangle",
+						width: "50px",
+						height: "50px",
+						"font-size": "10px",
+						"text-valign": "bottom",
+						"text-margin-y": 5,
+					},
 				},
 				{
 					selector: 'node[type="post"]',

@@ -1,15 +1,24 @@
 import { Show } from "solid-js";
-import type { Post, Profile } from "../../@types/types";
+import {
+	type LinkData,
+	linkDataSchema,
+	type Post,
+	type Profile,
+} from "../../@types/types";
 import PostEdit from "./PostEdit";
 
 export default function PostCard({
+	did,
 	post,
 	profile,
+	onLink,
 	onUpdate,
 	onDelete,
 }: {
+	did: string;
 	post: Post;
 	profile: Profile;
+	onLink?: (link: LinkData) => void;
 	onUpdate?: (tag: string[], text: string) => void;
 	onDelete?: () => void;
 }) {
@@ -45,7 +54,48 @@ export default function PostCard({
 					)}
 				</Show>
 			</header>
+
 			{post.data.content}
+
+			<Show when={onLink}>
+				{(link) => (
+					<footer>
+						<form
+							onSubmit={(e) => {
+								e.preventDefault();
+
+								const form = e.currentTarget;
+								const formData = new FormData(form);
+								const tags = formData.get("tags") as string | null;
+								if (!tags) return;
+								const split = tags.split(",");
+
+								const raw = {
+									ref: {
+										did,
+										rpath: post.rpath,
+									},
+									tags: split,
+									updatedAt: new Date().toISOString(),
+								};
+
+								const parsed = linkDataSchema.safeParse(raw);
+								if (!parsed.success) {
+									console.error("Failed to parse link data:", parsed.error);
+									return;
+								}
+
+								link()(parsed.data);
+
+								form.reset();
+							}}
+						>
+							<input type="text" name="tags" />
+							<button type="submit">Link</button>
+						</form>
+					</footer>
+				)}
+			</Show>
 		</article>
 	);
 }

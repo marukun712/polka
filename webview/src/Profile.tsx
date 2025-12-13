@@ -1,3 +1,5 @@
+import { now } from "@atcute/tid";
+import { verifySignature } from "@atproto/crypto";
 import { useSearchParams } from "@solidjs/router";
 import {
 	type Component,
@@ -7,6 +9,8 @@ import {
 	Show,
 } from "solid-js";
 import {
+	type LinkData,
+	linkSchema,
 	type Post,
 	type PostData,
 	type Profile,
@@ -15,6 +19,7 @@ import {
 } from "../@types/types";
 import { RepoReader } from "../lib/client";
 import { DaemonClient } from "../lib/daemon";
+import { resolve } from "../lib/identity";
 import GraphComponent from "./components/Graph";
 import PostCard from "./components/PostCard";
 import PostForm from "./components/PostForm";
@@ -22,9 +27,14 @@ import ProfileEdit from "./components/ProfileEdit";
 
 const fetchRepo = async (did: string) => {
 	const reader = await RepoReader.init(did);
-	console.log(await reader.allRecords());
+	const { didKey } = await resolve(did);
+	const { sig, bytes } = await reader.getCommitToVerify();
+	const verified = await verifySignature(didKey, bytes, sig);
+	if (!verified) throw new Error("Failed to verify signature");
+
 	const profile = await reader.getRecord("polka.profile/self");
 	const posts = await reader.getRecords("polka.post");
+	const links = await reader.getRecords("polka.link");
 
 	const parsedProfile = profileSchema.safeParse(JSON.parse(profile.data));
 	if (!parsedProfile.success) {
@@ -46,10 +56,27 @@ const fetchRepo = async (did: string) => {
 		})
 		.filter((post) => post !== null && post !== undefined);
 
+	const parsedLinks = links
+		.map((link) => {
+			try {
+				return linkSchema.safeParse({
+					rpath: link.rpath,
+					data: JSON.parse(link.data),
+				}).data;
+			} catch (e) {
+				console.error(e);
+				return null;
+			}
+		})
+		.filter((link) => link !== null && link !== undefined);
+
 	const daemon = await DaemonClient.init(did);
+
 	return {
 		profile: parsedProfile.data,
 		posts: parsedPosts,
+		links: parsedLinks,
+		reader,
 		daemon,
 	};
 };
@@ -98,6 +125,16 @@ const ProfilePage: Component = () => {
 			refetch();
 		} catch (e) {
 			console.error("Failed to delete post:", e);
+		}
+	};
+
+	const onLink = async (daemon: DaemonClient, link: LinkData) => {
+		try {
+			await daemon.create(`polka.link/${now()}`, JSON.stringify(link));
+			await daemon.commit();
+			refetch();
+		} catch (e) {
+			console.error("Failed to link post:", e);
 		}
 	};
 
@@ -162,6 +199,7 @@ const ProfilePage: Component = () => {
 
 						<GraphComponent
 							posts={r().posts}
+							links={r().links}
 							root={r().profile.name}
 							node={node}
 							selectNode={selectNode}
@@ -185,7 +223,11 @@ const ProfilePage: Component = () => {
 												new Date(a.data.updatedAt).getTime(),
 										)
 										.map((post) => (
-											<PostCard post={post} profile={r().profile} />
+											<PostCard
+												did={r().reader.getDid()}
+												post={post}
+												profile={r().profile}
+											/>
 										))}
 								</article>
 							}
@@ -205,6 +247,7 @@ const ProfilePage: Component = () => {
 										)
 										.map((post) => (
 											<PostCard
+												did={r().reader.getDid()}
 												post={post}
 												profile={r().profile}
 												onUpdate={(tag, text) =>
@@ -219,6 +262,7 @@ const ProfilePage: Component = () => {
 													)
 												}
 												onDelete={() => onDelete(d(), post.rpath)}
+												onLink={(link) => onLink(d(), link)}
 											/>
 										))}
 								</article>
