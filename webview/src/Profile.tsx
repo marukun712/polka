@@ -9,6 +9,7 @@ import {
 import {
 	type Post,
 	type PostData,
+	type Profile,
 	postSchema,
 	profileSchema,
 } from "../@types/types";
@@ -17,6 +18,7 @@ import { DaemonClient } from "../lib/daemon";
 import GraphComponent from "./components/Graph";
 import PostCard from "./components/PostCard";
 import PostForm from "./components/PostForm";
+import ProfileEdit from "./components/ProfileEdit";
 
 const fetchRepo = async (did: string) => {
 	const reader = await RepoReader.init(did);
@@ -52,7 +54,7 @@ const fetchRepo = async (did: string) => {
 	};
 };
 
-const Profile: Component = () => {
+const ProfilePage: Component = () => {
 	const [searchParams] = useSearchParams();
 	const did = searchParams.did;
 	if (!did || typeof did !== "string") {
@@ -64,6 +66,16 @@ const Profile: Component = () => {
 	const [filtered, setFiltered] = createSignal<Post[]>([]);
 	const [children, selectChildren] = createSignal<string[]>([]);
 	const [node, selectNode] = createSignal<string>("root");
+
+	const onProfileUpdate = async (daemon: DaemonClient, data: Profile) => {
+		try {
+			await daemon.update("polka.profile/self", JSON.stringify(data));
+			await daemon.commit();
+			refetch();
+		} catch (e) {
+			console.error("Failed to update post:", e);
+		}
+	};
 
 	const onUpdate = async (
 		daemon: DaemonClient,
@@ -101,7 +113,7 @@ const Profile: Component = () => {
 				{(r) => (
 					<>
 						<article>
-							<header>
+							<header style="display: flex; justify-content: space-between;">
 								<hgroup>
 									<figure>
 										<img
@@ -113,6 +125,16 @@ const Profile: Component = () => {
 									<h1>{r().profile.name}</h1>
 									<p>{did}</p>
 								</hgroup>
+								<Show when={r().daemon}>
+									{(d) => {
+										return (
+											<ProfileEdit
+												init={r().profile}
+												onUpdate={(profile) => onProfileUpdate(d(), profile)}
+											/>
+										);
+									}}
+								</Show>
 							</header>
 
 							<p>{r().profile.description}</p>
@@ -126,52 +148,68 @@ const Profile: Component = () => {
 
 						<Show when={r().daemon} fallback={<div></div>}>
 							{(d) => (
-								<>
-									<PostForm
-										onSubmit={async (data, rpath) => {
-											await d().create(rpath, JSON.stringify(data));
-											await d().commit();
-											refetch();
-										}}
-										tag={tag}
-										insertTag={insertTag}
-									/>
+								<PostForm
+									onSubmit={async (data, rpath) => {
+										await d().create(rpath, JSON.stringify(data));
+										await d().commit();
+										refetch();
+									}}
+									tag={tag}
+									insertTag={insertTag}
+								/>
+							)}
+						</Show>
 
-									<GraphComponent
-										posts={r().posts}
-										root={r().profile.name}
-										node={node}
-										selectNode={selectNode}
-										insertTag={insertTag}
-										selectChildren={selectChildren}
-									/>
+						<GraphComponent
+							posts={r().posts}
+							root={r().profile.name}
+							node={node}
+							selectNode={selectNode}
+							insertTag={insertTag}
+							selectChildren={selectChildren}
+						/>
 
-									<article>
-										<header>
-											<Show when={node() !== "root"}>
-												<h1>Posts: {node()}</h1>
-											</Show>
-										</header>
-										{filtered().map((post) => (
-											<PostCard
-												post={post}
-												profile={r().profile}
-												onUpdate={(tag, text) =>
-													onUpdate(
-														d(),
-														{
-															tags: tag,
-															content: text,
-															updatedAt: new Date().toISOString(),
-														},
-														post.rpath,
-													)
-												}
-												onDelete={() => onDelete(d(), post.rpath)}
-											/>
-										))}
-									</article>
-								</>
+						<Show
+							when={r().daemon}
+							fallback={
+								<article>
+									<header>
+										<Show when={node() !== "root"}>
+											<h1>Posts: {node()}</h1>
+										</Show>
+									</header>
+									{filtered().map((post) => (
+										<PostCard post={post} profile={r().profile} />
+									))}
+								</article>
+							}
+						>
+							{(d) => (
+								<article>
+									<header>
+										<Show when={node() !== "root"}>
+											<h1>Posts: {node()}</h1>
+										</Show>
+									</header>
+									{filtered().map((post) => (
+										<PostCard
+											post={post}
+											profile={r().profile}
+											onUpdate={(tag, text) =>
+												onUpdate(
+													d(),
+													{
+														tags: tag,
+														content: text,
+														updatedAt: new Date().toISOString(),
+													},
+													post.rpath,
+												)
+											}
+											onDelete={() => onDelete(d(), post.rpath)}
+										/>
+									))}
+								</article>
 							)}
 						</Show>
 					</>
@@ -181,4 +219,4 @@ const Profile: Component = () => {
 	);
 };
 
-export default Profile;
+export default ProfilePage;

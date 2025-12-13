@@ -34,15 +34,16 @@ export default function GraphComponent({
 		posts.forEach((post: Post) => {
 			const tags = post.data.tags;
 			if (tags) {
-				tags.forEach((_: string, i: number) => {
-					const parent = tags[i - 1];
+				const validated = tags.filter((tag) => tag.trim() !== "");
+				validated.forEach((_: string, i: number) => {
+					const parent = validated[i - 1];
 					if (parent !== undefined) {
 						const children = parentChildrenMap.get(parent) ?? new Set<string>();
-						children.add(tags[i]);
-						parents.add(tags[i]);
+						children.add(validated[i]);
+						parents.add(validated[i]);
 						parentChildrenMap.set(parent, children);
 					} else {
-						roots.add(tags[i]);
+						roots.add(validated[i]);
 					}
 				});
 			}
@@ -80,9 +81,15 @@ export default function GraphComponent({
 				},
 			});
 
+			const tags = post.data.tags ?? [];
+			const lastTag =
+				tags.length > 0 && tags[tags.length - 1].trim() !== ""
+					? tags[tags.length - 1]
+					: "root";
+
 			elements.add({
 				data: {
-					source: post.data.tags?.pop(),
+					source: lastTag,
 					target: post.rpath,
 				},
 			});
