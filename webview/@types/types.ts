@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export type FeedItem = {
+	type: "post" | "link";
+	profile: Profile;
+	tags: string[];
+	post: Post;
+};
+
 export const refSchema = z.object({
 	did: z.string().min(1),
 	rpath: z.string().min(1),

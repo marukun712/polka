@@ -8,14 +8,14 @@ import {
 	useContext,
 } from "solid-js";
 import {
+	type FeedItem,
 	type Link,
 	linkSchema,
-	type Post,
 	postSchema,
 	profileSchema,
 } from "../@types/types";
 import { RepoReader } from "../lib/client";
-import { resolve } from "../lib/identity";
+import { resolve, resolveRecord } from "../lib/identity";
 import { daemonContext } from ".";
 import GraphComponent from "./components/Graph";
 import PostCard from "./components/PostCard";
@@ -41,6 +41,8 @@ const fetchRepo = async (did: string) => {
 		return;
 	}
 
+	const feed = new Set<FeedItem>();
+
 	const parsedPosts = posts
 		.map((post) => {
 			try {
@@ -54,6 +56,15 @@ const fetchRepo = async (did: string) => {
 			}
 		})
 		.filter((post) => post !== null && post !== undefined);
+
+	parsedPosts.forEach((post) =>
+		feed.add({
+			type: "post",
+			profile: parsedProfile.data,
+			tags: post.data.tags,
+			post,
+		}),
+	);
 
 	const parsedLinks = links
 		.map((link) => {
@@ -70,20 +81,41 @@ const fetchRepo = async (did: string) => {
 		.filter((link) => link !== null && link !== undefined);
 
 	const postToLinks = new Map<string, Link[]>();
-	parsedLinks.forEach((link) => {
-		const rpath = link.data.ref.rpath;
-		if (postToLinks.has(rpath)) {
-			postToLinks.get(rpath)?.push(link);
-		} else {
-			postToLinks.set(rpath, [link]);
-		}
-	});
+
+	await Promise.all(
+		parsedLinks.map(async (link) => {
+			const rpath = link.data.ref.rpath;
+			const post = await resolveRecord(link.data.ref.did, link.data.ref.rpath);
+			const profile = await resolveRecord(
+				link.data.ref.did,
+				"polka.profile/self",
+			);
+			if (!post || !profile) return;
+			const parsedPost = postSchema.safeParse({
+				rpath: post.rpath,
+				data: JSON.parse(post.data),
+			});
+			const parsedProfile = profileSchema.safeParse(JSON.parse(profile.data));
+			if (parsedPost.success && parsedProfile.success) {
+				feed.add({
+					type: "link",
+					tags: link.data.tags,
+					post: parsedPost.data,
+					profile: parsedProfile.data,
+				});
+				if (postToLinks.has(rpath)) {
+					postToLinks.get(rpath)?.push(link);
+				} else {
+					postToLinks.set(rpath, [link]);
+				}
+			}
+		}),
+	);
 
 	return {
 		didKey,
 		profile: parsedProfile.data,
-		posts: parsedPosts,
-		links: parsedLinks,
+		feed,
 		postToLinks,
 		reader,
 	};
@@ -102,13 +134,17 @@ const TopPage: Component = () => {
 	const [repo] = createResource(daemon.did, fetchRepo);
 
 	const [tag, insertTag] = createSignal("");
-	const [filtered, setFiltered] = createSignal<Post[]>([]);
+	const [filtered, setFiltered] = createSignal<FeedItem[]>([]);
 	const [children, selectChildren] = createSignal<string[]>([]);
 	const [node, selectNode] = createSignal<string>("root");
 
 	createEffect(() => {
+		const r = repo();
+		const feed = r ? [...r.feed] : [];
+		console.log(feed);
 		const filtered =
-			repo()?.posts.filter((post) => children().includes(post.rpath)) ?? [];
+			feed.filter((item) => children().includes(item.post.rpath)) ?? [];
+		console.log(filtered);
 		setFiltered(filtered);
 	});
 
@@ -145,8 +181,7 @@ const TopPage: Component = () => {
 						<PostForm tag={tag} insertTag={insertTag} />
 
 						<GraphComponent
-							posts={r().posts}
-							links={r().links}
+							feed={[...r().feed]}
 							root={r().profile.name}
 							node={node}
 							selectNode={selectNode}
@@ -163,17 +198,15 @@ const TopPage: Component = () => {
 							{filtered()
 								.sort(
 									(a, b) =>
-										new Date(b.data.updatedAt).getTime() -
-										new Date(a.data.updatedAt).getTime(),
+										new Date(b.post.data.updatedAt).getTime() -
+										new Date(a.post.data.updatedAt).getTime(),
 								)
-								.map((post) => {
-									const links = r().postToLinks.get(post.rpath);
-									console.log(post.rpath);
+								.map((item) => {
+									const links = r().postToLinks.get(item.post.rpath);
 									return (
 										<PostCard
 											did={r().reader.getDid()}
-											post={post}
-											profile={r().profile}
+											item={item}
 											links={links ?? []}
 										/>
 									);

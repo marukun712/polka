@@ -1,7 +1,7 @@
 import cytoscape, { type ElementDefinition } from "cytoscape";
 import dagre from "cytoscape-dagre";
 import { createEffect, onMount } from "solid-js";
-import type { Link, Post } from "../../@types/types";
+import type { FeedItem } from "../../@types/types";
 
 function collectChildPosts(cy: cytoscape.Core, tagId: string) {
 	const tagNode = cy.getElementById(tagId);
@@ -13,16 +13,14 @@ function collectChildPosts(cy: cytoscape.Core, tagId: string) {
 cytoscape.use(dagre);
 
 export default function GraphComponent({
-	posts,
-	links,
+	feed,
 	root,
 	node,
 	selectNode,
 	insertTag,
 	selectChildren,
 }: {
-	posts: Post[];
-	links: Link[];
+	feed: FeedItem[];
 	root: string;
 	insertTag: (tag: string) => void;
 	node: () => string;
@@ -41,8 +39,8 @@ export default function GraphComponent({
 		const parents = new Set<string>();
 
 		// 親になっているタグ、子になっているタグを集計
-		posts.forEach((post: Post) => {
-			const tags = post.data.tags;
+		feed.forEach((item: FeedItem) => {
+			const tags = item.post.data.tags;
 			if (tags) {
 				const validated = tags.filter((tag) => tag.trim() !== "");
 				validated.forEach((_: string, i: number) => {
@@ -82,16 +80,16 @@ export default function GraphComponent({
 			});
 		}
 
-		posts.forEach((post: Post) => {
+		feed.forEach((item: FeedItem) => {
 			elements.add({
 				data: {
-					id: post.rpath,
-					label: post.rpath,
-					type: "post",
+					id: `${item.type}:${item.post.rpath}`,
+					label: item.post.rpath,
+					type: item.type === "post" ? "post" : "link",
 				},
 			});
 
-			const tags = post.data.tags ?? [];
+			const tags = item.tags ?? [];
 			const lastTag =
 				tags.length > 0 && tags[tags.length - 1].trim() !== ""
 					? tags[tags.length - 1]
@@ -100,30 +98,7 @@ export default function GraphComponent({
 			elements.add({
 				data: {
 					source: lastTag,
-					target: post.rpath,
-				},
-			});
-		});
-
-		links.forEach((link: Link) => {
-			elements.add({
-				data: {
-					id: link.rpath,
-					label: link.rpath,
-					type: "link",
-				},
-			});
-
-			const tags = link.data.tags ?? [];
-			const lastTag =
-				tags.length > 0 && tags[tags.length - 1].trim() !== ""
-					? tags[tags.length - 1]
-					: "root";
-
-			elements.add({
-				data: {
-					source: lastTag,
-					target: link.rpath,
+					target: `${item.type}:${item.post.rpath}`,
 				},
 			});
 		});
@@ -208,7 +183,7 @@ export default function GraphComponent({
 
 		createEffect(() => {
 			const pathList = collectChildPosts(cy, node());
-			const paths = pathList.map((post) => post.id as string);
+			const paths = pathList.map((post) => post.label as string);
 			selectChildren(paths);
 		});
 

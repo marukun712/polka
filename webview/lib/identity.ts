@@ -36,6 +36,11 @@ export async function resolve(did: string) {
 }
 
 export async function resolveRecord(did: string, rpath: string) {
-	const client = await RepoReader.init(did);
-	return client.getRecord(rpath);
+	try {
+		const client = await RepoReader.init(did);
+		return client.getRecord(rpath);
+	} catch (e) {
+		console.log(e);
+		return null;
+	}
 }

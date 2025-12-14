@@ -1,44 +1,50 @@
-import type { Link, Post, Profile } from "../../@types/types";
+import { IoLink } from "solid-icons/io";
+import { Show } from "solid-js";
+import type { FeedItem, Link } from "../../@types/types";
 import LinkButton from "./LinkButton";
 import PostEdit from "./PostEdit";
 
 export default function PostCard({
 	did,
-	post,
-	profile,
+	item,
 	links,
 }: {
 	did: string;
-	post: Post;
-	profile: Profile;
+	item: FeedItem;
 	links: Link[];
 }) {
 	return (
 		<article>
+			<Show when={item.type === "link"}>
+				<IoLink />
+				<h4>linked {item.tags.join("/")}</h4>
+			</Show>
 			<header style="display:flex; justify-content: space-between">
 				<hgroup>
 					<div style="display: flex; align-items: center; gap: 1rem;">
 						<img
-							src={profile.icon}
-							alt={profile.name}
+							src={item.profile.icon}
+							alt={item.profile.name}
 							style="border-radius: 50%; width: 48px; height: 48px; object-fit: cover; margin: 0;"
 						/>
 						<div>
-							<strong>{profile.name}</strong>
+							<strong>{item.profile.name}</strong>
 							<br />
 							<small>
-								<time>{new Date(post.data.updatedAt).toLocaleString()}</time>
+								<time>
+									{new Date(item.post.data.updatedAt).toLocaleString()}
+								</time>
 							</small>
 						</div>
 					</div>
 				</hgroup>
-				<PostEdit post={post} />
+				<PostEdit post={item.post} />
 			</header>
 
-			{post.data.content}
+			{item.post.data.content}
 
 			<footer>
-				<LinkButton did={did} post={post} links={links} />
+				<LinkButton did={did} post={item.post} links={links} />
 			</footer>
 		</article>
 	);
