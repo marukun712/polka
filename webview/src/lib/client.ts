@@ -1,8 +1,8 @@
 import { WASIShim } from "@bytecodealliance/preview2-shim/instantiation";
 import { decode, encode } from "@ipld/dag-cbor";
 import { CID } from "multiformats";
-import type { Repo } from "../public/interfaces/polka-repository-repo.js";
-import { instantiate } from "../public/repo.js";
+import type { Repo } from "../../public/interfaces/polka-repository-repo.js";
+import { instantiate } from "../../public/repo.js";
 import { ReadOnlyStore } from "./blockstore.js";
 import { resolve } from "./identity.js";
 

@@ -3,12 +3,9 @@ import "./index.css";
 import { render } from "solid-js/web";
 import "solid-devtools";
 import { Route, Router } from "@solidjs/router";
-import { createContext, createResource, Show } from "solid-js";
-import type { FeedItem, Ref } from "../@types/types";
-import type { RepoReader } from "../lib/client";
-import { DaemonClient } from "../lib/daemon";
-import TopPage from "./Top";
-import UserPage from "./User";
+import { CacheProvider, DaemonProvider } from "./contexts";
+import TopPage from "./pages/TopPage";
+import UserPage from "./pages/UserPage";
 
 const root = document.getElementById("root");
 
@@ -18,42 +15,19 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
 	);
 }
 
-const fetchDaemon = async () => {
-	const daemon = await DaemonClient.init();
-	if (!daemon) return null;
-	const did = await daemon?.getDid();
-	return { did, daemon };
-};
-
-const [daemon] = createResource(fetchDaemon);
-export const daemonContext = createContext<{
-	did: string;
-	daemon: DaemonClient;
-} | null>(null);
-
-export const feedCache = createContext<Map<Ref, FeedItem>>(
-	new Map<Ref, FeedItem>(),
-);
-export const readerCache = createContext<Map<string, RepoReader>>(
-	new Map<string, RepoReader>(),
-);
+// コンテキストは contexts/ から一括エクスポート
+export { daemonContext, feedCache, readerCache } from "./contexts";
 
 render(
 	() => (
-		<Show when={daemon()}>
-			{(d) => (
-				<daemonContext.Provider value={d()}>
-					<feedCache.Provider value={new Map<Ref, FeedItem>()}>
-						<readerCache.Provider value={new Map<string, RepoReader>()}>
-							<Router>
-								<Route path="/" component={TopPage} />
-								<Route path="/user" component={UserPage} />
-							</Router>
-						</readerCache.Provider>
-					</feedCache.Provider>
-				</daemonContext.Provider>
-			)}
-		</Show>
+		<DaemonProvider>
+			<CacheProvider>
+				<Router>
+					<Route path="/" component={TopPage} />
+					<Route path="/user" component={UserPage} />
+				</Router>
+			</CacheProvider>
+		</DaemonProvider>
 	),
 	root as HTMLElement,
 );

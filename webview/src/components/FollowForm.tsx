@@ -1,7 +1,7 @@
 import { now } from "@atcute/tid";
 import { useContext } from "solid-js";
-import { followDataSchema } from "../../@types/types";
 import { daemonContext } from "..";
+import { followDataSchema } from "../types";
 
 export default function FollowForm() {
 	const daemon = useContext(daemonContext);

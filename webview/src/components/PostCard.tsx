@@ -1,6 +1,6 @@
 import { IoLink } from "solid-icons/io";
 import { type JSX, type ParentComponent, Show } from "solid-js";
-import type { FeedItem } from "../../@types/types";
+import type { FeedItem } from "../types";
 
 type PostCardProps = {
 	item: FeedItem;

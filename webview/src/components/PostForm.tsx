@@ -1,7 +1,7 @@
 import { now } from "@atcute/tid";
 import { createSignal, useContext } from "solid-js";
-import { type PostData, postDataSchema } from "../../@types/types";
 import { daemonContext } from "..";
+import { type PostData, postDataSchema } from "../types";
 
 export default function PostForm() {
 	const [text, setText] = createSignal("");

@@ -1,7 +1,7 @@
 import { now } from "@atcute/tid";
 import { Show, useContext } from "solid-js";
-import { linkDataSchema, type Post } from "../../@types/types";
 import { daemonContext } from "..";
+import { linkDataSchema, type Post } from "../types";
 
 export default function LinkButton({
 	did,

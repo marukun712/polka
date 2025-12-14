@@ -1,4 +1,6 @@
 import { verifySignature } from "@atproto/crypto";
+import { RepoReader } from "../lib/client";
+import { resolve } from "../lib/identity";
 import {
 	type Feed,
 	type FeedItem,
@@ -7,66 +9,8 @@ import {
 	postSchema,
 	profileSchema,
 	type Ref,
-} from "../@types/types";
-import { RepoReader } from "../lib/client";
-import { resolve } from "../lib/identity";
-import type { GetResult } from "../public/interfaces/polka-repository-repo";
-
-const validatePosts = (posts: GetResult[]) =>
-	posts.flatMap((post) => {
-		try {
-			const json = JSON.parse(post.data);
-			const parsed = postSchema.safeParse({ rpath: post.rpath, data: json });
-			return parsed.success ? [parsed.data] : [];
-		} catch {
-			return [];
-		}
-	});
-
-const validateProfile = (profile: GetResult) => {
-	try {
-		const json = JSON.parse(profile.data);
-		const parsedProfile = profileSchema.safeParse(json);
-		if (!parsedProfile.success) {
-			console.error("Failed to parse profile:", parsedProfile.error);
-			return null;
-		}
-		return parsedProfile.data;
-	} catch (e) {
-		console.error(e);
-		return null;
-	}
-};
-
-const validateLinks = (links: GetResult[]) => {
-	return links.flatMap((link) => {
-		try {
-			const json = JSON.parse(link.data);
-			const parsed = linkSchema.safeParse({
-				rpath: link.rpath,
-				data: json,
-			});
-			return parsed.success ? [parsed.data] : [];
-		} catch {
-			return [];
-		}
-	});
-};
-
-const validateFollows = (follows: GetResult[]) => {
-	return follows.flatMap((follow) => {
-		try {
-			const json = JSON.parse(follow.data);
-			const parsed = followSchema.safeParse({
-				rpath: follow.rpath,
-				data: json,
-			});
-			return parsed.success ? [parsed.data] : [];
-		} catch {
-			return [];
-		}
-	});
-};
+} from "../types";
+import { validateRecord, validateRecords } from "../utils/validation";
 
 export const generateFeed = async (
 	did: string,
@@ -82,6 +26,7 @@ export const generateFeed = async (
 
 	const { didKey } = identity;
 
+	// 署名検証
 	const { sig, bytes } = await reader.getCommitToVerify();
 	const verified = await verifySignature(didKey, bytes, sig);
 	if (!verified) throw new Error("Failed to verify signature");
@@ -93,12 +38,14 @@ export const generateFeed = async (
 		reader.getRecords("polka.follow"),
 	]);
 
-	const parsedPosts = validatePosts(posts);
-	const parsedProfile = validateProfile(profile);
-	const parsedLinks = validateLinks(links);
-	const parsedFollows = validateFollows(follows);
+	const parsedPosts = validateRecords(posts, postSchema);
+	const parsedProfile = validateRecord(profile, profileSchema);
+	const parsedLinks = validateRecords(links, linkSchema);
+	const parsedFollows = validateRecords(follows, followSchema);
+
 	if (!parsedProfile) return null;
 
+	// 投稿をキャッシュに追加
 	parsedPosts.forEach((post) => {
 		feedCache.set(
 			{ did, rpath: post.rpath },
@@ -113,6 +60,7 @@ export const generateFeed = async (
 		);
 	});
 
+	// リンク先のリポジトリリーダーを事前に初期化
 	await Promise.all(
 		parsedLinks.map(async (link) => {
 			if (!readerCache.has(link.data.ref.did)) {
@@ -122,6 +70,7 @@ export const generateFeed = async (
 		}),
 	);
 
+	// リンクデータを並列取得してキャッシュに追加
 	await Promise.all(
 		parsedLinks.map(async (link) => {
 			try {
@@ -138,9 +87,12 @@ export const generateFeed = async (
 						reader.getRecord(link.data.ref.rpath),
 						reader.getRecord("polka.profile/self"),
 					]);
-					const parsedPost = validatePosts([post]);
-					const parsedProfile = validateProfile(profile);
+
+					const parsedPost = validateRecords([post], postSchema);
+					const parsedProfile = validateRecord(profile, profileSchema);
+
 					if (!parsedPost || !parsedProfile) return;
+
 					feedCache.set(
 						{ did: link.data.ref.did, rpath: link.rpath },
 						{
@@ -154,7 +106,8 @@ export const generateFeed = async (
 					);
 				}
 			} catch {
-				return [];
+				// リンク先の取得に失敗しても処理を継続
+				return;
 			}
 		}),
 	);
