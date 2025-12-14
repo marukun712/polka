@@ -18,7 +18,7 @@ export const profileSchema = z
 
 export const postDataSchema = z.object({
 	content: z.string().min(1),
-	tags: z.string().array().optional(),
+	tags: z.string().array(),
 	updatedAt: z.iso.datetime(),
 });
 
@@ -31,7 +31,7 @@ export const postSchema = z
 
 export const linkDataSchema = z.object({
 	ref: refSchema,
-	tags: z.string().array().optional(),
+	tags: z.string().array(),
 	updatedAt: z.iso.datetime(),
 });
 

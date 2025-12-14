@@ -1,26 +1,17 @@
-import { Show } from "solid-js";
-import {
-	type LinkData,
-	linkDataSchema,
-	type Post,
-	type Profile,
-} from "../../@types/types";
+import type { Link, Post, Profile } from "../../@types/types";
+import LinkButton from "./LinkButton";
 import PostEdit from "./PostEdit";
 
 export default function PostCard({
 	did,
 	post,
 	profile,
-	onLink,
-	onUpdate,
-	onDelete,
+	links,
 }: {
 	did: string;
 	post: Post;
 	profile: Profile;
-	onLink?: (link: LinkData) => void;
-	onUpdate?: (tag: string[], text: string) => void;
-	onDelete?: () => void;
+	links: Link[];
 }) {
 	return (
 		<article>
@@ -41,61 +32,14 @@ export default function PostCard({
 						</div>
 					</div>
 				</hgroup>
-				<Show when={onUpdate && onDelete ? { onUpdate, onDelete } : null}>
-					{(edit) => (
-						<div>
-							<PostEdit
-								tag={post.data.tags ?? []}
-								text={post.data.content}
-								onUpdate={edit().onUpdate}
-								onDelete={edit().onDelete}
-							/>
-						</div>
-					)}
-				</Show>
+				<PostEdit post={post} />
 			</header>
 
 			{post.data.content}
 
-			<Show when={onLink}>
-				{(link) => (
-					<footer>
-						<form
-							onSubmit={(e) => {
-								e.preventDefault();
-
-								const form = e.currentTarget;
-								const formData = new FormData(form);
-								const tags = formData.get("tags") as string | null;
-								if (!tags) return;
-								const split = tags.split(",");
-
-								const raw = {
-									ref: {
-										did,
-										rpath: post.rpath,
-									},
-									tags: split,
-									updatedAt: new Date().toISOString(),
-								};
-
-								const parsed = linkDataSchema.safeParse(raw);
-								if (!parsed.success) {
-									console.error("Failed to parse link data:", parsed.error);
-									return;
-								}
-
-								link()(parsed.data);
-
-								form.reset();
-							}}
-						>
-							<input type="text" name="tags" />
-							<button type="submit">Link</button>
-						</form>
-					</footer>
-				)}
-			</Show>
+			<footer>
+				<LinkButton did={did} post={post} links={links} />
+			</footer>
 		</article>
 	);
 }

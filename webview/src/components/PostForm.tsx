@@ -1,28 +1,30 @@
 import { now } from "@atcute/tid";
-import { createSignal } from "solid-js";
+import { createSignal, useContext } from "solid-js";
 import { type PostData, postDataSchema } from "../../@types/types";
+import { daemonContext } from "..";
 
 export default function PostForm({
-	onSubmit,
 	tag,
 	insertTag,
 }: {
-	onSubmit: (post: PostData, rpath: string) => void;
 	tag: () => string;
 	insertTag: (tag: string) => void;
 }) {
 	const [text, setText] = createSignal("");
+	const daemon = useContext(daemonContext);
 
 	return (
 		<form
-			onSubmit={(e) => {
+			onSubmit={async (e) => {
 				e.preventDefault();
+				if (!daemon) return;
 
 				const rpath = `polka.post/${now()}`;
 				const tags = tag().split("/");
 
 				const data: PostData = {
 					content: text(),
+					tags,
 					updatedAt: new Date().toISOString(),
 				};
 
@@ -36,7 +38,9 @@ export default function PostForm({
 					return;
 				}
 
-				onSubmit(parsed.data, rpath);
+				await daemon.daemon.create(rpath, JSON.stringify(parsed.data));
+				await daemon.daemon.commit();
+
 				setText("");
 				insertTag("");
 			}}

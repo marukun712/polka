@@ -25,7 +25,7 @@ export class RepoReader {
 	static async init(did: string) {
 		const doc = await resolve(did);
 		const path = doc.target;
-		const res = await fetch(path);
+		const res = await fetch(path, { cache: "no-store" });
 		const file = await res.arrayBuffer();
 		const store = new ReadOnlyStore(new Uint8Array(file));
 		store.updateIndex();

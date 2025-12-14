@@ -5,11 +5,8 @@ import type { Link, Post } from "../../@types/types";
 
 function collectChildPosts(cy: cytoscape.Core, tagId: string) {
 	const tagNode = cy.getElementById(tagId);
-
 	if (tagNode.empty()) return [];
-
 	const posts = tagNode.successors('node[type="post"]').map((n) => n.data());
-
 	return posts;
 }
 

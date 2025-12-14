@@ -5,15 +5,10 @@ export class DaemonClient {
 		this.url = url;
 	}
 
-	static async init(did: string) {
+	static async init() {
 		try {
 			const res = await fetch("http://localhost:3030/health");
 			if (!res.ok) {
-				return null;
-			}
-			const didRes = await fetch("http://localhost:3030/did");
-			const json = await didRes.json();
-			if (json.did !== did) {
 				return null;
 			}
 			return new DaemonClient("http://localhost:3030/");
@@ -55,5 +50,11 @@ export class DaemonClient {
 			method: "POST",
 		});
 		return await res.json();
+	}
+
+	async getDid() {
+		const res = await fetch(new URL("did", this.url));
+		const json = await res.json();
+		return json.did as string;
 	}
 }

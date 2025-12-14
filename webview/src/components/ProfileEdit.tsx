@@ -1,22 +1,20 @@
-import { createSignal } from "solid-js";
+import { createSignal, useContext } from "solid-js";
 import type { Profile } from "../../@types/types";
+import { daemonContext } from "..";
 
-export default function ProfileEdit({
-	init,
-	onUpdate,
-}: {
-	init: Profile;
-	onUpdate: (profile: Profile) => void;
-}) {
+export default function ProfileEdit({ init }: { init: Profile }) {
 	const [profile, setProfile] = createSignal(init);
+	const daemon = useContext(daemonContext);
 
 	let editDialog!: HTMLDialogElement;
 
 	const openEdit = () => editDialog.showModal();
 	const closeEdit = () => editDialog.close();
 
-	const handleSave = () => {
-		onUpdate(profile());
+	const handleSave = async () => {
+		if (!daemon) return;
+		await daemon.daemon.update("polka.profile/self", JSON.stringify(profile()));
+		await daemon.daemon.commit();
 		closeEdit();
 	};
 
@@ -36,7 +34,12 @@ export default function ProfileEdit({
 			<dialog ref={editDialog}>
 				<article>
 					<header>
-						<button aria-label="Close" rel="prev" onclick={closeEdit}></button>
+						<button
+							aria-label="Close"
+							//@ts-expect-error
+							rel="prev"
+							onclick={closeEdit}
+						></button>
 						<p>
 							<strong>Edit post</strong>
 						</p>
