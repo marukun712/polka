@@ -1,14 +1,17 @@
 import cytoscape, { type ElementDefinition } from "cytoscape";
 import dagre from "cytoscape-dagre";
 import { createEffect, onMount } from "solid-js";
-import type { Feed, FeedItem, Node } from "../../@types/types";
+import type { Feed, FeedItem, Node, Ref } from "../../@types/types";
 
 cytoscape.use(dagre);
 
-const collectChildPosts = (cy: cytoscape.Core, tagId: string) => {
+const collectChildPosts = (cy: cytoscape.Core, tagId: string): Ref[] => {
 	const node = cy.getElementById(tagId);
 	if (node.empty()) return [];
-	return node.successors('node[type="post"]').map((n) => n.data());
+	return node
+		.successors('node[type="post"], node[type="link"]')
+		.map((n) => n.data("ref"))
+		.filter((r): r is Ref => r !== undefined && r !== null);
 };
 
 export default function GraphComponent({
@@ -22,15 +25,30 @@ export default function GraphComponent({
 	follows: Feed[];
 	node: () => Node | null;
 	setNode: (state: Node) => void;
-	setChildren: (children: Set<string>) => void;
+	setChildren: (children: Set<Ref>) => void;
 }) {
 	let container!: HTMLDivElement;
 
 	onMount(() => {
-		const elements = new Set<ElementDefinition>([
-			{ data: { id: "following", label: "following", type: "tag" } },
-		]);
-		const addElement = (data: ElementDefinition) => elements.add(data);
+		const elements = new Map<string, ElementDefinition>();
+
+		const edgeKey = (s: string, t: string) => `edge:${s}->${t}`;
+		const nodeKey = (id: string) => `node:${id}`;
+
+		const addNode = (id: string, data: ElementDefinition) => {
+			elements.set(nodeKey(id), data);
+		};
+
+		const addEdge = (s: string, t: string) => {
+			const key = edgeKey(s, t);
+			if (!elements.has(key)) {
+				elements.set(key, { data: { source: s, target: t } });
+			}
+		};
+
+		addNode("following", {
+			data: { id: "following", label: "following", type: "tag" },
+		});
 
 		const processFeed = (
 			id: string,
@@ -42,13 +60,13 @@ export default function GraphComponent({
 			const graphRootId = rootTag ? `${id}:${rootTag}` : id;
 
 			// ルートノードの作成
-			addElement({
+			addNode(graphRootId, {
 				data: { id: graphRootId, label: rootTag || label, type: "tag" },
 			});
 
 			// rootTag指定がある場合は、"following" ノードと接続する
 			if (rootTag) {
-				addElement({ data: { source: "following", target: graphRootId } });
+				addEdge("following", graphRootId);
 			}
 
 			// 全投稿からタグの親子関係を解析 (データ構造の構築)
@@ -91,15 +109,10 @@ export default function GraphComponent({
 						queue.push(child);
 
 						const childNodeId = `${id}:${child}`;
-						addElement({
+						addNode(childNodeId, {
 							data: { id: childNodeId, label: child, type: "tag" },
 						});
-						addElement({
-							data: {
-								source: `${id}:${currentTag}`,
-								target: childNodeId,
-							},
-						});
+						addEdge(`${id}:${currentTag}`, childNodeId);
 						addedTagNodes.add(childNodeId);
 					});
 				}
@@ -108,8 +121,8 @@ export default function GraphComponent({
 				const rootTags = [...allTags].filter((t) => !childTags.has(t));
 				rootTags.forEach((r) => {
 					const nodeId = `${id}:${r}`;
-					addElement({ data: { id: nodeId, label: r, type: "tag" } });
-					addElement({ data: { source: id, target: nodeId } });
+					addNode(nodeId, { data: { id: nodeId, label: r, type: "tag" } });
+					addEdge(id, nodeId);
 					addedTagNodes.add(nodeId);
 				});
 
@@ -117,10 +130,10 @@ export default function GraphComponent({
 				tagParentMap.forEach((children, parent) => {
 					children.forEach((child) => {
 						const childId = `${id}:${child}`;
-						addElement({ data: { id: childId, label: child, type: "tag" } });
-						addElement({
-							data: { source: `${id}:${parent}`, target: childId },
+						addNode(childId, {
+							data: { id: childId, label: child, type: "tag" },
 						});
+						addEdge(`${id}:${parent}`, childId);
 						addedTagNodes.add(childId);
 					});
 				});
@@ -146,14 +159,15 @@ export default function GraphComponent({
 				}
 
 				const itemId = `${id}:${item.type}:${item.post.rpath}`;
-				addElement({
+				addNode(itemId, {
 					data: {
 						id: itemId,
 						label: item.post.rpath,
 						type: item.type === "post" ? "post" : "link",
+						ref: { did: item.did, rpath: item.rpath },
 					},
 				});
-				addElement({ data: { source: parentId, target: itemId } });
+				addEdge(parentId, itemId);
 			});
 		};
 
@@ -167,7 +181,7 @@ export default function GraphComponent({
 
 		const cy = cytoscape({
 			container,
-			elements: [...elements],
+			elements: [...elements.values()],
 			style: [
 				{
 					selector: "node",
@@ -230,8 +244,7 @@ export default function GraphComponent({
 		createEffect(() => {
 			const n = node();
 			if (!n) return;
-			const pathList = collectChildPosts(cy, n.id);
-			const paths = pathList.map((post) => post.label as string);
+			const paths = collectChildPosts(cy, n.id);
 			setChildren(new Set(paths));
 		});
 

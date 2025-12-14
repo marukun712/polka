@@ -4,10 +4,9 @@ import {
 	type FeedItem,
 	followSchema,
 	linkSchema,
-	type Post,
-	type Profile,
 	postSchema,
 	profileSchema,
+	type Ref,
 } from "../@types/types";
 import { RepoReader } from "../lib/client";
 import { resolve } from "../lib/identity";
@@ -69,14 +68,18 @@ const validateFollows = (follows: GetResult[]) => {
 	});
 };
 
-export const generateFeed = async (did: string): Promise<Feed | null> => {
-	const cachedPost = new Map<string, Post>();
-	const cachedProfile = new Map<string, Profile>();
-
+export const generateFeed = async (
+	did: string,
+	feedCache: Map<Ref, FeedItem>,
+	readerCache: Map<string, RepoReader>,
+): Promise<Feed | null> => {
 	const [reader, identity] = await Promise.all([
 		RepoReader.init(did),
 		resolve(did),
 	]);
+
+	readerCache.set(did, reader);
+
 	const { didKey } = identity;
 
 	const { sig, bytes } = await reader.getCommitToVerify();
@@ -96,30 +99,25 @@ export const generateFeed = async (did: string): Promise<Feed | null> => {
 	const parsedFollows = validateFollows(follows);
 	if (!parsedProfile) return null;
 
-	cachedProfile.set(did, parsedProfile);
-
-	const feed = new Set<FeedItem>();
-	const readerMap = new Map<string, RepoReader>();
-
 	parsedPosts.forEach((post) => {
-		cachedPost.set(post.rpath, post);
-
-		feed.add({
-			type: "post",
-			did,
-			rpath: post.rpath,
-			profile: parsedProfile,
-			tags: post.data.tags,
-			post,
-		});
+		feedCache.set(
+			{ did, rpath: post.rpath },
+			{
+				type: "post",
+				did,
+				rpath: post.rpath,
+				profile: parsedProfile,
+				tags: post.data.tags,
+				post,
+			},
+		);
 	});
 
 	await Promise.all(
 		parsedLinks.map(async (link) => {
-			const reader = readerMap.get(link.data.ref.did);
-			if (!reader) {
+			if (!readerCache.has(link.data.ref.did)) {
 				const reader = await RepoReader.init(link.data.ref.did);
-				readerMap.set(link.data.ref.did, reader);
+				readerCache.set(link.data.ref.did, reader);
 			}
 		}),
 	);
@@ -127,38 +125,34 @@ export const generateFeed = async (did: string): Promise<Feed | null> => {
 	await Promise.all(
 		parsedLinks.map(async (link) => {
 			try {
-				const reader = readerMap.get(link.data.ref.did);
+				const reader = readerCache.get(link.data.ref.did);
 				if (!reader) return;
-				if (cachedPost.has(link.data.ref.rpath)) {
-					const post = cachedPost.get(link.data.ref.rpath);
-					if (!post) return;
-					const profile = cachedProfile.get(link.data.ref.did);
-					if (!profile) return;
-					feed.add({
-						type: "link",
-						did: link.data.ref.did,
-						rpath: link.rpath,
-						tags: link.data.tags,
-						post,
-						profile,
-					});
-					return;
-				}
-				const [post, profile] = await Promise.all([
-					reader.getRecord(link.data.ref.rpath),
-					reader.getRecord("polka.profile/self"),
-				]);
-				const parsedPost = validatePosts([post]);
-				const parsedProfile = validateProfile(profile);
-				if (!parsedPost || !parsedProfile) return;
-				feed.add({
-					type: "link",
+
+				const has = feedCache.has({
 					did: link.data.ref.did,
-					rpath: link.rpath,
-					tags: link.data.tags,
-					post: parsedPost[0],
-					profile: parsedProfile,
+					rpath: link.data.ref.rpath,
 				});
+
+				if (!has) {
+					const [post, profile] = await Promise.all([
+						reader.getRecord(link.data.ref.rpath),
+						reader.getRecord("polka.profile/self"),
+					]);
+					const parsedPost = validatePosts([post]);
+					const parsedProfile = validateProfile(profile);
+					if (!parsedPost || !parsedProfile) return;
+					feedCache.set(
+						{ did: link.data.ref.did, rpath: link.rpath },
+						{
+							type: "link",
+							did: link.data.ref.did,
+							rpath: link.rpath,
+							tags: link.data.tags,
+							post: parsedPost[0],
+							profile: parsedProfile,
+						},
+					);
+				}
 			} catch {
 				return [];
 			}
@@ -170,7 +164,7 @@ export const generateFeed = async (did: string): Promise<Feed | null> => {
 		did,
 		pk: identity.didKey,
 		ownerProfile: parsedProfile,
-		feed: [...feed],
+		feed: [...feedCache.values()],
 		follows: parsedFollows,
 	};
 };

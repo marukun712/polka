@@ -6,9 +6,17 @@ import {
 	Show,
 	useContext,
 } from "solid-js";
-import type { FeedItem, Node } from "../@types/types";
+import {
+	type FeedItem,
+	linkSchema,
+	type Node,
+	postSchema,
+	profileSchema,
+	type Ref,
+} from "../@types/types";
+import { RepoReader } from "../lib/client";
 import { generateFeed } from "../utils/feed";
-import { daemonContext } from ".";
+import { daemonContext, feedCache, readerCache } from ".";
 import FollowForm from "./components/FollowForm";
 import GraphComponent from "./components/Graph";
 import LinkButton from "./components/LinkButton";
@@ -18,27 +26,27 @@ import PostForm from "./components/PostForm";
 import ProfileEdit from "./components/ProfileEdit";
 import Loading from "./components/ui/Loading";
 
-const fetchRepo = async (did: string) => {
-	const allItem: FeedItem[] = [];
-	const feed = await generateFeed(did);
-	feed?.feed.forEach((item) => {
-		allItem.push(item);
-	});
+const fetchRepo = async (
+	did: string,
+	feedCache: Map<Ref, FeedItem>,
+	readerCache: Map<string, RepoReader>,
+) => {
+	const feed = await generateFeed(did, feedCache, readerCache);
 	if (!feed) return null;
 	const followFeeds = await Promise.all(
 		feed.follows.flatMap(async (follow) => {
-			const feed = await generateFeed(follow.data.did);
-			feed?.feed.forEach((item) => {
-				allItem.push(item);
-			});
+			const feed = await generateFeed(follow.data.did, feedCache, readerCache);
 			return feed ? [{ ...feed, rootTag: follow.data.tag }] : [];
 		}),
 	);
-	return { feed, followFeeds: followFeeds.flat(), allItem };
+	return { feed, followFeeds: followFeeds.flat() };
 };
 
 const TopPage: Component = () => {
 	const daemon = useContext(daemonContext);
+	const loadedFeed = useContext(feedCache);
+	const loadedReader = useContext(readerCache);
+
 	if (!daemon) {
 		return (
 			<main class="container">
@@ -47,11 +55,20 @@ const TopPage: Component = () => {
 		);
 	}
 
-	const [res] = createResource(daemon.did, fetchRepo);
+	const [res] = createResource(
+		() => ({
+			did: daemon.did,
+			feedCache: loadedFeed,
+			readerCache: loadedReader,
+		}),
+		async ({ did, feedCache, readerCache }) => {
+			return fetchRepo(did, feedCache, readerCache);
+		},
+	);
 
 	const [filtered, setFiltered] = createSignal<FeedItem[]>([]);
 	const [node, setNode] = createSignal<Node>({ id: "", label: "" });
-	const [children, setChildren] = createSignal<Set<string>>(new Set());
+	const [children, setChildren] = createSignal<Set<Ref>>(new Set());
 
 	createEffect(() => {
 		const r = res();
@@ -59,13 +76,69 @@ const TopPage: Component = () => {
 		setNode({ id: r.feed.id, label: r.feed.ownerProfile.name });
 	});
 
-	createEffect(() => {
-		console.log(children());
-		const items = res()?.allItem ?? [];
-		[...children()].map((c) => {
-			const item = items.find((i) => i.rpath === c);
-			if (item) setFiltered([...filtered(), item]);
-		});
+	const resolveFeedItem = async (ref: Ref): Promise<FeedItem | null> => {
+		const cached = loadedFeed.get(ref);
+		if (cached) return cached;
+
+		let reader = loadedReader.get(ref.did);
+		if (!reader) {
+			reader = await RepoReader.init(ref.did);
+			loadedReader.set(ref.did, reader);
+		}
+
+		const postRecord = await reader.getRecord(ref.rpath);
+		const profileRecord = await reader.getRecord("polka.profile/self");
+		if (!postRecord || !profileRecord) return null;
+
+		const profileParsed = profileSchema.safeParse(
+			JSON.parse(profileRecord.data),
+		);
+		if (!profileParsed.success) return null;
+
+		const postData = {
+			rpath: postRecord.rpath,
+			data: JSON.parse(postRecord.data),
+		};
+
+		const postParsed = postSchema.safeParse(postData);
+		if (postParsed.success) {
+			return {
+				type: "post",
+				did: ref.did,
+				profile: profileParsed.data,
+				rpath: postParsed.data.rpath,
+				tags: postParsed.data.data.tags,
+				post: postParsed.data,
+			};
+		}
+
+		const linkParsed = linkSchema.safeParse(postData);
+		if (!linkParsed.success) return null;
+
+		const target =
+			loadedFeed.get(linkParsed.data.data.ref) ??
+			(await resolveFeedItem(linkParsed.data.data.ref));
+
+		if (!target) return null;
+
+		return {
+			type: "link",
+			did: ref.did,
+			profile: profileParsed.data,
+			rpath: linkParsed.data.rpath,
+			tags: linkParsed.data.data.tags,
+			post: target.post,
+		};
+	};
+
+	createEffect(async () => {
+		const refs = [...children()];
+		if (refs.length === 0) {
+			setFiltered([]);
+			return;
+		}
+		const items = await Promise.all(refs.map((ref) => resolveFeedItem(ref)));
+		setFiltered(items.filter(Boolean) as FeedItem[]);
 	}, [children]);
 
 	return (
@@ -100,7 +173,7 @@ const TopPage: Component = () => {
 
 							<footer>
 								<p>
-									<strong>1 nodes</strong> フォロー中
+									<strong>{f().feed.follows.length} ノード</strong> フォロー中
 								</p>
 							</footer>
 						</article>

@@ -36,7 +36,6 @@ export class DaemonClient {
 	}
 
 	async delete(rpath: string) {
-		console.log(rpath);
 		const res = await fetch(new URL("record", this.url), {
 			method: "DELETE",
 			headers: { "Content-Type": "application/json" },

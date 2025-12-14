@@ -4,6 +4,8 @@ import { render } from "solid-js/web";
 import "solid-devtools";
 import { Route, Router } from "@solidjs/router";
 import { createContext, createResource, Show } from "solid-js";
+import type { FeedItem, Ref } from "../@types/types";
+import type { RepoReader } from "../lib/client";
 import { DaemonClient } from "../lib/daemon";
 import TopPage from "./Top";
 import UserPage from "./User";
@@ -29,15 +31,26 @@ export const daemonContext = createContext<{
 	daemon: DaemonClient;
 } | null>(null);
 
+export const feedCache = createContext<Map<Ref, FeedItem>>(
+	new Map<Ref, FeedItem>(),
+);
+export const readerCache = createContext<Map<string, RepoReader>>(
+	new Map<string, RepoReader>(),
+);
+
 render(
 	() => (
 		<Show when={daemon()}>
 			{(d) => (
 				<daemonContext.Provider value={d()}>
-					<Router>
-						<Route path="/" component={TopPage} />
-						<Route path="/user" component={UserPage} />
-					</Router>
+					<feedCache.Provider value={new Map<Ref, FeedItem>()}>
+						<readerCache.Provider value={new Map<string, RepoReader>()}>
+							<Router>
+								<Route path="/" component={TopPage} />
+								<Route path="/user" component={UserPage} />
+							</Router>
+						</readerCache.Provider>
+					</feedCache.Provider>
 				</daemonContext.Provider>
 			)}
 		</Show>
