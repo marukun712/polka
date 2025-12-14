@@ -85,6 +85,7 @@ const UserPage: Component = () => {
 							selectNode={selectNode}
 							insertTag={insertTag}
 							selectChildren={selectChildren}
+							follows={r().follows || []}
 						/>
 
 						<article>

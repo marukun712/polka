@@ -3,14 +3,9 @@ import { createSignal, useContext } from "solid-js";
 import { type PostData, postDataSchema } from "../../@types/types";
 import { daemonContext } from "..";
 
-export default function PostForm({
-	tag,
-	insertTag,
-}: {
-	tag: () => string;
-	insertTag: (tag: string) => void;
-}) {
+export default function PostForm() {
 	const [text, setText] = createSignal("");
+	const [tag, setTag] = createSignal("");
 	const daemon = useContext(daemonContext);
 
 	return (
@@ -42,7 +37,7 @@ export default function PostForm({
 				await daemon.daemon.commit();
 
 				setText("");
-				insertTag("");
+				setTag("");
 			}}
 		>
 			<input
@@ -55,7 +50,7 @@ export default function PostForm({
 				type="text"
 				value={tag()}
 				placeholder="Enter your tags..."
-				onInput={(e) => insertTag(e.currentTarget.value)}
+				onInput={(e) => setTag(e.currentTarget.value)}
 			/>
 			<button type="submit">Post</button>
 		</form>

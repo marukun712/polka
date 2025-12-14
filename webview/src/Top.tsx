@@ -6,9 +6,10 @@ import {
 	Show,
 	useContext,
 } from "solid-js";
-import type { FeedItem } from "../@types/types";
+import type { FeedItem, Node } from "../@types/types";
 import { generateFeed } from "../utils/feed";
 import { daemonContext } from ".";
+import FollowForm from "./components/FollowForm";
 import GraphComponent from "./components/Graph";
 import LinkButton from "./components/LinkButton";
 import PostCard from "./components/PostCard";
@@ -18,8 +19,22 @@ import ProfileEdit from "./components/ProfileEdit";
 import Loading from "./components/ui/Loading";
 
 const fetchRepo = async (did: string) => {
+	const allItem: FeedItem[] = [];
 	const feed = await generateFeed(did);
-	return feed;
+	feed?.feed.forEach((item) => {
+		allItem.push(item);
+	});
+	if (!feed) return null;
+	const followFeeds = await Promise.all(
+		feed.follows.flatMap(async (follow) => {
+			const feed = await generateFeed(follow.data.did);
+			feed?.feed.forEach((item) => {
+				allItem.push(item);
+			});
+			return feed ? [{ ...feed, rootTag: follow.data.tag }] : [];
+		}),
+	);
+	return { feed, followFeeds: followFeeds.flat(), allItem };
 };
 
 const TopPage: Component = () => {
@@ -32,30 +47,36 @@ const TopPage: Component = () => {
 		);
 	}
 
-	const [repo] = createResource(daemon.did, fetchRepo);
+	const [res] = createResource(daemon.did, fetchRepo);
 
-	const [tag, insertTag] = createSignal("");
 	const [filtered, setFiltered] = createSignal<FeedItem[]>([]);
-	const [children, selectChildren] = createSignal<string[]>([]);
-	const [node, selectNode] = createSignal<string>("root");
+	const [node, setNode] = createSignal<Node>({ id: "", label: "" });
+	const [children, setChildren] = createSignal<Set<string>>(new Set());
 
 	createEffect(() => {
-		const r = repo();
-		const feed = r ? [...r.feed] : [];
-		const filtered =
-			feed.filter((item) => children().includes(item.post.rpath)) ?? [];
-		setFiltered(filtered);
+		const r = res();
+		if (!r) return;
+		setNode({ id: r.feed.id, label: r.feed.ownerProfile.name });
 	});
+
+	createEffect(() => {
+		console.log(children());
+		const items = res()?.allItem ?? [];
+		[...children()].map((c) => {
+			const item = items.find((i) => i.rpath === c);
+			if (item) setFiltered([...filtered(), item]);
+		});
+	}, [children]);
 
 	return (
 		<main class="container">
-			<Show when={repo()} fallback={<Loading />}>
-				{(r) => (
+			<Show when={res()} fallback={<Loading />}>
+				{(f) => (
 					<>
 						<article>
-							<Show when={r().ownerProfile.banner}>
+							<Show when={f().feed.ownerProfile.banner}>
 								<img
-									src={r().ownerProfile.banner}
+									src={f().feed.ownerProfile.banner}
 									alt="Banner"
 									style="width: 100%; height: 300px; object-fit: cover;"
 								/>
@@ -64,18 +85,18 @@ const TopPage: Component = () => {
 								<hgroup>
 									<figure>
 										<img
-											src={r().ownerProfile.icon}
-											alt={r().ownerProfile.name}
+											src={f().feed.ownerProfile.icon}
+											alt={f().feed.ownerProfile.name}
 											style="border-radius: 50%; width: 150px; height: 150px; object-fit: cover;"
 										/>
 									</figure>
-									<h1>{r().ownerProfile.name}</h1>
-									<p>{r().pk}</p>
+									<h1>{f().feed.ownerProfile.name}</h1>
+									<p>{f().feed.pk}</p>
 								</hgroup>
-								<ProfileEdit init={r().ownerProfile} />
+								<ProfileEdit init={f().feed.ownerProfile} />
 							</header>
 
-							<p>{r().ownerProfile.description}</p>
+							<p>{f().feed.ownerProfile.description}</p>
 
 							<footer>
 								<p>
@@ -84,31 +105,29 @@ const TopPage: Component = () => {
 							</footer>
 						</article>
 
-						<PostForm tag={tag} insertTag={insertTag} />
+						<PostForm />
+						<FollowForm />
 
 						<GraphComponent
-							feed={[...r().feed]}
-							root={r().ownerProfile.name}
+							feed={f().feed}
+							follows={f().followFeeds}
 							node={node}
-							selectNode={selectNode}
-							insertTag={insertTag}
-							selectChildren={selectChildren}
+							setNode={setNode}
+							setChildren={setChildren}
 						/>
 
 						<article>
 							<header>
-								<Show when={node() !== "root"}>
-									<h1>Posts: {node()}</h1>
-								</Show>
+								<h1>Posts: {node()?.label}</h1>
 							</header>
-							{filtered()
+							{[...filtered()]
 								.sort(
 									(a, b) =>
 										new Date(b.post.data.updatedAt).getTime() -
 										new Date(a.post.data.updatedAt).getTime(),
 								)
 								.map((item) => {
-									const links = r().feed.filter(
+									const links = [...filtered()].filter(
 										(link) =>
 											link.type === "link" &&
 											link.post.rpath === item.post.rpath,

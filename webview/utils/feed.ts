@@ -1,6 +1,8 @@
 import { verifySignature } from "@atproto/crypto";
 import {
+	type Feed,
 	type FeedItem,
+	followSchema,
 	linkSchema,
 	type Post,
 	type Profile,
@@ -52,7 +54,22 @@ const validateLinks = (links: GetResult[]) => {
 	});
 };
 
-export const generateFeed = async (did: string) => {
+const validateFollows = (follows: GetResult[]) => {
+	return follows.flatMap((follow) => {
+		try {
+			const json = JSON.parse(follow.data);
+			const parsed = followSchema.safeParse({
+				rpath: follow.rpath,
+				data: json,
+			});
+			return parsed.success ? [parsed.data] : [];
+		} catch {
+			return [];
+		}
+	});
+};
+
+export const generateFeed = async (did: string): Promise<Feed | null> => {
 	const cachedPost = new Map<string, Post>();
 	const cachedProfile = new Map<string, Profile>();
 
@@ -66,15 +83,17 @@ export const generateFeed = async (did: string) => {
 	const verified = await verifySignature(didKey, bytes, sig);
 	if (!verified) throw new Error("Failed to verify signature");
 
-	const [profile, posts, links] = await Promise.all([
+	const [profile, posts, links, follows] = await Promise.all([
 		reader.getRecord("polka.profile/self"),
 		reader.getRecords("polka.post"),
 		reader.getRecords("polka.link"),
+		reader.getRecords("polka.follow"),
 	]);
 
 	const parsedPosts = validatePosts(posts);
 	const parsedProfile = validateProfile(profile);
 	const parsedLinks = validateLinks(links);
+	const parsedFollows = validateFollows(follows);
 	if (!parsedProfile) return null;
 
 	cachedProfile.set(did, parsedProfile);
@@ -147,9 +166,11 @@ export const generateFeed = async (did: string) => {
 	);
 
 	return {
+		id: crypto.randomUUID(),
 		did,
 		pk: identity.didKey,
 		ownerProfile: parsedProfile,
 		feed: [...feed],
+		follows: parsedFollows,
 	};
 };

@@ -1,10 +1,22 @@
 import { z } from "zod";
 
+export type Node = { id: string; label: string };
+
+export type Feed = {
+	id: string;
+	did: string;
+	pk: string;
+	ownerProfile: Profile;
+	feed: FeedItem[];
+	follows: Follow[];
+	rootTag?: string;
+};
+
 export type FeedItem = {
 	type: "post" | "link";
 	did: string;
-	rpath: string;
 	profile: Profile;
+	rpath: string;
 	tags: string[];
 	post: Post;
 };
@@ -51,9 +63,26 @@ export const linkSchema = z
 	})
 	.strict();
 
+export const followDataSchema = z
+	.object({
+		did: z.string().min(1),
+		tag: z.string().min(1),
+		updatedAt: z.iso.datetime(),
+	})
+	.strict();
+
+export const followSchema = z
+	.object({
+		rpath: z.string(),
+		data: followDataSchema,
+	})
+	.strict();
+
 export type Profile = z.infer<typeof profileSchema>;
 export type Post = z.infer<typeof postSchema>;
 export type PostData = z.infer<typeof postDataSchema>;
 export type Link = z.infer<typeof linkSchema>;
 export type LinkData = z.infer<typeof linkDataSchema>;
 export type Ref = z.infer<typeof refSchema>;
+export type Follow = z.infer<typeof followSchema>;
+export type FollowData = z.infer<typeof followDataSchema>;
