@@ -1,6 +1,6 @@
 import { now } from "@atcute/tid";
 import { Show, useContext } from "solid-js";
-import { type Link, linkDataSchema, type Post } from "../../@types/types";
+import { linkDataSchema, type Post } from "../../@types/types";
 import { daemonContext } from "..";
 
 export default function LinkButton({
@@ -10,24 +10,21 @@ export default function LinkButton({
 }: {
 	did: string;
 	post: Post;
-	links: Link[];
+	links: string[];
 }) {
 	const daemon = useContext(daemonContext);
-	const linked = links.filter(
-		(link) => link.data.ref.did === did && link.data.ref.rpath === post.rpath,
-	);
 
 	if (daemon)
 		return (
 			<Show
-				when={linked.length === 0}
+				when={links.length === 0}
 				fallback={
 					<form
 						onSubmit={async (e) => {
 							e.preventDefault();
 
 							await Promise.all(
-								linked.map((link) => daemon.daemon.delete(link.rpath)),
+								links.map((link) => daemon.daemon.delete(link)),
 							);
 
 							await daemon.daemon.commit();

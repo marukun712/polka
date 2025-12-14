@@ -1,4 +1,3 @@
-import { verifySignature } from "@atproto/crypto";
 import {
 	type Component,
 	createEffect,
@@ -7,15 +6,8 @@ import {
 	Show,
 	useContext,
 } from "solid-js";
-import {
-	type FeedItem,
-	type Link,
-	linkSchema,
-	postSchema,
-	profileSchema,
-} from "../@types/types";
-import { RepoReader } from "../lib/client";
-import { resolve, resolveRecord } from "../lib/identity";
+import type { FeedItem } from "../@types/types";
+import { generateFeed } from "../utils/feed";
 import { daemonContext } from ".";
 import GraphComponent from "./components/Graph";
 import PostCard from "./components/PostCard";
@@ -24,101 +16,8 @@ import ProfileEdit from "./components/ProfileEdit";
 import Loading from "./components/ui/Loading";
 
 const fetchRepo = async (did: string) => {
-	const reader = await RepoReader.init(did);
-	const { didKey } = await resolve(did);
-
-	const { sig, bytes } = await reader.getCommitToVerify();
-	const verified = await verifySignature(didKey, bytes, sig);
-	if (!verified) throw new Error("Failed to verify signature");
-
-	const profile = await reader.getRecord("polka.profile/self");
-	const posts = await reader.getRecords("polka.post");
-	const links = await reader.getRecords("polka.link");
-
-	const parsedProfile = profileSchema.safeParse(JSON.parse(profile.data));
-	if (!parsedProfile.success) {
-		console.error("Failed to parse profile:", parsedProfile.error);
-		return;
-	}
-
-	const feed = new Set<FeedItem>();
-
-	const parsedPosts = posts
-		.map((post) => {
-			try {
-				return postSchema.safeParse({
-					rpath: post.rpath,
-					data: JSON.parse(post.data),
-				}).data;
-			} catch (e) {
-				console.error(e);
-				return null;
-			}
-		})
-		.filter((post) => post !== null && post !== undefined);
-
-	parsedPosts.forEach((post) =>
-		feed.add({
-			type: "post",
-			profile: parsedProfile.data,
-			tags: post.data.tags,
-			post,
-		}),
-	);
-
-	const parsedLinks = links
-		.map((link) => {
-			try {
-				return linkSchema.safeParse({
-					rpath: link.rpath,
-					data: JSON.parse(link.data),
-				}).data;
-			} catch (e) {
-				console.error(e);
-				return null;
-			}
-		})
-		.filter((link) => link !== null && link !== undefined);
-
-	const postToLinks = new Map<string, Link[]>();
-
-	await Promise.all(
-		parsedLinks.map(async (link) => {
-			const rpath = link.data.ref.rpath;
-			const post = await resolveRecord(link.data.ref.did, link.data.ref.rpath);
-			const profile = await resolveRecord(
-				link.data.ref.did,
-				"polka.profile/self",
-			);
-			if (!post || !profile) return;
-			const parsedPost = postSchema.safeParse({
-				rpath: post.rpath,
-				data: JSON.parse(post.data),
-			});
-			const parsedProfile = profileSchema.safeParse(JSON.parse(profile.data));
-			if (parsedPost.success && parsedProfile.success) {
-				feed.add({
-					type: "link",
-					tags: link.data.tags,
-					post: parsedPost.data,
-					profile: parsedProfile.data,
-				});
-				if (postToLinks.has(rpath)) {
-					postToLinks.get(rpath)?.push(link);
-				} else {
-					postToLinks.set(rpath, [link]);
-				}
-			}
-		}),
-	);
-
-	return {
-		didKey,
-		profile: parsedProfile.data,
-		feed,
-		postToLinks,
-		reader,
-	};
+	const feed = await generateFeed(did);
+	return feed;
 };
 
 const TopPage: Component = () => {
@@ -141,10 +40,8 @@ const TopPage: Component = () => {
 	createEffect(() => {
 		const r = repo();
 		const feed = r ? [...r.feed] : [];
-		console.log(feed);
 		const filtered =
 			feed.filter((item) => children().includes(item.post.rpath)) ?? [];
-		console.log(filtered);
 		setFiltered(filtered);
 	});
 
@@ -158,18 +55,18 @@ const TopPage: Component = () => {
 								<hgroup>
 									<figure>
 										<img
-											src={r().profile.icon}
-											alt={r().profile.name}
+											src={r().ownerProfile.icon}
+											alt={r().ownerProfile.name}
 											style="border-radius: 50%; width: 150px; height: 150px; object-fit: cover;"
 										/>
 									</figure>
-									<h1>{r().profile.name}</h1>
+									<h1>{r().ownerProfile.name}</h1>
 									<p>{daemon.did}</p>
 								</hgroup>
-								<ProfileEdit init={r().profile} />
+								<ProfileEdit init={r().ownerProfile} />
 							</header>
 
-							<p>{r().profile.description}</p>
+							<p>{r().ownerProfile.description}</p>
 
 							<footer>
 								<p>
@@ -182,7 +79,7 @@ const TopPage: Component = () => {
 
 						<GraphComponent
 							feed={[...r().feed]}
-							root={r().profile.name}
+							root={r().ownerProfile.name}
 							node={node}
 							selectNode={selectNode}
 							insertTag={insertTag}
@@ -202,14 +99,13 @@ const TopPage: Component = () => {
 										new Date(a.post.data.updatedAt).getTime(),
 								)
 								.map((item) => {
-									const links = r().postToLinks.get(item.post.rpath);
-									return (
-										<PostCard
-											did={r().reader.getDid()}
-											item={item}
-											links={links ?? []}
-										/>
+									const links = r().feed.filter(
+										(link) =>
+											link.type === "link" &&
+											link.post.rpath === item.post.rpath,
 									);
+									const path = links.map((link) => link.rpath);
+									return <PostCard did={r().did} item={item} links={path} />;
 								})}
 						</article>
 					</>

@@ -1,6 +1,6 @@
 import { IoLink } from "solid-icons/io";
 import { Show } from "solid-js";
-import type { FeedItem, Link } from "../../@types/types";
+import type { FeedItem } from "../../@types/types";
 import LinkButton from "./LinkButton";
 import PostEdit from "./PostEdit";
 
@@ -11,7 +11,7 @@ export default function PostCard({
 }: {
 	did: string;
 	item: FeedItem;
-	links: Link[];
+	links: string[];
 }) {
 	return (
 		<article>
