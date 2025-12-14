@@ -1,56 +1,150 @@
-import { useSearchParams } from "@solidjs/router";
 import {
 	type Component,
 	createEffect,
 	createResource,
 	createSignal,
 	Show,
+	useContext,
 } from "solid-js";
-import type { FeedItem } from "../@types/types";
+import {
+	type FeedItem,
+	linkSchema,
+	type Node,
+	postSchema,
+	profileSchema,
+	type Ref,
+} from "../@types/types";
+import { RepoReader } from "../lib/client";
 import { generateFeed } from "../utils/feed";
+import { daemonContext, feedCache, readerCache } from ".";
 import GraphComponent from "./components/Graph";
 import PostCard from "./components/PostCard";
 import Loading from "./components/ui/Loading";
 
-const fetchRepo = async (did: string) => {
-	const feed = await generateFeed(did);
-	return feed;
+const fetchRepo = async (
+	did: string,
+	feedCache: Map<Ref, FeedItem>,
+	readerCache: Map<string, RepoReader>,
+) => {
+	const feed = await generateFeed(did, feedCache, readerCache);
+	if (!feed) return null;
+	const followFeeds = await Promise.all(
+		feed.follows.flatMap(async (follow) => {
+			const feed = await generateFeed(follow.data.did, feedCache, readerCache);
+			return feed ? [{ ...feed, rootTag: follow.data.tag }] : [];
+		}),
+	);
+	return { feed, followFeeds: followFeeds.flat() };
 };
 
-const UserPage: Component = () => {
-	const [params] = useSearchParams();
-	const did = params.did;
-	if (!did || typeof did !== "string") {
+const TopPage: Component = () => {
+	const daemon = useContext(daemonContext);
+	const loadedFeed = useContext(feedCache);
+	const loadedReader = useContext(readerCache);
+
+	if (!daemon) {
 		return (
 			<main class="container">
-				<h1>Invalid did</h1>
+				<h1>Please start daemon</h1>
 			</main>
 		);
 	}
-	const [repo] = createResource(did, fetchRepo);
 
-	const [_tag, insertTag] = createSignal("");
+	const [res] = createResource(
+		() => ({
+			did: daemon.did,
+			feedCache: loadedFeed,
+			readerCache: loadedReader,
+		}),
+		async ({ did, feedCache, readerCache }) => {
+			return fetchRepo(did, feedCache, readerCache);
+		},
+	);
+
 	const [filtered, setFiltered] = createSignal<FeedItem[]>([]);
-	const [children, selectChildren] = createSignal<string[]>([]);
-	const [node, selectNode] = createSignal<string>("root");
+	const [node, setNode] = createSignal<Node>({ id: "", label: "" });
+	const [children, setChildren] = createSignal<Set<Ref>>(new Set());
 
 	createEffect(() => {
-		const r = repo();
-		const feed = r ? [...r.feed] : [];
-		const filtered =
-			feed.filter((item) => children().includes(item.post.rpath)) ?? [];
-		setFiltered(filtered);
+		const r = res();
+		if (!r) return;
+		setNode({ id: r.feed.id, label: r.feed.ownerProfile.name });
 	});
+
+	const resolveFeedItem = async (ref: Ref): Promise<FeedItem | null> => {
+		const cached = loadedFeed.get(ref);
+		if (cached) return cached;
+
+		let reader = loadedReader.get(ref.did);
+		if (!reader) {
+			reader = await RepoReader.init(ref.did);
+			loadedReader.set(ref.did, reader);
+		}
+
+		const postRecord = await reader.getRecord(ref.rpath);
+		const profileRecord = await reader.getRecord("polka.profile/self");
+		if (!postRecord || !profileRecord) return null;
+
+		const profileParsed = profileSchema.safeParse(
+			JSON.parse(profileRecord.data),
+		);
+		if (!profileParsed.success) return null;
+
+		const postData = {
+			rpath: postRecord.rpath,
+			data: JSON.parse(postRecord.data),
+		};
+
+		const postParsed = postSchema.safeParse(postData);
+		if (postParsed.success) {
+			return {
+				type: "post",
+				did: ref.did,
+				profile: profileParsed.data,
+				rpath: postParsed.data.rpath,
+				tags: postParsed.data.data.tags,
+				post: postParsed.data,
+			};
+		}
+
+		const linkParsed = linkSchema.safeParse(postData);
+		if (!linkParsed.success) return null;
+
+		const target =
+			loadedFeed.get(linkParsed.data.data.ref) ??
+			(await resolveFeedItem(linkParsed.data.data.ref));
+
+		if (!target) return null;
+
+		return {
+			type: "link",
+			did: ref.did,
+			profile: profileParsed.data,
+			rpath: linkParsed.data.rpath,
+			tags: linkParsed.data.data.tags,
+			post: target.post,
+		};
+	};
+
+	createEffect(async () => {
+		const refs = [...children()];
+		if (refs.length === 0) {
+			setFiltered([]);
+			return;
+		}
+		const items = await Promise.all(refs.map((ref) => resolveFeedItem(ref)));
+		setFiltered(items.filter(Boolean) as FeedItem[]);
+	}, [children]);
 
 	return (
 		<main class="container">
-			<Show when={repo()} fallback={<Loading />}>
-				{(r) => (
+			<Show when={res()} fallback={<Loading />}>
+				{(f) => (
 					<>
 						<article>
-							<Show when={r().ownerProfile.banner}>
+							<Show when={f().feed.ownerProfile.banner}>
 								<img
-									src={r().ownerProfile.banner}
+									src={f().feed.ownerProfile.banner}
 									alt="Banner"
 									style="width: 100%; height: 300px; object-fit: cover;"
 								/>
@@ -59,42 +153,38 @@ const UserPage: Component = () => {
 								<hgroup>
 									<figure>
 										<img
-											src={r().ownerProfile.icon}
-											alt={r().ownerProfile.name}
+											src={f().feed.ownerProfile.icon}
+											alt={f().feed.ownerProfile.name}
 											style="border-radius: 50%; width: 150px; height: 150px; object-fit: cover;"
 										/>
 									</figure>
-									<h1>{r().ownerProfile.name}</h1>
-									<p>{r().pk}</p>
+									<h1>{f().feed.ownerProfile.name}</h1>
+									<p>{f().feed.pk}</p>
 								</hgroup>
 							</header>
 
-							<p>{r().ownerProfile.description}</p>
+							<p>{f().feed.ownerProfile.description}</p>
 
 							<footer>
 								<p>
-									<strong>1 nodes</strong> フォロー中
+									<strong>{f().feed.follows.length} ノード</strong> フォロー中
 								</p>
 							</footer>
 						</article>
 
 						<GraphComponent
-							feed={[...r().feed]}
-							root={r().ownerProfile.name}
+							feed={f().feed}
+							follows={f().followFeeds}
 							node={node}
-							selectNode={selectNode}
-							insertTag={insertTag}
-							selectChildren={selectChildren}
-							follows={r().follows || []}
+							setNode={setNode}
+							setChildren={setChildren}
 						/>
 
 						<article>
 							<header>
-								<Show when={node() !== "root"}>
-									<h1>Posts: {node()}</h1>
-								</Show>
+								<h1>Posts: {node()?.label}</h1>
 							</header>
-							{filtered()
+							{[...filtered()]
 								.sort(
 									(a, b) =>
 										new Date(b.post.data.updatedAt).getTime() -
@@ -111,4 +201,4 @@ const UserPage: Component = () => {
 	);
 };
 
-export default UserPage;
+export default TopPage;
