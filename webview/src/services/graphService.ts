@@ -136,6 +136,8 @@ export function createGraphElements(
 					// rootTagモードで親が見つからない場合はこの投稿を表示しない
 					return;
 				}
+			} else if (rootTag) {
+				return;
 			}
 
 			const itemId = `${id}:${item.type}:${item.post.rpath}`;
@@ -147,6 +149,7 @@ export function createGraphElements(
 					ref: { did: item.did, rpath: item.rpath },
 				},
 			});
+
 			addEdge(parentId, itemId);
 		});
 	};
