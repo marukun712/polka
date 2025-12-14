@@ -6,6 +6,7 @@ import { Route, Router } from "@solidjs/router";
 import { createContext, createResource, Show } from "solid-js";
 import { DaemonClient } from "../lib/daemon";
 import TopPage from "./Top";
+import UserPage from "./User";
 
 const root = document.getElementById("root");
 
@@ -35,6 +36,7 @@ render(
 				<daemonContext.Provider value={d()}>
 					<Router>
 						<Route path="/" component={TopPage} />
+						<Route path="/user" component={UserPage} />
 					</Router>
 				</daemonContext.Provider>
 			)}

@@ -87,6 +87,7 @@ export const generateFeed = async (did: string) => {
 
 		feed.add({
 			type: "post",
+			did,
 			rpath: post.rpath,
 			profile: parsedProfile,
 			tags: post.data.tags,
@@ -116,6 +117,7 @@ export const generateFeed = async (did: string) => {
 					if (!profile) return;
 					feed.add({
 						type: "link",
+						did: link.data.ref.did,
 						rpath: link.rpath,
 						tags: link.data.tags,
 						post,
@@ -132,6 +134,7 @@ export const generateFeed = async (did: string) => {
 				if (!parsedPost || !parsedProfile) return;
 				feed.add({
 					type: "link",
+					did: link.data.ref.did,
 					rpath: link.rpath,
 					tags: link.data.tags,
 					post: parsedPost[0],
@@ -145,6 +148,7 @@ export const generateFeed = async (did: string) => {
 
 	return {
 		did,
+		pk: identity.didKey,
 		ownerProfile: parsedProfile,
 		feed: [...feed],
 	};

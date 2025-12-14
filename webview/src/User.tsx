@@ -1,20 +1,15 @@
+import { useSearchParams } from "@solidjs/router";
 import {
 	type Component,
 	createEffect,
 	createResource,
 	createSignal,
 	Show,
-	useContext,
 } from "solid-js";
 import type { FeedItem } from "../@types/types";
 import { generateFeed } from "../utils/feed";
-import { daemonContext } from ".";
 import GraphComponent from "./components/Graph";
-import LinkButton from "./components/LinkButton";
 import PostCard from "./components/PostCard";
-import PostEdit from "./components/PostEdit";
-import PostForm from "./components/PostForm";
-import ProfileEdit from "./components/ProfileEdit";
 import Loading from "./components/ui/Loading";
 
 const fetchRepo = async (did: string) => {
@@ -22,19 +17,19 @@ const fetchRepo = async (did: string) => {
 	return feed;
 };
 
-const TopPage: Component = () => {
-	const daemon = useContext(daemonContext);
-	if (!daemon) {
+const UserPage: Component = () => {
+	const [params] = useSearchParams();
+	const did = params.did;
+	if (!did || typeof did !== "string") {
 		return (
 			<main class="container">
-				<h1>Please start daemon</h1>
+				<h1>Invalid did</h1>
 			</main>
 		);
 	}
+	const [repo] = createResource(did, fetchRepo);
 
-	const [repo] = createResource(daemon.did, fetchRepo);
-
-	const [tag, insertTag] = createSignal("");
+	const [_tag, insertTag] = createSignal("");
 	const [filtered, setFiltered] = createSignal<FeedItem[]>([]);
 	const [children, selectChildren] = createSignal<string[]>([]);
 	const [node, selectNode] = createSignal<string>("root");
@@ -72,7 +67,6 @@ const TopPage: Component = () => {
 									<h1>{r().ownerProfile.name}</h1>
 									<p>{r().pk}</p>
 								</hgroup>
-								<ProfileEdit init={r().ownerProfile} />
 							</header>
 
 							<p>{r().ownerProfile.description}</p>
@@ -83,8 +77,6 @@ const TopPage: Component = () => {
 								</p>
 							</footer>
 						</article>
-
-						<PostForm tag={tag} insertTag={insertTag} />
 
 						<GraphComponent
 							feed={[...r().feed]}
@@ -107,27 +99,9 @@ const TopPage: Component = () => {
 										new Date(b.post.data.updatedAt).getTime() -
 										new Date(a.post.data.updatedAt).getTime(),
 								)
-								.map((item) => {
-									const links = r().feed.filter(
-										(link) =>
-											link.type === "link" &&
-											link.post.rpath === item.post.rpath,
-									);
-									const path = links.map((link) => link.rpath);
-									return (
-										<PostCard
-											item={item}
-											headerAction={<PostEdit post={item.post} />}
-											footerAction={
-												<LinkButton
-													did={item.did}
-													links={path}
-													post={item.post}
-												/>
-											}
-										/>
-									);
-								})}
+								.map((item) => (
+									<PostCard item={item} />
+								))}
 						</article>
 					</>
 				)}
@@ -136,4 +110,4 @@ const TopPage: Component = () => {
 	);
 };
 
-export default TopPage;
+export default UserPage;

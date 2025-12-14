@@ -2,6 +2,7 @@ import { z } from "zod";
 
 export type FeedItem = {
 	type: "post" | "link";
+	did: string;
 	rpath: string;
 	profile: Profile;
 	tags: string[];
