@@ -1,5 +1,6 @@
 import { type Component, createEffect, createSignal, Show } from "solid-js";
 import FollowForm from "../components/FollowForm";
+import FollowList from "../components/FollowList";
 import PostEdit from "../components/forms/PostEditForm";
 import ProfileEdit from "../components/forms/ProfileEditForm";
 import GraphComponent from "../components/graph/Graph";
@@ -33,7 +34,7 @@ const TopPage: Component = () => {
 					<>
 						<ProfileHeader
 							profile={f().feed.ownerProfile}
-							publicKey={f().feed.pk}
+							did={f().feed.did}
 							followCount={f().feed.follows.length}
 							isOwner={true}
 							headerAction={<ProfileEdit init={f().feed.ownerProfile} />}
@@ -41,6 +42,7 @@ const TopPage: Component = () => {
 
 						<PostForm />
 						<FollowForm />
+						<FollowList follows={f().feed.follows} />
 
 						<GraphComponent
 							feed={f().feed}

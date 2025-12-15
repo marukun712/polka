@@ -3,7 +3,7 @@ import type { Profile } from "../../types";
 
 type ProfileHeaderProps = {
 	profile: Profile;
-	publicKey: string;
+	did: string;
 	followCount: number;
 	isOwner?: boolean;
 	headerAction?: JSX.Element;
@@ -29,7 +29,7 @@ export const ProfileHeader: Component<ProfileHeaderProps> = (props) => {
 						/>
 					</figure>
 					<h1>{props.profile.name}</h1>
-					<p>{props.publicKey}</p>
+					<p>{props.did}</p>
 				</hgroup>
 				<Show when={props.isOwner}>{props.headerAction}</Show>
 			</header>

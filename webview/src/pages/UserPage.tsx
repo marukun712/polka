@@ -32,7 +32,7 @@ const UserPage: Component = () => {
 					<>
 						<ProfileHeader
 							profile={f().feed.ownerProfile}
-							publicKey={f().feed.pk}
+							did={f().feed.did}
 							followCount={f().feed.follows.length}
 							isOwner={false}
 						/>
