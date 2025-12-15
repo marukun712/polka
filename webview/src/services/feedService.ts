@@ -17,6 +17,8 @@ export const generateFeed = async (
 	feedCache: Map<Ref, FeedItem>,
 	readerCache: Map<string, RepoReader>,
 ): Promise<Feed | null> => {
+	const feed = new Map<Ref, FeedItem>();
+
 	const [reader, identity] = await Promise.all([
 		RepoReader.init(did),
 		resolve(did),
@@ -58,6 +60,18 @@ export const generateFeed = async (
 				post,
 			},
 		);
+
+		feed.set(
+			{ did, rpath: post.rpath },
+			{
+				type: "post",
+				did,
+				rpath: post.rpath,
+				profile: parsedProfile,
+				tags: post.data.tags,
+				post,
+			},
+		);
 	});
 
 	// リンク先のリポジトリリーダーを事前に初期化
@@ -77,10 +91,14 @@ export const generateFeed = async (
 				const reader = readerCache.get(link.data.ref.did);
 				if (!reader) return;
 
-				const has = feedCache.has({
+				const has = feedCache.get({
 					did: link.data.ref.did,
 					rpath: link.data.ref.rpath,
 				});
+
+				if (has) {
+					feed.set({ did: link.data.ref.did, rpath: link.rpath }, has);
+				}
 
 				if (!has) {
 					const [post, profile] = await Promise.all([
@@ -104,6 +122,18 @@ export const generateFeed = async (
 							profile: parsedProfile,
 						},
 					);
+
+					feed.set(
+						{ did: link.data.ref.did, rpath: link.rpath },
+						{
+							type: "link",
+							did: link.data.ref.did,
+							rpath: link.rpath,
+							tags: link.data.tags,
+							post: parsedPost[0],
+							profile: parsedProfile,
+						},
+					);
 				}
 			} catch {
 				// リンク先の取得に失敗しても処理を継続
@@ -117,7 +147,7 @@ export const generateFeed = async (
 		did,
 		pk: identity.didKey,
 		ownerProfile: parsedProfile,
-		feed: [...feedCache.values()],
+		feed: [...feed.values()],
 		follows: parsedFollows,
 	};
 };
