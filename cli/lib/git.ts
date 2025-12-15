@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 export const POLKA_REPO_PATH = join(homedir(), ".polka/repo");
-export const POLKA_CAR_PATH = join(POLKA_REPO_PATH, "repo.car");
+export const POLKA_CAR_PATH = join(POLKA_REPO_PATH, "polka", "repo.car");
 
 function sh(cmd: string, cwd = POLKA_REPO_PATH) {
 	return execSync(cmd, { cwd, stdio: "inherit" });
