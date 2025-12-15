@@ -11,8 +11,7 @@
 		"check": "biome check ./",
 		"check:fix": "biome check --write ./",
 		"transpile": "npx jco transpile wasm/repo.wasm -o dist/transpiled --instantiation=async",
-		"start": "node index.ts",
-		"daemon": "node daemon.ts"
+		"setup": "node index.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.8",

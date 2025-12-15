@@ -2,16 +2,11 @@ import { existsSync, mkdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { WASIShim } from "@bytecodealliance/preview2-shim/instantiation";
-import { serve } from "@hono/node-server";
-import { zValidator } from "@hono/zod-validator";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hexToBytes } from "@noble/hashes/utils.js";
 import { config } from "dotenv";
-import { Hono } from "hono";
-import { cors } from "hono/cors";
 import keytar from "keytar";
 import { CID } from "multiformats";
-import z from "zod";
 import type { Repo } from "./dist/transpiled/interfaces/polka-repository-repo.js";
 import { instantiate } from "./dist/transpiled/repo.js";
 import { CarSyncStore } from "./lib/blockstore.ts";
@@ -27,98 +22,29 @@ import { resolve } from "./lib/identity.ts";
 
 config();
 
-class polkaDaemon {
+class PolkaCLI {
 	domain: string;
 	repo: Repo;
 	store: CarSyncStore;
-	server: Hono;
 
 	constructor(domain: string, repo: Repo, store: CarSyncStore) {
 		this.domain = domain;
 		this.repo = repo;
 		this.store = store;
-		this.server = new Hono();
+	}
 
-		this.server.use(
-			cors({
-				origin: ["http://localhost:3000"],
-			}),
-		);
-
-		this.server.post(
-			"/record",
-			zValidator(
-				"json",
-				z.object({
-					rpath: z.string().min(1),
-					data: z.string(),
-				}),
-			),
-			async (c) => {
-				const { rpath, data } = c.req.valid("json");
-				const result = await this.create(rpath, data);
-				return c.json({ ok: true, message: result }, 201);
-			},
-		);
-
-		this.server.put(
-			"/record",
-			zValidator(
-				"json",
-				z.object({
-					rpath: z.string().min(1),
-					data: z.string(),
-				}),
-			),
-			async (c) => {
-				const { rpath, data } = c.req.valid("json");
-				const result = await this.update(rpath, data);
-				return c.json({ ok: true, message: result }, 200);
-			},
-		);
-
-		this.server.delete(
-			"/record",
-			zValidator(
-				"json",
-				z.object({
-					rpath: z.string().min(1),
-				}),
-			),
-			async (c) => {
-				const { rpath } = c.req.valid("json");
-				const result = await this.delete(rpath);
-				return c.json({ ok: true, message: result }, 200);
-			},
-		);
-
-		this.server.post("/commit", async (c) => {
-			await this.commit();
-			return c.json({ ok: true }, 200);
-		});
-
-		this.server.get("/health", (c) => c.json({ ok: true }));
-		this.server.get("/did", (c) => c.json({ did: `did:web:${this.domain}` }));
-
-		const port = Number(process.env.PORT) || 3030;
-
-		serve({ fetch: this.server.fetch, port: port });
-		console.log(`polka daemon is listening on ${port}`);
+	async did() {
+		console.log(JSON.stringify({ did: `did:web:${this.domain}` }, null, 2));
 	}
 
 	async commit() {
-		try {
-			const commitMessage = generateCommitMessage();
-			console.log("Committing and pushing...");
-			await commitAndPush(commitMessage);
-			return "Committed and pushed!";
-		} catch {
-			return "Failed to commit/push";
-		}
+		const commitMessage = generateCommitMessage();
+		console.log("Committing and pushing...");
+		await commitAndPush(commitMessage);
+		console.log("Committed and pushed!");
 	}
 
 	async create(rpath: string, data: string) {
-		console.log(rpath, data);
 		try {
 			this.repo.getRecord(rpath);
 			this.repo.update(rpath, data);
@@ -127,42 +53,38 @@ class polkaDaemon {
 		}
 		const root = this.repo.getRoot();
 		this.store.updateHeaderRoots([CID.parse(root)]);
+		console.log(`record created: ${rpath}`);
 	}
 
 	async update(rpath: string, data: string) {
-		console.log(rpath, data);
 		this.repo.update(rpath, data);
 		const root = this.repo.getRoot();
 		this.store.updateHeaderRoots([CID.parse(root)]);
+		console.log(`record updated: ${rpath}`);
 	}
 
 	async delete(rpath: string) {
-		console.log(rpath);
 		this.repo.delete(rpath);
 		const root = this.repo.getRoot();
 		this.store.updateHeaderRoots([CID.parse(root)]);
+		console.log(`record deleted: ${rpath}`);
 	}
 
-	static async start() {
+	static async start(): Promise<PolkaCLI> {
 		const domain = process.env.POLKA_DOMAIN;
-		if (!domain) {
-			throw new Error("Please initialize repository first.");
-		}
+		if (!domain) throw new Error("Please initialize repository first.");
 
 		const doc = await resolve(domain);
 		if (!doc.didKey && doc.target) {
 			throw new Error("Please initialize repository first.");
 		}
+
 		const sk = await keytar.getPassword("polka", "user");
-		if (!sk) {
-			throw new Error("Please initialize private key first.");
-		}
-		// メインのリモートを取得
+		if (!sk) throw new Error("Please initialize private key first.");
+
 		const remoteUrl = process.env.POLKA_MAIN_REMOTE;
-		if (!remoteUrl) {
-			throw new Error("Please initialize Git remote first.");
-		}
-		// リポジトリをクローンかpull
+		if (!remoteUrl) throw new Error("Please initialize Git remote first.");
+
 		if (!existsRepository(POLKA_REPO_PATH)) {
 			throw new Error("Please initialize Git remote first.");
 		} else {
@@ -170,16 +92,13 @@ class polkaDaemon {
 			await pullRepository();
 			console.log("Repository updated!");
 		}
-		console.log("Repo initialized successfully!");
 
 		const { repo, store } = await init(sk, doc.didKey);
-		return new polkaDaemon(domain, repo, store);
+		return new PolkaCLI(domain, repo, store);
 	}
 }
 
-// repoをinitする
 export async function init(sk: string, didKey: string) {
-	// ~/.polkaがあるか確認
 	if (!existsSync(join(homedir(), ".polka"))) {
 		mkdirSync(join(homedir(), ".polka"));
 	}
@@ -187,20 +106,17 @@ export async function init(sk: string, didKey: string) {
 	const path = POLKA_CAR_PATH;
 	const store = new CarSyncStore(path);
 
-	// WASMのロード
 	const loader = async (path: string) => {
 		const buf = readFileSync(`./dist/transpiled/${path}`);
 		return await WebAssembly.compile(new Uint8Array(buf));
 	};
 
-	// importする関数をバインド
 	const wasm = await instantiate(loader, {
 		//@ts-expect-error
 		"polka:repository/crypto": {
 			sign: (bytes: Uint8Array) => {
 				const skBytes = hexToBytes(sk);
-				const sig = secp256k1.sign(bytes, skBytes);
-				return sig;
+				return secp256k1.sign(bytes, skBytes);
 			},
 		},
 		"polka:repository/blockstore": {
@@ -218,7 +134,6 @@ export async function init(sk: string, didKey: string) {
 		...new WASIShim().getImportObject<"0.2.6">(),
 	});
 
-	// repoを開く
 	if (existsSync(path)) {
 		store.updateIndex();
 		const roots = store.getRoots();
@@ -233,4 +148,45 @@ export async function init(sk: string, didKey: string) {
 	}
 }
 
-await polkaDaemon.start();
+const command = process.argv[2];
+const args = process.argv.slice(3);
+
+const cli = await PolkaCLI.start();
+
+switch (command) {
+	case "did":
+		await cli.did();
+		break;
+
+	case "record:create":
+		if (typeof args[0] !== "string" || typeof args[1] !== "string") {
+			console.error("Usage: polka record:create <rpath> <data>");
+			process.exit(1);
+		}
+		await cli.create(args[0], args[1]);
+		break;
+
+	case "record:update":
+		if (typeof args[0] !== "string" || typeof args[1] !== "string") {
+			console.error("Usage: polka record:update <rpath> <data>");
+			process.exit(1);
+		}
+		await cli.update(args[0], args[1]);
+		break;
+
+	case "record:delete":
+		if (typeof args[0] !== "string") {
+			console.error("Usage: polka record:delete <rpath>");
+			process.exit(1);
+		}
+		await cli.delete(args[0]);
+		break;
+
+	case "commit":
+		await cli.commit();
+		break;
+
+	default:
+		console.error(`unknown command ${command}`);
+		process.exit(1);
+}
