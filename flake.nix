@@ -34,40 +34,31 @@
       in
       {
         devShell = pkgs.mkShell {
-          nativeBuildInputs = with pkgs; [
-            pkg-config
-            gobject-introspection
-            cargo
-          ];
-
           buildInputs = [
             pkgs.nodejs_24
             pkgs.pnpm
             pkgs.bun
-            pkgs.wasm-tools
             pkgs.wit-bindgen
 
+            pkgs.pkg-config
+            pkgs.openssl
+
+            pkgs.electron
             pkgs.glib
             pkgs.glib.dev
             pkgs.libsecret
             pkgs.libsecret.dev
             pkgs.gnome-keyring
 
-            pkgs.at-spi2-atk
-            pkgs.atkmm
-            pkgs.cairo
-            pkgs.gdk-pixbuf
-            pkgs.glib
-            pkgs.gtk3
-            pkgs.harfbuzz
-            pkgs.librsvg
-            pkgs.libsoup_3
-            pkgs.pango
-            pkgs.webkitgtk_4_1
-            pkgs.openssl
-
             rust
           ];
+          shellHook = ''
+            export PKG_CONFIG_PATH="${pkgs.openssl.dev}/lib/pkgconfig:${pkgs.libsecret.dev}/lib/pkgconfig:${pkgs.glib.out}/lib/pkgconfig"
+            export LD_LIBRARY_PATH="${pkgs.libsecret.out}/lib:${pkgs.glib.out}/lib"
+
+            export ELECTRON_EXEC_PATH="${pkgs.electron}/bin/electron"
+            export ELECTRON_SKIP_BINARY_DOWNLOAD="1"
+          '';
         };
       }
     );

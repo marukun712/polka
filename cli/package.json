@@ -11,8 +11,7 @@
 		"check": "biome check ./",
 		"check:fix": "biome check --write ./",
 		"transpile": "npx jco transpile wasm/repo.wasm -o dist/transpiled --instantiation=async",
-		"setup": "node index.ts",
-		"build": "npm run pkg index.ts --output app;node convert.ts"
+		"setup": "node index.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.3.8",
@@ -26,17 +25,13 @@
 		"@atproto/crypto": "^0.4.5",
 		"@bytecodealliance/jco": "^1.15.4",
 		"@bytecodealliance/preview2-shim": "^0.17.5",
-		"@hono/node-server": "^1.19.7",
-		"@hono/zod-validator": "^0.7.5",
 		"@ipld/dag-cbor": "^9.2.5",
 		"@noble/curves": "^2.0.1",
 		"@noble/hashes": "^2.0.1",
 		"@types/varint": "^6.0.3",
-		"@yao-pkg/pkg": "^6.11.0",
 		"did-resolver": "^4.1.0",
 		"dotenv": "^17.2.3",
 		"enquirer": "^2.4.1",
-		"hono": "^4.10.7",
 		"keytar": "^7.9.0",
 		"multiformats": "^13.4.1",
 		"varint": "^6.0.0",

@@ -1,0 +1,40 @@
+{
+	"name": "vite-template-solid",
+	"version": "0.0.0",
+	"description": "",
+	"type": "module",
+	"scripts": {
+		"start": "vite",
+		"dev": "vite",
+		"build": "vite build",
+		"serve": "vite preview"
+	},
+	"license": "MIT",
+	"devDependencies": {
+		"solid-devtools": "^0.34.3",
+		"typescript": "^5.7.2",
+		"vite": "^7.1.4",
+		"vite-plugin-solid": "^2.11.8"
+	},
+	"dependencies": {
+		"@atcute/tid": "^1.0.3",
+		"@atproto/crypto": "^0.4.4",
+		"@bytecodealliance/jco": "^1.15.3",
+		"@bytecodealliance/preview2-shim": "^0.17.5",
+		"@ipld/dag-cbor": "^9.2.5",
+		"@noble/hashes": "^2.0.1",
+		"@solidjs/router": "^0.15.4",
+		"@types/cytoscape-dagre": "^2.3.4",
+		"@types/varint": "^6.0.3",
+		"cytoscape": "^3.33.1",
+		"cytoscape-dagre": "^2.5.0",
+		"graphology": "^0.26.0",
+		"multiformats": "^13.4.1",
+		"sigma": "^3.0.2",
+		"solid-icons": "^1.1.0",
+		"solid-js": "^1.9.9",
+		"varint": "^6.0.0",
+		"web-did-resolver": "^2.0.31",
+		"zod": "^4.1.13"
+	}
+}
