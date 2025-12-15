@@ -22,7 +22,7 @@ import { resolve } from "./lib/identity.ts";
 
 config();
 
-class PolkaCLI {
+class polkaCLI {
 	domain: string;
 	repo: Repo;
 	store: CarSyncStore;
@@ -70,10 +70,7 @@ class PolkaCLI {
 		console.log(`record deleted: ${rpath}`);
 	}
 
-	static async start(): Promise<PolkaCLI> {
-		const domain = process.env.POLKA_DOMAIN;
-		if (!domain) throw new Error("Please initialize repository first.");
-
+	static async start(domain: string): Promise<polkaCLI> {
 		const doc = await resolve(domain);
 		if (!doc.didKey && doc.target) {
 			throw new Error("Please initialize repository first.");
@@ -81,9 +78,6 @@ class PolkaCLI {
 
 		const sk = await keytar.getPassword("polka", "user");
 		if (!sk) throw new Error("Please initialize private key first.");
-
-		const remoteUrl = process.env.POLKA_MAIN_REMOTE;
-		if (!remoteUrl) throw new Error("Please initialize Git remote first.");
 
 		if (!existsRepository(POLKA_REPO_PATH)) {
 			throw new Error("Please initialize Git remote first.");
@@ -94,7 +88,7 @@ class PolkaCLI {
 		}
 
 		const { repo, store } = await init(sk, doc.didKey);
-		return new PolkaCLI(domain, repo, store);
+		return new polkaCLI(domain, repo, store);
 	}
 }
 
@@ -148,10 +142,16 @@ export async function init(sk: string, didKey: string) {
 	}
 }
 
-const command = process.argv[2];
-const args = process.argv.slice(3);
+const domain = process.argv[2];
+const command = process.argv[3];
+const args = process.argv.slice(4);
 
-const cli = await PolkaCLI.start();
+if (!domain) {
+	console.error("Usage: polka <domain> <command> <args>");
+	process.exit(1);
+}
+
+const cli = await polkaCLI.start(domain);
 
 switch (command) {
 	case "did":
@@ -160,7 +160,7 @@ switch (command) {
 
 	case "record:create":
 		if (typeof args[0] !== "string" || typeof args[1] !== "string") {
-			console.error("Usage: polka record:create <rpath> <data>");
+			console.error("Usage: polka <domain> record:create <rpath> <data>");
 			process.exit(1);
 		}
 		await cli.create(args[0], args[1]);
@@ -168,7 +168,7 @@ switch (command) {
 
 	case "record:update":
 		if (typeof args[0] !== "string" || typeof args[1] !== "string") {
-			console.error("Usage: polka record:update <rpath> <data>");
+			console.error("Usage: polka <domain> record:update <rpath> <data>");
 			process.exit(1);
 		}
 		await cli.update(args[0], args[1]);
@@ -176,7 +176,7 @@ switch (command) {
 
 	case "record:delete":
 		if (typeof args[0] !== "string") {
-			console.error("Usage: polka record:delete <rpath>");
+			console.error("Usage: polka <domain> record:delete <rpath>");
 			process.exit(1);
 		}
 		await cli.delete(args[0]);
