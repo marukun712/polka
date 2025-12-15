@@ -80,7 +80,7 @@ export class RepoReader {
 		};
 		const { sig, ...unsignedData } = decoded;
 		const bytes = encode(unsignedData);
-		return { sig, bytes };
+		return { sig, bytes, decoded: decode(out[0]), root };
 	}
 
 	public getDid() {

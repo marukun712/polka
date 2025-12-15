@@ -40,8 +40,7 @@ export default function PostForm() {
 				setTag("");
 			}}
 		>
-			<input
-				type="text"
+			<textarea
 				value={text()}
 				placeholder="Enter your post..."
 				onInput={(e) => setText(e.currentTarget.value)}

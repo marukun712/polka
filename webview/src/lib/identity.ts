@@ -32,6 +32,7 @@ export async function resolve(did: string) {
 	return {
 		didKey,
 		target,
+		doc: res.didDocument,
 	};
 }
 
