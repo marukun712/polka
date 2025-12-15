@@ -1,18 +1,17 @@
 import { now } from "@atcute/tid";
-import { createSignal, useContext } from "solid-js";
-import { daemonContext } from "..";
+import { createSignal } from "solid-js";
+import { useCli } from "../hooks/useCli";
 import { type PostData, postDataSchema } from "../types";
 
 export default function PostForm() {
 	const [text, setText] = createSignal("");
 	const [tag, setTag] = createSignal("");
-	const daemon = useContext(daemonContext);
+	const cli = useCli();
 
 	return (
 		<form
 			onSubmit={async (e) => {
 				e.preventDefault();
-				if (!daemon) return;
 
 				const rpath = `polka.post/${now()}`;
 				const tags = tag().split("/");
@@ -33,8 +32,8 @@ export default function PostForm() {
 					return;
 				}
 
-				await daemon.daemon.create(rpath, JSON.stringify(parsed.data));
-				await daemon.daemon.commit();
+				await cli.client.create(rpath, JSON.stringify(parsed.data));
+				await cli.client.commit();
 
 				setText("");
 				setTag("");

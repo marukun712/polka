@@ -13,7 +13,7 @@ const InspectorPage: Component = () => {
 					<>
 						<article>
 							<h1>Your identity:</h1>
-							<h4>did:web: {r().daemon?.did}</h4>
+							<h4>did:web: {r().client?.did}</h4>
 							<h4>did:key(pk to verify): {r().doc.didKey}</h4>
 							<pre style="max-height: 12rem; overflow: auto;">
 								{JSON.stringify(r().doc.doc, null, 2)}

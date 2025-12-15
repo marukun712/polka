@@ -1,13 +1,14 @@
 import { createResource, useContext } from "solid-js";
-import { daemonContext, feedCache, readerCache } from "../index";
+import { feedCache, readerCache } from "../contexts";
 import { generateFeed } from "../services/feedService";
+import { useCli } from "./useCli";
 
 export function useFeedData(did?: string) {
-	const daemon = useContext(daemonContext);
+	const cli = useCli();
 	const loadedFeed = useContext(feedCache);
 	const loadedReader = useContext(readerCache);
 
-	const targetDid = did ?? daemon?.did;
+	const targetDid = did ?? cli.did;
 
 	const [resource] = createResource(
 		() => ({
@@ -16,11 +17,8 @@ export function useFeedData(did?: string) {
 			readerCache: loadedReader,
 		}),
 		async ({ did, feedCache, readerCache }) => {
-			if (!did) return null;
-
 			const feed = await generateFeed(did, feedCache, readerCache);
 			if (!feed) return null;
-
 			const followFeeds = await Promise.all(
 				feed.follows.flatMap(async (follow) => {
 					const f = await generateFeed(follow.data.did, feedCache, readerCache);

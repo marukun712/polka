@@ -1,24 +1,25 @@
 import { createResource, useContext } from "solid-js";
-import { daemonContext, readerCache } from "../index";
+import { readerCache } from "../contexts/CacheContext";
 import { RepoReader } from "../lib/client";
 import { resolve } from "../lib/identity";
+import { useCli } from "./useCli";
 
 export function useAllRecords() {
-	const daemon = useContext(daemonContext);
+	const cli = useCli();
 	const loadedReader = useContext(readerCache);
 
 	const [resource] = createResource(
 		() => ({
-			did: daemon?.did,
+			did: cli.did,
 		}),
 		async ({ did }) => {
 			if (!did) return null;
 			const doc = await resolve(did);
 			const has = loadedReader.get(did);
-			if (has) return { daemon, reader: has, records: has.allRecords(), doc };
+			if (has) return { cli, reader: has, records: has.allRecords(), doc };
 			const reader = await RepoReader.init(did);
 			loadedReader.set(did, reader);
-			return { daemon, reader, records: reader.allRecords(), doc };
+			return { cli, reader, records: reader.allRecords(), doc };
 		},
 	);
 

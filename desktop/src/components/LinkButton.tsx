@@ -1,6 +1,6 @@
 import { now } from "@atcute/tid";
-import { Show, useContext } from "solid-js";
-import { daemonContext } from "..";
+import { Show } from "solid-js";
+import { useCli } from "../hooks/useCli";
 import { linkDataSchema, type Post } from "../types";
 
 export default function LinkButton({
@@ -12,64 +12,61 @@ export default function LinkButton({
 	post: Post;
 	links: string[];
 }) {
-	const daemon = useContext(daemonContext);
+	const cli = useCli();
 
-	if (daemon)
-		return (
-			<Show
-				when={links.length === 0}
-				fallback={
-					<form
-						onSubmit={async (e) => {
-							e.preventDefault();
-
-							await Promise.all(
-								links.map((link) => daemon.daemon.delete(link)),
-							);
-
-							await daemon.daemon.commit();
-						}}
-					>
-						<button type="submit">Unlink</button>
-					</form>
-				}
-			>
+	return (
+		<Show
+			when={links.length === 0}
+			fallback={
 				<form
 					onSubmit={async (e) => {
 						e.preventDefault();
 
-						const form = e.currentTarget;
-						const formData = new FormData(form);
-						const tags = formData.get("tags") as string;
-						const split = tags ? tags.split(",") : [];
+						await Promise.all(links.map((link) => cli.client.delete(link)));
 
-						const raw = {
-							ref: {
-								did,
-								rpath: post.rpath,
-							},
-							tags: split,
-							updatedAt: new Date().toISOString(),
-						};
-
-						const parsed = linkDataSchema.safeParse(raw);
-						if (!parsed.success) {
-							console.error("Failed to parse link data:", parsed.error);
-							return;
-						}
-
-						await daemon.daemon.create(
-							`polka.link/${now()}`,
-							JSON.stringify(parsed.data),
-						);
-						await daemon.daemon.commit();
-
-						form.reset();
+						await cli.client.commit();
 					}}
 				>
-					<input type="text" name="tags" />
-					<button type="submit">Link</button>
+					<button type="submit">Unlink</button>
 				</form>
-			</Show>
-		);
+			}
+		>
+			<form
+				onSubmit={async (e) => {
+					e.preventDefault();
+
+					const form = e.currentTarget;
+					const formData = new FormData(form);
+					const tags = formData.get("tags") as string;
+					const split = tags ? tags.split(",") : [];
+
+					const raw = {
+						ref: {
+							did,
+							rpath: post.rpath,
+						},
+						tags: split,
+						updatedAt: new Date().toISOString(),
+					};
+
+					const parsed = linkDataSchema.safeParse(raw);
+					if (!parsed.success) {
+						console.error("Failed to parse link data:", parsed.error);
+						return;
+					}
+
+					await cli.client.create(
+						`polka.link/${now()}`,
+						JSON.stringify(parsed.data),
+					);
+					await cli.client.commit();
+
+					form.reset();
+				}}
+			>
+				<input type="text" name="tags" />
+				<button type="submit">Link</button>
+			</form>
+		</Show>
+	);
 }

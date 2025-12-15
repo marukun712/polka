@@ -1,5 +1,5 @@
 import { createSignal } from "solid-js";
-import { useDaemon } from "../../hooks/useDaemon";
+import { useCli } from "../../hooks/useCli";
 import { useDialog } from "../../hooks/useDialog";
 import { useFormSubmit } from "../../hooks/useFormSubmit";
 import { type Post, postDataSchema } from "../../types";
@@ -7,7 +7,7 @@ import { formatTags, parseTags } from "../../utils/formatting";
 import { Dialog } from "../ui/Dialog";
 
 export default function PostEdit({ post }: { post: Post }) {
-	const daemon = useDaemon();
+	const cli = useCli();
 	const [input, setInput] = createSignal(post.data.content);
 	const [inputTag, setInputTag] = createSignal(formatTags(post.data.tags));
 
@@ -34,8 +34,8 @@ export default function PostEdit({ post }: { post: Post }) {
 	};
 
 	const handleDelete = async () => {
-		await daemon.delete(post.rpath);
-		await daemon.commit();
+		await cli.client.delete(post.rpath);
+		await cli.client.commit();
 		deleteDialog.close();
 		location.reload();
 	};

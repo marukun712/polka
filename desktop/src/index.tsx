@@ -1,12 +1,11 @@
-/* @refresh reload */
 import "./index.css";
-import { render } from "solid-js/web";
-import "solid-devtools";
-import { Route, Router } from "@solidjs/router";
-import { CacheProvider, DaemonProvider } from "./contexts";
+import { HashRouter, Route } from "@solidjs/router";
+import { createResource } from "solid-js";
+import { render, Show } from "solid-js/web";
+import { CacheProvider, CliProvider } from "./contexts";
+import { getDomain, setDomain } from "./lib/store";
 import InspectorPage from "./pages/InspectorPage";
 import TopPage from "./pages/TopPage";
-import UserPage from "./pages/UserPage";
 
 const root = document.getElementById("root");
 
@@ -16,19 +15,43 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
 	);
 }
 
-export { daemonContext, feedCache, readerCache } from "./contexts";
+const [domain, { refetch }] = createResource(getDomain);
 
 render(
 	() => (
-		<DaemonProvider>
-			<CacheProvider>
-				<Router>
-					<Route path="/" component={TopPage} />
-					<Route path="/user" component={UserPage} />
-					<Route path="/inspector" component={InspectorPage} />
-				</Router>
-			</CacheProvider>
-		</DaemonProvider>
+		<Show
+			when={domain()}
+			fallback={
+				<main class="container">
+					<form
+						onSubmit={async (e) => {
+							e.preventDefault();
+							const formData = new FormData(e.currentTarget);
+							await setDomain(formData.get("domain") as string);
+							refetch();
+						}}
+					>
+						<input
+							type="text"
+							name="domain"
+							placeholder="Enter you domain..."
+						/>
+						<button type="submit">Submit</button>
+					</form>
+				</main>
+			}
+		>
+			{(d) => (
+				<CliProvider domain={d()}>
+					<CacheProvider>
+						<HashRouter>
+							<Route path="/" component={TopPage} />
+							<Route path="/inspector" component={InspectorPage} />
+						</HashRouter>
+					</CacheProvider>
+				</CliProvider>
+			)}
+		</Show>
 	),
 	root as HTMLElement,
 );

@@ -1,5 +1,5 @@
 import type { z } from "zod";
-import type { GetResult } from "../../public/interfaces/polka-repository-repo";
+import type { GetResult } from "../public/interfaces/polka-repository-repo";
 
 export function validateRecord<T>(
 	record: GetResult | null,

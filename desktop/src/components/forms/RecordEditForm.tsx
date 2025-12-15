@@ -1,13 +1,13 @@
 import { createSignal } from "solid-js";
 import z from "zod";
-import type { GetResult } from "../../../public/interfaces/polka-repository-repo";
-import { useDaemon } from "../../hooks/useDaemon";
+import { useCli } from "../../hooks/useCli";
 import { useDialog } from "../../hooks/useDialog";
 import { useFormSubmit } from "../../hooks/useFormSubmit";
+import type { GetResult } from "../../public/interfaces/polka-repository-repo";
 import { Dialog } from "../ui/Dialog";
 
 export default function RecordEditForm({ init }: { init: GetResult }) {
-	const daemon = useDaemon();
+	const cli = useCli();
 	const [data, setData] = createSignal(init.data);
 
 	const editDialog = useDialog();
@@ -21,14 +21,14 @@ export default function RecordEditForm({ init }: { init: GetResult }) {
 	});
 
 	const handleSave = async () => {
-		submitEdit(data(), async (daemon, validated) => {
-			await daemon.update(init.rpath, JSON.stringify(validated));
+		submitEdit(data(), async (client, validated) => {
+			await client.update(init.rpath, JSON.stringify(validated));
 		});
 	};
 
 	const handleDelete = async () => {
-		await daemon.delete(init.rpath);
-		await daemon.commit();
+		await cli.client.delete(init.rpath);
+		await cli.client.commit();
 		editDialog.close();
 		location.reload();
 	};

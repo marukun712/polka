@@ -29,8 +29,8 @@ export default function ProfileEdit({ init }: { init: Profile }) {
 			followsCount: init.followsCount,
 			updatedAt: new Date().toISOString(),
 		};
-		submit(data, async (daemon, validated) => {
-			await daemon.update("polka.profile/self", JSON.stringify(validated));
+		submit(data, async (client, validated) => {
+			await client.update("polka.profile/self", JSON.stringify(validated));
 		});
 	};
 

@@ -1,13 +1,13 @@
-import type { DaemonClient } from "../lib/daemon";
+import type { CliClient } from "../lib/cli";
 import type { FormSubmitOptions } from "../types/forms";
-import { useDaemon } from "./useDaemon";
+import { useCli } from "./useCli";
 
 export function useFormSubmit<T>(options: FormSubmitOptions<T>) {
-	const daemon = useDaemon();
+	const cli = useCli();
 
 	const submit = async (
 		data: unknown,
-		action: (daemon: DaemonClient, validated: T) => Promise<void>,
+		action: (client: CliClient, validated: T) => Promise<void>,
 	) => {
 		try {
 			const parsed = options.schema.safeParse(data);
@@ -17,8 +17,8 @@ export function useFormSubmit<T>(options: FormSubmitOptions<T>) {
 				return;
 			}
 
-			await action(daemon, parsed.data);
-			await daemon.commit();
+			await action(cli.client, parsed.data);
+			await cli.client.commit();
 
 			options.onSuccess?.();
 		} catch (error) {

@@ -1,16 +1,16 @@
 import { For, Show } from "solid-js";
-import { useDaemon } from "../hooks/useDaemon";
+import { useCli } from "../hooks/useCli";
 import { useDialog } from "../hooks/useDialog";
 import type { Follow } from "../types";
 import { Dialog } from "./ui/Dialog";
 
 export default function FollowList({ follows }: { follows: Follow[] }) {
-	const daemon = useDaemon();
+	const cli = useCli();
 	const listDialog = useDialog();
 
 	const handleUnfollow = async (rpath: string) => {
-		await daemon.delete(rpath);
-		await daemon.commit();
+		await cli.client.delete(rpath);
+		await cli.client.commit();
 		listDialog.close();
 		location.reload();
 	};
