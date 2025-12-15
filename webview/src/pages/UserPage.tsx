@@ -11,8 +11,17 @@ import type { Node, Ref } from "../types";
 const UserPage: Component = () => {
 	const [searchParams] = useSearchParams<{ did: string }>();
 	const userDid = () => searchParams.did;
+	const did = userDid();
 
-	const res = useFeedData(userDid());
+	if (!did) {
+		return (
+			<main class="container">
+				<p>No user DID provided.</p>
+			</main>
+		);
+	}
+
+	const res = useFeedData(did);
 
 	const [node, setNode] = createSignal<Node>({ id: "", label: "" });
 	const [children, setChildren] = createSignal<Set<Ref>>(new Set());

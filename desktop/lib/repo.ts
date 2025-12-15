@@ -13,7 +13,6 @@ import { CarSyncStore } from "./blockstore.ts";
 import {
 	commitAndPush,
 	existsRepository,
-	generateCommitMessage,
 	POLKA_CAR_PATH,
 	POLKA_REPO_PATH,
 	pullRepository,
@@ -35,11 +34,12 @@ export class polkaRepo {
 
 	async commit() {
 		try {
-			const commitMessage = generateCommitMessage();
 			console.log("Committing and pushing...");
-			await commitAndPush(commitMessage);
+			await commitAndPush();
+			console.log("Committed and pushed!");
 			return "Committed and pushed!";
 		} catch {
+			console.log("Failed to commit/push");
 			return "Failed to commit/push";
 		}
 	}

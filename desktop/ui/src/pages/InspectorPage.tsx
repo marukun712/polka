@@ -8,6 +8,7 @@ const InspectorPage: Component = () => {
 
 	return (
 		<main class="container-fluid">
+			<a href="/">Back to top page</a>
 			<Show when={res()} fallback={<Loading />}>
 				{(r) => (
 					<>

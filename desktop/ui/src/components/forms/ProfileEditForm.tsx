@@ -40,9 +40,7 @@ export default function ProfileEdit({ init }: { init: Profile }) {
 				<summary>Edit</summary>
 				<ul>
 					<li>
-						<a href="#" onClick={dialog.open}>
-							Edit
-						</a>
+						<a onClick={dialog.open}>Edit</a>
 					</li>
 				</ul>
 			</details>

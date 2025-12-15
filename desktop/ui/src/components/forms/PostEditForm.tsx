@@ -46,14 +46,10 @@ export default function PostEdit({ post }: { post: Post }) {
 				<summary>Edit</summary>
 				<ul>
 					<li>
-						<a href="#" onClick={editDialog.open}>
-							Edit
-						</a>
+						<a onClick={editDialog.open}>Edit</a>
 					</li>
 					<li>
-						<a href="#" onClick={deleteDialog.open}>
-							Delete
-						</a>
+						<a onClick={deleteDialog.open}>Delete</a>
 					</li>
 				</ul>
 			</details>

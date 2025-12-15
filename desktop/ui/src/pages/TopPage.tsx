@@ -32,6 +32,7 @@ const TopPage: Component = () => {
 			<Show when={res()} fallback={<Loading />}>
 				{(f) => (
 					<>
+						<a href="/inspector">View inspector</a>
 						<ProfileHeader
 							profile={f().feed.ownerProfile}
 							did={f().feed.did}
