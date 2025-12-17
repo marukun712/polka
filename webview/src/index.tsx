@@ -5,6 +5,7 @@ import "solid-devtools";
 import { Route, Router } from "@solidjs/router";
 import Notfound from "./components/ui/Notfound";
 import { CacheProvider } from "./contexts";
+import TopPage from "./pages/TopPage";
 import UserPage from "./pages/UserPage";
 
 const root = document.getElementById("root");
@@ -19,6 +20,7 @@ render(
 	() => (
 		<CacheProvider>
 			<Router>
+				<Route path="/" component={TopPage} />
 				<Route path="/user" component={UserPage} />
 				<Route path="*404" component={Notfound} />
 			</Router>

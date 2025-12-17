@@ -39,6 +39,7 @@
             pkgs.pnpm
             pkgs.bun
             pkgs.wit-bindgen
+            pkgs.mdbook
 
             pkgs.pkg-config
             pkgs.openssl

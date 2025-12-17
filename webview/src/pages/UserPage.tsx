@@ -15,8 +15,8 @@ const UserPage: Component = () => {
 
 	if (!did) {
 		return (
-			<main class="container">
-				<p>No user DID provided.</p>
+			<main class="container" style="text-align: center; padding-top: 10rem;">
+				<h1>No user DID provided.</h1>
 			</main>
 		);
 	}
@@ -36,7 +36,17 @@ const UserPage: Component = () => {
 
 	return (
 		<main class="container">
-			<Show when={res()} fallback={<Loading />}>
+			<Show when={res() === undefined}>
+				<Loading />
+			</Show>
+
+			<Show when={res() === null}>
+				<main class="container" style="text-align: center; padding-top: 10rem;">
+					<h1>User not found.</h1>
+				</main>
+			</Show>
+
+			<Show when={res()}>
 				{(f) => (
 					<>
 						<ProfileHeader
