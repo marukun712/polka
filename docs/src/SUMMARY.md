@@ -1,3 +1,4 @@
 # Summary
 
-- [Chapter 1](./chapter_1.md)
+- [What is polka?](./intro.md)
+- [SNS実装としてのpolka](./polka-sns.md)
