@@ -13,7 +13,6 @@ export function useAllRecords() {
 			did: ipc.did,
 		}),
 		async ({ did }) => {
-			if (!did) return null;
 			const doc = await resolve(did);
 			const has = loadedReader.get(did);
 			if (has) return { ipc, reader: has, records: has.allRecords(), doc };

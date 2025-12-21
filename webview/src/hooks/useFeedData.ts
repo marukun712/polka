@@ -16,7 +16,6 @@ export function useFeedData(did: string) {
 			try {
 				const feed = await generateFeed(did, feedCache, readerCache);
 				if (!feed) return null;
-
 				const followFeeds = await Promise.all(
 					feed.follows.flatMap(async (follow) => {
 						const f = await generateFeed(
@@ -27,7 +26,6 @@ export function useFeedData(did: string) {
 						return f ? [{ ...f, rootTag: follow.data.tag }] : [];
 					}),
 				);
-
 				return { feed, followFeeds: followFeeds.flat() };
 			} catch {
 				return null;

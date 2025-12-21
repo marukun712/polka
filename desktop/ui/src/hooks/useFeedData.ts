@@ -25,7 +25,6 @@ export function useFeedData(did?: string) {
 					return f ? [{ ...f, rootTag: follow.data.tag }] : [];
 				}),
 			);
-
 			return { feed, followFeeds: followFeeds.flat() };
 		},
 	);
