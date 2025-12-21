@@ -34,11 +34,12 @@ git clone https://github.com/marukun712/polka
 nix develop
 cd polka/cli
 pnpm i
+pnpm run transpile
 ```
 
 cliを起動します。
 ```
-npm run start
+pnpm run start
 ```
 
 すると、polkaで使用したいあなたのドメインが尋ねられます。
@@ -195,7 +196,7 @@ sudo chown -R gitea-runner:gitea-runner /var/www/polka
 ## ユーザー情報の入力
 cliを起動します。
 ```
-npm run start
+pnpm run setup
 ```
 
 秘密鍵の入力を求められるので、入力します。
@@ -204,4 +205,25 @@ npm run start
 - description
 - icon
 
-これにてpolkaのセットアップは完了です。おめでとうございます🎉
+## デスクトップアプリの起動
+次に、デスクトップアプリから投稿をしてみましょう。
+
+アプリをセットアップします。
+```
+cd desktop
+pnpm i
+pnpm run transpile
+pnpm run build
+pnpm run start
+```
+
+すると、デスクトップアプリが起動します。
+入力フォームで使用しているドメインを尋ねられるので、セットアップ時に入力したものと同じドメインを入力してください。
+
+入力すると、プロフィール画面が表示されます。CLIでセットアップしたプロフィールと同じものか確かめましょう。
+投稿フォームに投稿を入力してみます。polkaでは`/`でタグを`アニメ/ラブライブ/イキヅライブ`のように階層分けすることができます。
+階層分けされたタグは、自動的にグラフとして描画されます。
+
+投稿すると、自動的にリモートにpushされ、Actionが走った後、デスクトップアプリをリロードして投稿が反映されていることを確認してください。
+
+これにてpolkaのセットアップは終了です。おめでとうございます🎉
