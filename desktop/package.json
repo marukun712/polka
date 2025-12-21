@@ -4,12 +4,6 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"format": "biome format ./",
-		"format:fix": "biome format --write ./",
-		"lint": "biome lint ./",
-		"lint:fix": "biome lint --write ./",
-		"check": "biome check ./",
-		"check:fix": "biome check --write ./",
 		"transpile": "bunx jco transpile wasm/repo.wasm -o ui/public --instantiation=async",
 		"build:ui": "cd ui && bun run build",
 		"build": "bun run build:ui && bunx tsup",

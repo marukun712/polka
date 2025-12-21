@@ -20,7 +20,7 @@ export function generateDidDocument(domain: string, key: string): DIDDocument {
 			{
 				id: `${did}#keys-1`,
 				controller: did,
-				type: "Ed25519VerificationKey2020",
+				type: "EcdsaSecp256k1Signature2019",
 				publicKeyMultibase: pkMultiBase,
 			},
 		],

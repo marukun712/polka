@@ -7,7 +7,7 @@ did:webにはドメインの変更でソーシャルグラフが失われてし�
 
 ## did:webとは
 
-did:webは、[W3C DID仕様](https://www.w3.org/TR/did-1.0/)に基づく分散型識別子(DID)の一種で、既存のドメイン名システム(DNS)を利用したアイデンティティです。
+did:webは、[W3C DID仕様](https://www.w3.org/TR/did-1.0/)に基づく分散型識別子(DID)の一種で、DNSを利用したアイデンティティです。
 
 ### polkaでdid:webを採用する理由
 
@@ -22,8 +22,6 @@ did:web:example.com
 did:web:example.com:user:alice
 did:web:subdomain.example.com
 ```
-
-polkaでは、基本的に`did:web:ドメイン名`の形式を使用します。
 
 ## DID Documentの構造
 
@@ -41,7 +39,7 @@ DID Documentは、アイデンティティに関する情報を記述したJSON�
   "verificationMethod": [{
     "id": "did:web:example.com#keys-1",
     "controller": "did:web:example.com",
-    "type": "Ed25519VerificationKey2020",
+    "type": "EcdsaSecp256k1Signature2019",
     "publicKeyMultibase": "pk..."
   }],
   "assertionMethod": ["did:web:example.com#keys-1"],
