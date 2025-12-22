@@ -55,7 +55,6 @@ export function createGraphElements(
 		items: FeedItem[],
 		rootTag?: string,
 	) => {
-		console.log(items);
 		// グラフ上のルートID (rootTagがある場合は "id:tagName"、なければ "id")
 		const graphRootId = rootTag ? `${id}:${rootTag}` : id;
 

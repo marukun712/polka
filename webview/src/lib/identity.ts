@@ -40,8 +40,7 @@ export async function resolveRecord(did: string, rpath: string) {
 	try {
 		const client = await RepoReader.init(did);
 		return client.getRecord(rpath);
-	} catch (e) {
-		console.log(e);
+	} catch {
 		return null;
 	}
 }
