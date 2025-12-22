@@ -8,7 +8,7 @@
 		"dev": "vite",
 		"build": "vite build",
 		"serve": "vite preview",
-		"transpile": "bunx jco transpile wasm/repo.wasm -o public --instantiation=async"
+		"transpile": "npx jco transpile wasm/repo.wasm -o public --instantiation=async"
 	},
 	"license": "MIT",
 	"devDependencies": {

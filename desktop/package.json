@@ -4,9 +4,9 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"transpile": "bunx jco transpile wasm/repo.wasm -o ui/public --instantiation=async",
-		"build:ui": "cd ui && bun run build",
-		"build": "bun run build:ui && bunx tsup",
+		"transpile": "npx jco transpile wasm/repo.wasm -o ui/public --instantiation=async",
+		"build:ui": "cd ui && npm run build",
+		"build": "npm run build:ui && npx tsup",
 		"start": "electron ./dist/index.js"
 	},
 	"devDependencies": {

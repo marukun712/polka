@@ -29,9 +29,9 @@ did:web:example.com
 ```
 という構造になっており、DID Documentは`https://example.com/.well-known/did.json`でアクセス可能である必要があります。
 
-polka cliでは、DID Documentの生成をサポートします。
+polka CLIでは、DID Documentの生成をサポートします。
 
-まず、polka cliをセットアップします。
+まず、polka CLIをセットアップします。
 ```
 git clone https://github.com/marukun712/polka
 
@@ -41,7 +41,7 @@ pnpm i
 pnpm run transpile
 ```
 
-cliを起動します。
+CLIを起動します。
 ```
 pnpm run start
 ```
@@ -103,13 +103,13 @@ https://${domain}/.well-known/did.json
 ```
 にアクセスして、DID Documentが返ってくることを確認します。
 
-確認出来たら、cliフォルダに.envを作成し、
+確認出来たら、CLIフォルダに.envを作成し、
 ```
 POLKA_DOMAIN=
 ```
 環境変数`POLKA_DOMAIN`にドメインを入力します。
 
-再度cliを起動し、と表示されたら成功です。
+再度CLIを起動し、と表示されたら成功です。
 ```
 Your did:web can be solved.
 ```
@@ -198,7 +198,7 @@ sudo chown -R gitea-runner:gitea-runner /var/www/polka
 これで、push時に自動的にCaddyでリポジトリファイルが公開されます。
 
 ## ユーザー情報の入力
-cliを起動します。
+CLIを起動します。
 ```
 pnpm run setup
 ```
