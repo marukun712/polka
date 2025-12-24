@@ -1,0 +1,35 @@
+{
+	"name": "db",
+	"module": "index.ts",
+	"type": "module",
+	"scripts": {
+		"transpile": "npx jco transpile wasm/repo.wasm -o dist/transpiled --instantiation=async"
+	},
+	"private": true,
+	"dependencies": {
+		"@atcute/tid": "^1.0.3",
+		"@atproto/crypto": "^0.4.5",
+		"@bytecodealliance/jco": "^1.15.4",
+		"@bytecodealliance/preview2-shim": "^0.17.5",
+		"@ipld/dag-cbor": "^9.2.5",
+		"@noble/curves": "^2.0.1",
+		"@noble/hashes": "^2.0.1",
+		"@types/varint": "^6.0.3",
+		"did-resolver": "^4.1.0",
+		"dotenv": "^17.2.3",
+		"enquirer": "^2.4.1",
+		"keytar": "^7.9.0",
+		"multiformats": "^13.4.1",
+		"simple-git": "^3.30.0",
+		"varint": "^6.0.0",
+		"web-did-resolver": "^2.0.32",
+		"zod": "^4.1.13"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.3.10",
+		"@types/bun": "latest"
+	},
+	"peerDependencies": {
+		"typescript": "^5"
+	}
+}
