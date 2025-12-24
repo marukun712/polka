@@ -36,6 +36,7 @@
 		"tsup": "^8.5.1",
 		"varint": "^6.0.0",
 		"web-did-resolver": "^2.0.32",
-		"zod": "^4.1.13"
+		"zod": "^4.1.13",
+		"@polka/db": "workspace:*"
 	}
 }

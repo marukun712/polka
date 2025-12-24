@@ -12,19 +12,19 @@ export function cloneRepository(remoteUrl: string) {
 	git.clone(remoteUrl, POLKA_REPO_PATH);
 }
 
-export function pullRepository(_path: string = POLKA_REPO_PATH) {
+export function pullRepository() {
 	git.pull("origin", "main");
 }
 
-export function commitAndPush(_path: string = POLKA_REPO_PATH) {
+export function commitAndPush() {
 	git.add(".");
 	git.commit(new Date().toISOString());
 	git.push("origin", "main");
 }
 
-export function existsRepository(path: string) {
+export function existsRepository() {
 	try {
-		const exists = existsSync(join(path, ".git"));
+		const exists = existsSync(POLKA_REPO_PATH);
 		return exists;
 	} catch {
 		return false;

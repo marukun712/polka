@@ -4,7 +4,6 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"transpile": "npx jco transpile wasm/repo.wasm -o dist/transpiled --instantiation=async",
 		"setup": "node index.ts"
 	},
 	"devDependencies": {
@@ -31,6 +30,7 @@
 		"simple-git": "^3.30.0",
 		"varint": "^6.0.0",
 		"web-did-resolver": "^2.0.32",
-		"zod": "^4.1.13"
+		"zod": "^4.1.13",
+		"@polka/db": "workspace:*"
 	}
 }

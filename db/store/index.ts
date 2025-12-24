@@ -25,3 +25,6 @@ export class UnsupportedHash extends Error {
 		super(`Unsupported hash code: ${code}`);
 	}
 }
+
+export * from "./car";
+export * from "./fs";

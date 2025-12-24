@@ -5,11 +5,9 @@ import * as Digest from "multiformats/hashes/digest";
 import { type BlockStore, CidNotFound, SHA2_256, UnsupportedHash } from ".";
 
 export interface FileSystem {
-	exists(path: string): boolean;
-	access(path: string): void;
 	mkdir(path: string, options?: { recursive?: boolean }): void;
 	readFile(path: string): Uint8Array;
-	writeFile(path: string, data: Uint8Array): void;
+	writeFile(path: string, data: Uint8Array, options?: { flag?: string }): void;
 }
 
 export class FsSyncStore implements BlockStore {
@@ -26,7 +24,7 @@ export class FsSyncStore implements BlockStore {
 	}
 
 	open(): void {
-		this.fs.access(this.path);
+		this.fs.readFile(join(this.path, "root"));
 	}
 
 	readBlock(cid: CID, out: Uint8Array[]): void {

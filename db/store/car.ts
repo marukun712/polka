@@ -1,20 +1,27 @@
-import { readFileSync, writeFileSync } from "node:fs";
 import { decode, encode } from "@ipld/dag-cbor";
 import { sha256 as createHash } from "@noble/hashes/sha2.js";
 import { CID } from "multiformats";
 import * as Digest from "multiformats/hashes/digest";
 import varint from "varint";
-import { type BlockStore, CidNotFound, SHA2_256, UnsupportedHash } from ".";
+import {
+	type BlockStore,
+	CidNotFound,
+	type FileSystem,
+	SHA2_256,
+	UnsupportedHash,
+} from ".";
 
 export class CarSyncStore implements BlockStore {
 	private path: string;
 	private roots: CID[];
 	private index: Map<string, { offset: number; length: number }>;
+	private fs: FileSystem;
 
-	constructor(path: string) {
+	constructor(path: string, fs: FileSystem) {
 		this.path = path;
 		this.roots = [];
 		this.index = new Map<string, { offset: number; length: number }>();
+		this.fs = fs;
 	}
 
 	create() {
@@ -27,13 +34,13 @@ export class CarSyncStore implements BlockStore {
 		// ヘッダーの長さを可変長整数でエンコードする
 		const unsignedVarint = varint.encode(headerEncoded.length);
 		//ファイルの書き込み
-		writeFileSync(this.path, Buffer.from(unsignedVarint));
-		writeFileSync(this.path, headerEncoded, { flag: "a" });
+		this.fs.writeFile(this.path, Buffer.from(unsignedVarint));
+		this.fs.writeFile(this.path, headerEncoded, { flag: "a" });
 	}
 
 	open() {
 		this.index.clear();
-		const data: Uint8Array = readFileSync(this.path);
+		const data: Uint8Array = this.fs.readFile(this.path);
 		let offset = 0;
 
 		// ヘッダー長を読み取る
@@ -90,7 +97,7 @@ export class CarSyncStore implements BlockStore {
 		const headerEncoded = encode(header);
 		const headerLenVarint = varint.encode(headerEncoded.length);
 		// ファイル全体を読み込む
-		const data = readFileSync(this.path);
+		const data = this.fs.readFile(this.path);
 		// 既存ヘッダーの長さを読み取る
 		let offset = 0;
 		const oldHeaderLen = varint.decode(data, offset);
@@ -104,7 +111,7 @@ export class CarSyncStore implements BlockStore {
 			Buffer.from(headerEncoded),
 		]);
 		// ファイルを上書き
-		writeFileSync(this.path, Buffer.concat([newHeader, restOfFile]));
+		this.fs.writeFile(this.path, Buffer.concat([newHeader, restOfFile]));
 		// indexを更新
 		this.open();
 	}
@@ -124,13 +131,13 @@ export class CarSyncStore implements BlockStore {
 		// varintはCID + contentsの長さを表す
 		const lengthVarint = varint.encode(blockBuffer.length + cidBuffer.length);
 		const varintBuffer = Buffer.from(lengthVarint);
-		const fileBuffer = readFileSync(this.path);
+		const fileBuffer = this.fs.readFile(this.path);
 		// コンテンツが始まる場所を記録
 		const contentOffset =
 			fileBuffer.length + lengthVarint.length + cidBuffer.length;
-		writeFileSync(this.path, varintBuffer, { flag: "a" });
-		writeFileSync(this.path, cidBuffer, { flag: "a" });
-		writeFileSync(this.path, blockBuffer, { flag: "a" });
+		this.fs.writeFile(this.path, varintBuffer, { flag: "a" });
+		this.fs.writeFile(this.path, cidBuffer, { flag: "a" });
+		this.fs.writeFile(this.path, blockBuffer, { flag: "a" });
 		this.index.set(cid.toString(), {
 			offset: contentOffset,
 			length: contents.length,
@@ -145,7 +152,7 @@ export class CarSyncStore implements BlockStore {
 			throw new CidNotFound();
 		}
 		out.length = 0;
-		const data = readFileSync(this.path);
+		const data = this.fs.readFile(this.path);
 		const content = new Uint8Array(data).slice(
 			block.offset,
 			block.offset + block.length,

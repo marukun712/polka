@@ -1,30 +1,26 @@
-import { existsSync, mkdirSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { WASIShim } from "@bytecodealliance/preview2-shim/instantiation";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hexToBytes } from "@noble/hashes/utils.js";
+import type { GetResult } from "@polka/db/dist/transpiled/interfaces/polka-repository-repo.d.ts";
+import { create, open } from "@polka/db/lib";
+import { CarSyncStore } from "@polka/db/store";
 import { config } from "dotenv";
 import Enquirer from "enquirer";
 import keytar from "keytar";
 import { CID } from "multiformats";
-import type { GetResult } from "./dist/transpiled/interfaces/polka-repository-repo";
-import { instantiate } from "./dist/transpiled/repo.js";
-import { CarSyncStore } from "./lib/blockstore.ts";
 import { generate } from "./lib/crypto.ts";
 import {
 	cloneRepository,
 	commitAndPush,
 	existsRepository,
-	generateCommitMessage,
 	POLKA_CAR_PATH,
-	POLKA_REPO_PATH,
 	pullRepository,
 } from "./lib/git.ts";
 import { generateDidDocument, resolve } from "./lib/identity.ts";
 
 config();
-
 const { prompt } = Enquirer;
 
 async function main() {
@@ -125,7 +121,7 @@ async function main() {
 		}
 
 		// リポジトリをクローンかpull
-		if (!existsRepository(POLKA_REPO_PATH)) {
+		if (!existsRepository()) {
 			console.log("Cloning repository...");
 			await cloneRepository(remoteUrl);
 			console.log("Repository cloned!");
@@ -183,13 +179,12 @@ async function main() {
 			});
 			repo.create("polka.profile/self", data);
 			const root = repo.getRoot();
-			store.updateHeaderRoots([CID.parse(root)]);
+			store.saveRoots([CID.parse(root)]);
 
 			// コミット
 			try {
-				const commitMessage = generateCommitMessage();
 				console.log("Committing and pushing...");
-				await commitAndPush(commitMessage);
+				await commitAndPush();
 				console.log("Committed and pushed!");
 			} catch (error) {
 				console.error("Failed to commit/push:", (error as Error).message);
@@ -211,50 +206,36 @@ export async function init(sk: string, didKey: string) {
 	}
 
 	const path = POLKA_CAR_PATH;
-	const store = new CarSyncStore(path);
 
-	// WASMのロード
-	const loader = async (path: string) => {
-		const buf = readFileSync(`./dist/transpiled/${path}`);
-		return await WebAssembly.compile(new Uint8Array(buf));
-	};
-
-	// importする関数をバインド
-	const wasm = await instantiate(loader, {
-		//@ts-expect-error
-		"polka:repository/crypto": {
-			sign: (bytes: Uint8Array) => {
+	if (existsSync(path)) {
+		const { repo, store } = await open(
+			didKey,
+			new CarSyncStore(path, {
+				mkdir: mkdirSync,
+				readFile: readFileSync,
+				writeFile: writeFileSync,
+			}),
+			(bytes: Uint8Array) => {
 				const skBytes = hexToBytes(sk);
 				const sig = secp256k1.sign(bytes, skBytes);
 				return sig;
 			},
-		},
-		"polka:repository/blockstore": {
-			readBlock: (cid: Uint8Array) => {
-				const parsed = CID.decode(cid);
-				const out: Uint8Array[] = [];
-				store.readBlock(parsed, out);
-				if (!out[0]) throw new Error("Block not found.");
-				return out[0];
-			},
-			writeBlock: (codec: bigint, hash: bigint, contents: Uint8Array) => {
-				return store.writeBlock(Number(codec), Number(hash), contents);
-			},
-		},
-		...new WASIShim().getImportObject<"0.2.6">(),
-	});
-
-	// repoを開く
-	if (existsSync(path)) {
-		store.updateIndex();
-		const roots = store.getRoots();
-		if (!roots[0]) throw new Error("Root not found.");
-		return { repo: wasm.repo.open(didKey, roots[0].toString()), store };
+		);
+		return { repo, store };
 	} else {
-		store.create();
-		const repo = wasm.repo.create(didKey);
-		const root = repo.getRoot();
-		store.updateHeaderRoots([CID.parse(root)]);
+		const { repo, store } = await create(
+			didKey,
+			new CarSyncStore(path, {
+				mkdir: mkdirSync,
+				readFile: readFileSync,
+				writeFile: writeFileSync,
+			}),
+			(bytes: Uint8Array) => {
+				const skBytes = hexToBytes(sk);
+				const sig = secp256k1.sign(bytes, skBytes);
+				return sig;
+			},
+		);
 		return { repo, store };
 	}
 }

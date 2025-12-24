@@ -1,5 +1,5 @@
 {
-	"name": "vite-template-solid",
+	"name": "webview",
 	"version": "0.0.0",
 	"description": "",
 	"type": "module",
@@ -12,7 +12,6 @@
 	},
 	"license": "MIT",
 	"devDependencies": {
-		"@biomejs/biome": "2.3.5",
 		"@tailwindcss/vite": "^4.1.13",
 		"solid-devtools": "^0.34.3",
 		"tailwindcss": "^4.1.13",

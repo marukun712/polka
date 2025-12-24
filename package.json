@@ -1,0 +1,16 @@
+{
+	"name": "polka",
+	"module": "index.ts",
+	"type": "module",
+	"private": true,
+	"workspaces": [
+		"desktop",
+		"desktop/ui",
+		"db",
+		"cli",
+		"webview"
+	],
+	"devDependencies": {
+		"@biomejs/biome": "2.3.10"
+	}
+}

@@ -8,19 +8,19 @@ export const POLKA_CAR_PATH = join(POLKA_REPO_PATH, "polka", "repo.car");
 
 const git: SimpleGit = simpleGit(POLKA_REPO_PATH).clean(CleanOptions.FORCE);
 
-export function pullRepository(_path: string = POLKA_REPO_PATH) {
+export function pullRepository() {
 	git.pull("origin", "main");
 }
 
-export function commitAndPush(_path: string = POLKA_REPO_PATH) {
+export function commitAndPush() {
 	git.add(".");
 	git.commit(new Date().toISOString());
 	git.push("origin", "main");
 }
 
-export function existsRepository(path: string) {
+export function existsRepository() {
 	try {
-		const exists = existsSync(join(path, ".git"));
+		const exists = existsSync(join(POLKA_REPO_PATH, ".git"));
 		return exists;
 	} catch {
 		return false;
