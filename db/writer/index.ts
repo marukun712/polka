@@ -1,7 +1,7 @@
 import type { CID } from "multiformats";
 import { sha256 } from "multiformats/hashes/sha2";
 
-export interface BlockStore {
+export interface BlockStoreWriter {
 	create(): void;
 	open(): void;
 
@@ -27,4 +27,5 @@ export class UnsupportedHash extends Error {
 }
 
 export * from "./car";
+export * from "./db";
 export * from "./fs";

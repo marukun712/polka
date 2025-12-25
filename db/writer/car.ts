@@ -4,14 +4,14 @@ import { CID } from "multiformats";
 import * as Digest from "multiformats/hashes/digest";
 import varint from "varint";
 import {
-	type BlockStore,
+	type BlockStoreWriter,
 	CidNotFound,
 	type FileSystem,
 	SHA2_256,
 	UnsupportedHash,
 } from ".";
 
-export class CarSyncStore implements BlockStore {
+export class CarWriter implements BlockStoreWriter {
 	private path: string;
 	private roots: CID[];
 	private index: Map<string, { offset: number; length: number }>;

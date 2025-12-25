@@ -3,9 +3,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hexToBytes } from "@noble/hashes/utils.js";
-import type { Repo } from "@polka/db/dist/transpiled/interfaces/polka-repository-repo.js";
-import { create, open } from "@polka/db/lib";
-import { type BlockStore, CarSyncStore } from "@polka/db/store";
+import { CarWriter, DBWriter } from "@polka/db/writer";
 import { config } from "dotenv";
 import keytar from "keytar";
 import { CID } from "multiformats";
@@ -21,13 +19,11 @@ config();
 
 export class polkaRepo {
 	domain: string;
-	repo: Repo;
-	store: BlockStore;
+	writer: DBWriter;
 
-	constructor(domain: string, repo: Repo, store: BlockStore) {
+	constructor(domain: string, writer: DBWriter) {
 		this.domain = domain;
-		this.repo = repo;
-		this.store = store;
+		this.writer = writer;
 	}
 
 	async commit() {
@@ -45,27 +41,27 @@ export class polkaRepo {
 	async create(rpath: string, data: string) {
 		console.log(rpath, data);
 		try {
-			this.repo.getRecord(rpath);
-			this.repo.update(rpath, data);
+			this.writer.getRecord(rpath);
+			this.writer.update(rpath, data);
 		} catch {
-			this.repo.create(rpath, data);
+			this.writer.create(rpath, data);
 		}
-		const root = this.repo.getRoot();
-		this.store.saveRoots([CID.parse(root)]);
+		const root = this.writer.getRoot();
+		this.writer.saveRoots([CID.parse(root)]);
 	}
 
 	async update(rpath: string, data: string) {
 		console.log(rpath, data);
-		this.repo.update(rpath, data);
-		const root = this.repo.getRoot();
-		this.store.saveRoots([CID.parse(root)]);
+		this.writer.update(rpath, data);
+		const root = this.writer.getRoot();
+		this.writer.saveRoots([CID.parse(root)]);
 	}
 
 	async delete(rpath: string) {
 		console.log(rpath);
-		this.repo.delete(rpath);
-		const root = this.repo.getRoot();
-		this.store.saveRoots([CID.parse(root)]);
+		this.writer.delete(rpath);
+		const root = this.writer.getRoot();
+		this.writer.saveRoots([CID.parse(root)]);
 	}
 
 	getDid() {
@@ -91,8 +87,8 @@ export class polkaRepo {
 		}
 		console.log("Repo initialized successfully!");
 
-		const { repo, store } = await init(sk, doc.didKey);
-		return new polkaRepo(domain, repo, store);
+		const writer = await init(sk, doc.didKey);
+		return new polkaRepo(domain, writer);
 	}
 }
 
@@ -106,9 +102,9 @@ export async function init(sk: string, didKey: string) {
 	const path = POLKA_CAR_PATH;
 
 	if (existsSync(path)) {
-		const { repo, store } = await open(
+		const writer = await DBWriter.open(
 			didKey,
-			new CarSyncStore(path, {
+			new CarWriter(path, {
 				mkdir: mkdirSync,
 				readFile: readFileSync,
 				writeFile: writeFileSync,
@@ -119,11 +115,11 @@ export async function init(sk: string, didKey: string) {
 				return sig;
 			},
 		);
-		return { repo, store };
+		return writer;
 	} else {
-		const { repo, store } = await create(
+		const writer = await DBWriter.init(
 			didKey,
-			new CarSyncStore(path, {
+			new CarWriter(path, {
 				mkdir: mkdirSync,
 				readFile: readFileSync,
 				writeFile: writeFileSync,
@@ -134,6 +130,6 @@ export async function init(sk: string, didKey: string) {
 				return sig;
 			},
 		);
-		return { repo, store };
+		return writer;
 	}
 }

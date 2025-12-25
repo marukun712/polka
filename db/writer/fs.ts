@@ -2,7 +2,12 @@ import { join } from "node:path";
 import { sha256 as createHash } from "@noble/hashes/sha2.js";
 import { CID } from "multiformats";
 import * as Digest from "multiformats/hashes/digest";
-import { type BlockStore, CidNotFound, SHA2_256, UnsupportedHash } from ".";
+import {
+	type BlockStoreWriter,
+	CidNotFound,
+	SHA2_256,
+	UnsupportedHash,
+} from ".";
 
 export interface FileSystem {
 	mkdir(path: string, options?: { recursive?: boolean }): void;
@@ -10,7 +15,7 @@ export interface FileSystem {
 	writeFile(path: string, data: Uint8Array, options?: { flag?: string }): void;
 }
 
-export class FsSyncStore implements BlockStore {
+export class FsWriter implements BlockStoreWriter {
 	private path: string;
 	private fs: FileSystem;
 

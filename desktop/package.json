@@ -4,7 +4,6 @@
 	"type": "module",
 	"private": true,
 	"scripts": {
-		"transpile": "npx jco transpile wasm/repo.wasm -o ui/public --instantiation=async",
 		"build:ui": "cd ui && npm run build",
 		"build": "npm run build:ui && npx tsup",
 		"start": "electron ./dist/index.js"

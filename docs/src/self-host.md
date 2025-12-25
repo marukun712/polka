@@ -38,7 +38,6 @@ git clone https://github.com/marukun712/polka
 nix develop
 cd polka/cli
 pnpm i
-pnpm run transpile
 ```
 
 CLIを起動します。
@@ -216,7 +215,6 @@ pnpm run setup
 ```
 cd desktop
 pnpm i
-pnpm run transpile
 pnpm run build
 pnpm run start
 ```

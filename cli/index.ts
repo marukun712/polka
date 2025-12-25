@@ -4,8 +4,7 @@ import { join } from "node:path";
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { hexToBytes } from "@noble/hashes/utils.js";
 import type { GetResult } from "@polka/db/dist/transpiled/interfaces/polka-repository-repo.d.ts";
-import { create, open } from "@polka/db/lib";
-import { CarSyncStore } from "@polka/db/store";
+import { CarWriter, DBWriter } from "@polka/db/writer";
 import { config } from "dotenv";
 import Enquirer from "enquirer";
 import keytar from "keytar";
@@ -135,13 +134,13 @@ async function main() {
 		if (!sk) throw new Error("Please save private key first.");
 
 		// 解決出来たら、repoをinit
-		const { repo, store } = await init(sk, didKey);
+		const writer = await init(sk, didKey);
 		console.log("Repo initialized successfully!");
-		console.log(repo.allRecords());
+		console.log(writer.allRecords());
 
 		let profile: GetResult | null = null;
 		try {
-			profile = repo.getRecord("polka.profile/self");
+			profile = writer.getRecord("polka.profile/self");
 		} catch {}
 
 		// プロフィールをセット
@@ -177,9 +176,9 @@ async function main() {
 				updatedAt: new Date().toISOString(),
 				followsCount: 0,
 			});
-			repo.create("polka.profile/self", data);
-			const root = repo.getRoot();
-			store.saveRoots([CID.parse(root)]);
+			writer.create("polka.profile/self", data);
+			const root = writer.getRoot();
+			writer.saveRoots([CID.parse(root)]);
 
 			// コミット
 			try {
@@ -208,9 +207,9 @@ export async function init(sk: string, didKey: string) {
 	const path = POLKA_CAR_PATH;
 
 	if (existsSync(path)) {
-		const { repo, store } = await open(
+		const writer = await DBWriter.open(
 			didKey,
-			new CarSyncStore(path, {
+			new CarWriter(path, {
 				mkdir: mkdirSync,
 				readFile: readFileSync,
 				writeFile: writeFileSync,
@@ -221,11 +220,11 @@ export async function init(sk: string, didKey: string) {
 				return sig;
 			},
 		);
-		return { repo, store };
+		return writer;
 	} else {
-		const { repo, store } = await create(
+		const writer = await DBWriter.init(
 			didKey,
-			new CarSyncStore(path, {
+			new CarWriter(path, {
 				mkdir: mkdirSync,
 				readFile: readFileSync,
 				writeFile: writeFileSync,
@@ -236,7 +235,7 @@ export async function init(sk: string, didKey: string) {
 				return sig;
 			},
 		);
-		return { repo, store };
+		return writer;
 	}
 }
 

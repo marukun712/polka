@@ -8,7 +8,8 @@
 	"private": true,
 	"exports": {
 		"./lib": "./lib/db.ts",
-		"./store": "./store/index.ts",
+		"./writer": "./writer/index.ts",
+		"./reader": "./reader/index.ts",
 		"./dist/*": "./dist/*"
 	},
 	"dependencies": {

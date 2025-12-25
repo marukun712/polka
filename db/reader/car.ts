@@ -2,39 +2,23 @@ import { decode } from "@ipld/dag-cbor";
 import { sha256 as createHash } from "@noble/hashes/sha2.js";
 import { CID } from "multiformats";
 import * as Digest from "multiformats/hashes/digest";
-import { sha256 } from "multiformats/hashes/sha2";
 import varint from "varint";
+import { type BlockStoreReader, CidNotFound, SHA2_256 } from ".";
 
-export const SHA2_256 = sha256.code;
-
-export class CidNotFound extends Error {
-	constructor() {
-		super("CID not found");
-	}
-}
-
-export class UnsupportedHash extends Error {
-	constructor(code: number) {
-		super(`Unsupported hash code: ${code}`);
-	}
-}
-
-export type ErrorType = CidNotFound | UnsupportedHash;
-
-export class ReadOnlyStore {
-	private file: Uint8Array;
+export class CarReader implements BlockStoreReader {
+	private data: Uint8Array;
 	private roots: CID[];
 	private index: Map<string, { offset: number; length: number }>;
 
-	constructor(file: Uint8Array) {
-		this.file = file;
+	constructor(data: Uint8Array) {
+		this.data = data;
 		this.roots = [];
 		this.index = new Map<string, { offset: number; length: number }>();
 	}
 
-	updateIndex() {
+	open() {
 		this.index.clear();
-		const data: Uint8Array = this.file;
+		const data = this.data;
 		let offset = 0;
 
 		// ヘッダー長を読み取る
@@ -88,8 +72,7 @@ export class ReadOnlyStore {
 			throw new CidNotFound();
 		}
 		out.length = 0;
-		const data = this.file;
-		const content = new Uint8Array(data).slice(
+		const content = new Uint8Array(this.data).slice(
 			block.offset,
 			block.offset + block.length,
 		);

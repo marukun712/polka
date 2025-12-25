@@ -140,6 +140,7 @@
         "@bytecodealliance/preview2-shim": "^0.17.5",
         "@ipld/dag-cbor": "^9.2.5",
         "@noble/hashes": "^2.0.1",
+        "@polka/db": "workspace:*",
         "@solidjs/router": "^0.15.4",
         "@types/cytoscape-dagre": "^2.3.4",
         "@types/varint": "^6.0.3",
