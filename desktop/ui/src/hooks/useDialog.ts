@@ -22,7 +22,9 @@ export function useDialog() {
 	});
 
 	return {
-		ref: (el: HTMLDialogElement) => (dialogRef = el),
+		ref: (el: HTMLDialogElement) => {
+			dialogRef = el;
+		},
 		open,
 		close,
 	};

@@ -55,10 +55,7 @@ export default function LinkButton({
 						return;
 					}
 
-					await ipc.client.create(
-						`polka.link/${now()}`,
-						JSON.stringify(parsed.data),
-					);
+					await ipc.client.create(`polka.link/${now()}`, parsed.data);
 					await ipc.client.commit();
 
 					form.reset();

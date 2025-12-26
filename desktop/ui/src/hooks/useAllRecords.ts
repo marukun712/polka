@@ -15,10 +15,11 @@ export function useAllRecords() {
 		async ({ did }) => {
 			const doc = await resolve(did);
 			const has = loadedReader.get(did);
-			if (has) return { ipc, reader: has, records: has.allRecords(), doc };
+			if (has)
+				return { ipc, reader: has, records: await has.allRecords(), doc };
 			const reader = await RepoReader.init(did);
 			loadedReader.set(did, reader);
-			return { ipc, reader, records: reader.allRecords(), doc };
+			return { ipc, reader, records: await reader.allRecords(), doc };
 		},
 	);
 

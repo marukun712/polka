@@ -7,12 +7,17 @@
 	},
 	"private": true,
 	"exports": {
-		"./lib": "./lib/index.ts"
+		"./lib": "./lib/index.ts",
+		"./lib/db": "./lib/db.ts",
+		"./lib/reader": "./lib/reader.ts",
+		"./lib/http-store": "./lib/httpStore.ts",
+		"./lib/types": "./lib/types.ts"
 	},
 	"dependencies": {
 		"@atcute/tid": "^1.0.3",
 		"@atproto/crypto": "^0.4.5",
 		"@atproto/repo": "^0.8.12",
+		"@types/node": "^25.0.3",
 		"multiformats": "^13.4.1"
 	},
 	"devDependencies": {

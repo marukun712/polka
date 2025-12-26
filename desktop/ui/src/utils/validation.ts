@@ -1,5 +1,5 @@
+import type { GetResult } from "@polka/db/lib/types";
 import type { z } from "zod";
-import type { GetResult } from "../public/interfaces/polka-repository-repo";
 
 export function validateRecord<T>(
 	record: GetResult | null,
@@ -8,7 +8,7 @@ export function validateRecord<T>(
 	if (!record) return null;
 
 	try {
-		const json = JSON.parse(record.data);
+		const json = record.data;
 		const parsed = schema.safeParse(json);
 		return parsed.success ? parsed.data : null;
 	} catch {
@@ -22,7 +22,7 @@ export function validateRecords<T extends { rpath: string }>(
 ): T[] {
 	return records.flatMap((record) => {
 		try {
-			const json = JSON.parse(record.data);
+			const json = record.data;
 			const parsed = schema.safeParse({ rpath: record.rpath, data: json });
 			return parsed.success ? [parsed.data] : [];
 		} catch {

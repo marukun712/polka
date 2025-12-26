@@ -5,8 +5,8 @@ export type PolkaAPI = {
 	getDomain(): Promise<string>;
 	did(): Promise<string>;
 	init(): Promise<boolean>;
-	create(rpath: string, data: string): Promise<boolean>;
-	update(rpath: string, data: string): Promise<boolean>;
+	create(rpath: string, data: Record<string, unknown>): Promise<boolean>;
+	update(rpath: string, data: Record<string, unknown>): Promise<boolean>;
 	delete(rpath: string): Promise<boolean>;
 	commit(): Promise<boolean>;
 };
@@ -16,9 +16,9 @@ contextBridge.exposeInMainWorld("polka", {
 	getDomain: () => ipcRenderer.invoke("getDomain"),
 	did: () => ipcRenderer.invoke("did"),
 	init: () => ipcRenderer.invoke("init"),
-	create: (rpath: string, data: string) =>
+	create: (rpath: string, data: Record<string, unknown>) =>
 		ipcRenderer.invoke("create", rpath, data),
-	update: (rpath: string, data: string) =>
+	update: (rpath: string, data: Record<string, unknown>) =>
 		ipcRenderer.invoke("update", rpath, data),
 	delete: (rpath: string) => ipcRenderer.invoke("delete", rpath),
 	commit: () => ipcRenderer.invoke("commit"),

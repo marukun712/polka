@@ -1,29 +1,22 @@
+import type { GetResult } from "@polka/db/lib/types";
 import { createSignal } from "solid-js";
-import z from "zod";
 import { useDialog } from "../../hooks/useDialog";
-import { useFormSubmit } from "../../hooks/useFormSubmit";
 import { useIPC } from "../../hooks/useIPC";
-import type { GetResult } from "../../public/interfaces/polka-repository-repo";
 import { Dialog } from "../ui/Dialog";
 
 export default function RecordEditForm({ init }: { init: GetResult }) {
 	const ipc = useIPC();
-	const [data, setData] = createSignal(init.data);
+	const [data, setData] = createSignal(JSON.stringify(init.data));
 
 	const editDialog = useDialog();
 
-	const { submit: submitEdit } = useFormSubmit({
-		schema: z.string(),
-		onSuccess: () => {
-			editDialog.close();
-			location.reload();
-		},
-	});
-
 	const handleSave = async () => {
-		submitEdit(data(), async (client, validated) => {
-			await client.update(init.rpath, JSON.stringify(validated));
-		});
+		const parsed = JSON.parse(data());
+		await ipc.client.update(init.rpath, parsed);
+		await ipc.client.commit();
+
+		editDialog.close();
+		location.reload();
 	};
 
 	const handleDelete = async () => {

@@ -32,10 +32,7 @@ export default function FollowForm() {
 						return;
 					}
 
-					await ipc.client.create(
-						`polka.follow/${now()}`,
-						JSON.stringify(parsed.data),
-					);
+					await ipc.client.create(`polka.follow/${now()}`, parsed.data);
 					await ipc.client.commit();
 
 					form.reset();

@@ -8,6 +8,7 @@ import {
 	readCarWithRoot,
 	WriteOpAction,
 } from "@atproto/repo";
+import type { GetResult } from "./types";
 
 export class DB {
 	private path: string;
@@ -27,7 +28,7 @@ export class DB {
 		this.keypair = keypair;
 	}
 
-	static async create(path: string, keypair: Secp256k1Keypair) {
+	static async init(path: string, keypair: Secp256k1Keypair) {
 		const storage = new MemoryBlockstore();
 		const repo = await Repo.create(storage, keypair.did(), keypair);
 		const bytes = await blocksToCarFile(repo.cid, storage.blocks);
@@ -43,11 +44,10 @@ export class DB {
 		return new DB(path, repo, storage, keypair);
 	}
 
-	async init(
-		collection: string,
-		rkey: string,
-		record: Record<string, unknown>,
-	) {
+	async create(rpath: string, record: Record<string, unknown>) {
+		const collection = rpath.split("/")[0];
+		const rkey = rpath.split("/")[1];
+		if (!collection || !rkey) throw new Error("Invalid rpath");
 		this.repo = await this.repo.applyWrites(
 			{
 				action: WriteOpAction.Create,
@@ -63,29 +63,41 @@ export class DB {
 
 	async createMany(
 		data: {
-			collection: string;
-			rkey: string;
+			rpath: string;
 			record: Record<string, unknown>;
 		}[],
 	) {
 		this.repo = await this.repo.applyWrites(
-			data.map(({ collection, rkey, record }) => ({
-				action: WriteOpAction.Create,
-				collection: collection,
-				rkey: rkey,
-				record,
-			})),
+			data.map(({ rpath, record }) => {
+				const collection = rpath.split("/")[0];
+				const rkey = rpath.split("/")[1];
+				if (!collection || !rkey) throw new Error("Invalid rpath");
+				return {
+					action: WriteOpAction.Create,
+					collection: collection,
+					rkey: rkey,
+					record,
+				};
+			}),
 			this.keypair,
 		);
 		const bytes = await blocksToCarFile(this.repo.cid, this.storage.blocks);
 		writeFileSync(this.path, bytes);
 	}
 
-	async update(
-		collection: string,
-		rkey: string,
-		record: Record<string, unknown>,
-	) {
+	async upsert(rpath: string, record: Record<string, unknown>) {
+		try {
+			this.find(rpath);
+			this.update(rpath, record);
+		} catch {
+			this.create(rpath, record);
+		}
+	}
+
+	async update(rpath: string, record: Record<string, unknown>) {
+		const collection = rpath.split("/")[0];
+		const rkey = rpath.split("/")[1];
+		if (!collection || !rkey) throw new Error("Invalid rpath");
 		this.repo = await this.repo.applyWrites(
 			{
 				action: WriteOpAction.Update,
@@ -101,25 +113,32 @@ export class DB {
 
 	async updateMany(
 		data: {
-			collection: string;
-			rkey: string;
+			rpath: string;
 			record: Record<string, unknown>;
 		}[],
 	) {
 		this.repo = await this.repo.applyWrites(
-			data.map(({ collection, rkey, record }) => ({
-				action: WriteOpAction.Update,
-				collection: collection,
-				rkey: rkey,
-				record,
-			})),
+			data.map(({ rpath, record }) => {
+				const collection = rpath.split("/")[0];
+				const rkey = rpath.split("/")[1];
+				if (!collection || !rkey) throw new Error("Invalid rpath");
+				return {
+					action: WriteOpAction.Update,
+					collection: collection,
+					rkey: rkey,
+					record,
+				};
+			}),
 			this.keypair,
 		);
 		const bytes = await blocksToCarFile(this.repo.cid, this.storage.blocks);
 		writeFileSync(this.path, bytes);
 	}
 
-	async delete(collection: string, rkey: string) {
+	async delete(rpath: string) {
+		const collection = rpath.split("/")[0];
+		const rkey = rpath.split("/")[1];
+		if (!collection || !rkey) throw new Error("Invalid rpath");
 		this.repo = await this.repo.applyWrites(
 			{
 				action: WriteOpAction.Delete,
@@ -132,13 +151,18 @@ export class DB {
 		writeFileSync(this.path, bytes);
 	}
 
-	async deleteMany(data: { collection: string; rkey: string }[]) {
+	async deleteMany(data: { rpath: string }[]) {
 		this.repo = await this.repo.applyWrites(
-			data.map(({ collection, rkey }) => ({
-				action: WriteOpAction.Delete,
-				collection: collection,
-				rkey: rkey,
-			})),
+			data.map(({ rpath }) => {
+				const collection = rpath.split("/")[0];
+				const rkey = rpath.split("/")[1];
+				if (!collection || !rkey) throw new Error("Invalid rpath");
+				return {
+					action: WriteOpAction.Delete,
+					collection: collection,
+					rkey: rkey,
+				};
+			}),
 			this.keypair,
 		);
 		const bytes = await blocksToCarFile(this.repo.cid, this.storage.blocks);
@@ -149,5 +173,56 @@ export class DB {
 		this.storage.blocks.entries().forEach((entry) => {
 			writeFileSync(join(path, entry.cid.toString()), entry.bytes);
 		});
+	}
+
+	async find(rpath: string): Promise<GetResult> {
+		const collection = rpath.split("/")[0];
+		const rkey = rpath.split("/")[1];
+		if (!collection || !rkey) throw new Error("Invalid rpath");
+		const data = await this.repo.getRecord(collection, rkey);
+		return {
+			rpath,
+			data: data as Record<string, unknown>,
+		};
+	}
+
+	async findMany(
+		collection: string,
+		options?: {
+			limit?: number;
+			cursor?: string;
+		},
+	): Promise<{ records: GetResult[]; cursor?: string }> {
+		const { limit = 50, cursor } = options ?? {};
+		const records: GetResult[] = [];
+		const prefix = `${collection}/`;
+
+		for await (const { collection: col, rkey, record } of this.repo.walkRecords(
+			cursor ? `${prefix}${cursor}` : prefix,
+		)) {
+			if (col !== collection) continue;
+			if (records.length >= limit) {
+				return {
+					records,
+					cursor: rkey,
+				};
+			}
+			records.push({ rpath: `${col}/${rkey}`, data: record });
+		}
+
+		return { records };
+	}
+
+	async collections() {
+		const contents = await this.repo.getContents();
+		return Object.keys(contents);
+	}
+
+	get did() {
+		return this.repo.did;
+	}
+
+	get cid() {
+		return this.repo.cid;
 	}
 }

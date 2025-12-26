@@ -32,7 +32,7 @@ export default function PostForm() {
 					return;
 				}
 
-				await ipc.client.create(rpath, JSON.stringify(parsed.data));
+				await ipc.client.create(rpath, parsed.data);
 				await ipc.client.commit();
 
 				setText("");

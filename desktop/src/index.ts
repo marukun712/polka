@@ -47,17 +47,23 @@ app.whenReady().then(() => {
 		return true;
 	});
 
-	ipcMain.handle("create", async (_, rpath: string, data: string) => {
-		if (!polka) throw new Error("Polka not initialized");
-		await polka.create(rpath, data);
-		return true;
-	});
+	ipcMain.handle(
+		"create",
+		async (_, rpath: string, data: Record<string, unknown>) => {
+			if (!polka) throw new Error("Polka not initialized");
+			await polka.create(rpath, data);
+			return true;
+		},
+	);
 
-	ipcMain.handle("update", async (_, rpath: string, data: string) => {
-		if (!polka) throw new Error("Polka not initialized");
-		await polka.update(rpath, data);
-		return true;
-	});
+	ipcMain.handle(
+		"update",
+		async (_, rpath: string, data: Record<string, unknown>) => {
+			if (!polka) throw new Error("Polka not initialized");
+			await polka.update(rpath, data);
+			return true;
+		},
+	);
 
 	ipcMain.handle("delete", async (_, rpath: string) => {
 		if (!polka) throw new Error("Polka not initialized");

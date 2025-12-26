@@ -1,4 +1,3 @@
-import { verifySignature } from "@atproto/crypto";
 import { RepoReader } from "../lib/client";
 import { resolve } from "../lib/identity";
 import {
@@ -26,13 +25,6 @@ export const generateFeed = async (
 
 	readerCache.set(did, reader);
 
-	const { didKey } = identity;
-
-	// 署名検証
-	const { sig, bytes } = await reader.getCommitToVerify();
-	const verified = await verifySignature(didKey, bytes, sig);
-	if (!verified) throw new Error("Failed to verify signature");
-
 	const [profile, posts, links, follows] = await Promise.all([
 		reader.getRecord("polka.profile/self"),
 		reader.getRecords("polka.post"),
@@ -40,10 +32,10 @@ export const generateFeed = async (
 		reader.getRecords("polka.follow"),
 	]);
 
-	const parsedPosts = validateRecords(posts, postSchema);
+	const parsedPosts = validateRecords(posts.records, postSchema);
 	const parsedProfile = validateRecord(profile, profileSchema);
-	const parsedLinks = validateRecords(links, linkSchema);
-	const parsedFollows = validateRecords(follows, followSchema);
+	const parsedLinks = validateRecords(links.records, linkSchema);
+	const parsedFollows = validateRecords(follows.records, followSchema);
 
 	if (!parsedProfile) return null;
 

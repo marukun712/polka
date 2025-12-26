@@ -1,6 +1,5 @@
 import { createSignal } from "solid-js";
 import { useDialog } from "../../hooks/useDialog";
-import { useFormSubmit } from "../../hooks/useFormSubmit";
 import { useIPC } from "../../hooks/useIPC";
 import { type Post, postDataSchema } from "../../types";
 import { formatTags, parseTags } from "../../utils/formatting";
@@ -14,23 +13,24 @@ export default function PostEdit({ post }: { post: Post }) {
 	const editDialog = useDialog();
 	const deleteDialog = useDialog();
 
-	const { submit: submitEdit } = useFormSubmit({
-		schema: postDataSchema,
-		onSuccess: () => {
-			editDialog.close();
-			location.reload();
-		},
-	});
-
 	const handleSave = async () => {
 		const data = {
 			tags: parseTags(inputTag()),
 			content: input(),
 			updatedAt: new Date().toISOString(),
 		};
-		submitEdit(data, async (daemon, validated) => {
-			await daemon.update(post.rpath, JSON.stringify(validated));
-		});
+
+		const parsed = postDataSchema.safeParse(data);
+		if (!parsed.success) {
+			console.error("Failed to parse post:", parsed.error);
+			return;
+		}
+
+		await ipc.client.update(post.rpath, parsed.data);
+		await ipc.client.commit();
+
+		editDialog.close();
+		location.reload();
 	};
 
 	const handleDelete = async () => {

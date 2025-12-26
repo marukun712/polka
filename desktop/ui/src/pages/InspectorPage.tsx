@@ -20,20 +20,6 @@ const InspectorPage: Component = () => {
 								{JSON.stringify(r().doc.doc, null, 2)}
 							</pre>
 						</article>
-						<article>
-							<h1>Your repository data:</h1>
-							<h4>
-								Root CID(CID for Signed commit):{" "}
-								{r().reader.getCommitToVerify().root}
-							</h4>
-							<pre style="max-height: 12rem; overflow: auto;">
-								{JSON.stringify(
-									r().reader.getCommitToVerify().decoded,
-									null,
-									2,
-								)}
-							</pre>
-						</article>
 						<figure>
 							<table class="striped hoverable">
 								<thead>
@@ -44,7 +30,7 @@ const InspectorPage: Component = () => {
 									</tr>
 								</thead>
 								<tbody>
-									<For each={r().records}>
+									<For each={r().records.records}>
 										{(item) => (
 											<tr>
 												<th scope="row" style="white-space: nowrap;">
@@ -52,7 +38,7 @@ const InspectorPage: Component = () => {
 												</th>
 												<td>
 													<pre style="max-height: 12rem; overflow: auto;">
-														{JSON.stringify(JSON.parse(item.data), null, 2)}
+														{JSON.stringify(item.data, null, 2)}
 													</pre>
 												</td>
 												<td>

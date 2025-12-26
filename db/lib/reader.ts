@@ -6,6 +6,7 @@ import {
 import { ReadableRepo } from "@atproto/repo/dist/readable-repo";
 import type { CID } from "multiformats/cid";
 import HTTPStorage from "./httpStore";
+import type { GetResult } from "./types";
 
 export class Reader {
 	private repo: ReadableRepo;
@@ -23,8 +24,15 @@ export class Reader {
 		return new Reader(repo);
 	}
 
-	async find(collection: string, rkey: string) {
-		return this.repo.getRecord(collection, rkey);
+	async find(rpath: string): Promise<GetResult> {
+		const collection = rpath.split("/")[0];
+		const rkey = rpath.split("/")[1];
+		if (!collection || !rkey) throw new Error("Invalid rpath");
+		const data = await this.repo.getRecord(collection, rkey);
+		return {
+			rpath,
+			data: data as Record<string, unknown>,
+		};
 	}
 
 	async findMany(
@@ -33,17 +41,14 @@ export class Reader {
 			limit?: number;
 			cursor?: string;
 		},
-	) {
+	): Promise<{ records: GetResult[]; cursor?: string }> {
 		const { limit = 50, cursor } = options ?? {};
-		const records: { rkey: string; value: unknown; cid: CID }[] = [];
+		const records: GetResult[] = [];
 		const prefix = `${collection}/`;
 
-		for await (const {
-			collection: col,
-			rkey,
-			cid,
-			record,
-		} of this.repo.walkRecords(cursor ? `${prefix}${cursor}` : prefix)) {
+		for await (const { collection: col, rkey, record } of this.repo.walkRecords(
+			cursor ? `${prefix}${cursor}` : prefix,
+		)) {
 			if (col !== collection) continue;
 			if (records.length >= limit) {
 				return {
@@ -51,14 +56,32 @@ export class Reader {
 					cursor: rkey,
 				};
 			}
-			records.push({ rkey, value: record, cid });
+			records.push({ rpath: `${col}/${rkey}`, data: record });
 		}
 
-		return records;
+		return { records };
 	}
 
-	async all() {
-		return this.repo.getContents();
+	async all(options?: {
+		limit?: number;
+		cursor?: string;
+	}): Promise<{ records: GetResult[]; cursor?: string }> {
+		const { limit = 50, cursor } = options ?? {};
+		const records: GetResult[] = [];
+
+		for await (const { collection: col, rkey, record } of this.repo.walkRecords(
+			cursor ? `${cursor}` : "",
+		)) {
+			if (records.length >= limit) {
+				return {
+					records,
+					cursor: rkey,
+				};
+			}
+			records.push({ rpath: `${col}/${rkey}`, data: record });
+		}
+
+		return { records };
 	}
 
 	async collections() {

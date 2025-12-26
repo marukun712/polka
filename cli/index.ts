@@ -1,14 +1,11 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { secp256k1 } from "@noble/curves/secp256k1.js";
-import { hexToBytes } from "@noble/hashes/utils.js";
-import type { GetResult } from "@polka/db/dist/transpiled/interfaces/polka-repository-repo.d.ts";
-import { CarWriter, DBWriter } from "@polka/db/writer";
+import { Secp256k1Keypair } from "@atproto/crypto";
+import { DB } from "@polka/db/lib";
 import { config } from "dotenv";
 import Enquirer from "enquirer";
 import keytar from "keytar";
-import { CID } from "multiformats";
 import { generate } from "./lib/crypto.ts";
 import {
 	cloneRepository,
@@ -134,14 +131,10 @@ async function main() {
 		if (!sk) throw new Error("Please save private key first.");
 
 		// 解決出来たら、repoをinit
-		const writer = await init(sk, didKey);
+		const db = await init(sk);
 		console.log("Repo initialized successfully!");
-		console.log(writer.allRecords());
 
-		let profile: GetResult | null = null;
-		try {
-			profile = writer.getRecord("polka.profile/self");
-		} catch {}
+		const profile = await db.find("polka.profile/self");
 
 		// プロフィールをセット
 		if (!profile) {
@@ -169,16 +162,13 @@ async function main() {
 				result: (value) => value.trim(),
 			});
 
-			const data = JSON.stringify({
+			await db.create("polka.profile/self", {
 				name: name.name,
 				description: description.description,
 				icon: icon.icon,
 				updatedAt: new Date().toISOString(),
 				followsCount: 0,
 			});
-			writer.create("polka.profile/self", data);
-			const root = writer.getRoot();
-			writer.saveRoots([CID.parse(root)]);
 
 			// コミット
 			try {
@@ -198,7 +188,7 @@ async function main() {
 }
 
 // repoをinitする
-export async function init(sk: string, didKey: string) {
+async function init(sk: string) {
 	// ~/.polkaがあるか確認
 	if (!existsSync(join(homedir(), ".polka"))) {
 		mkdirSync(join(homedir(), ".polka"));
@@ -206,36 +196,14 @@ export async function init(sk: string, didKey: string) {
 
 	const path = POLKA_CAR_PATH;
 
+	const keypair = await Secp256k1Keypair.import(sk);
+
 	if (existsSync(path)) {
-		const writer = await DBWriter.open(
-			didKey,
-			new CarWriter(path, {
-				mkdir: mkdirSync,
-				readFile: readFileSync,
-				writeFile: writeFileSync,
-			}),
-			(bytes: Uint8Array) => {
-				const skBytes = hexToBytes(sk);
-				const sig = secp256k1.sign(bytes, skBytes);
-				return sig;
-			},
-		);
-		return writer;
+		const db = await DB.open(path, keypair);
+		return db;
 	} else {
-		const writer = await DBWriter.init(
-			didKey,
-			new CarWriter(path, {
-				mkdir: mkdirSync,
-				readFile: readFileSync,
-				writeFile: writeFileSync,
-			}),
-			(bytes: Uint8Array) => {
-				const skBytes = hexToBytes(sk);
-				const sig = secp256k1.sign(bytes, skBytes);
-				return sig;
-			},
-		);
-		return writer;
+		const db = await DB.init(path, keypair);
+		return db;
 	}
 }
 

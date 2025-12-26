@@ -1,12 +1,10 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { secp256k1 } from "@noble/curves/secp256k1.js";
-import { hexToBytes } from "@noble/hashes/utils.js";
-import { CarWriter, DBWriter } from "@polka/db/writer";
+import { Secp256k1Keypair } from "@atproto/crypto";
+import { DB } from "@polka/db/lib";
 import { config } from "dotenv";
 import keytar from "keytar";
-import { CID } from "multiformats";
 import {
 	commitAndPush,
 	existsRepository,
@@ -19,11 +17,11 @@ config();
 
 export class polkaRepo {
 	domain: string;
-	writer: DBWriter;
+	db: DB;
 
-	constructor(domain: string, writer: DBWriter) {
+	constructor(domain: string, db: DB) {
 		this.domain = domain;
-		this.writer = writer;
+		this.db = db;
 	}
 
 	async commit() {
@@ -38,34 +36,20 @@ export class polkaRepo {
 		}
 	}
 
-	async create(rpath: string, data: string) {
-		console.log(rpath, data);
-		try {
-			this.writer.getRecord(rpath);
-			this.writer.update(rpath, data);
-		} catch {
-			this.writer.create(rpath, data);
-		}
-		const root = this.writer.getRoot();
-		this.writer.saveRoots([CID.parse(root)]);
+	async create(rpath: string, data: Record<string, unknown>) {
+		this.db.upsert(rpath, data);
 	}
 
-	async update(rpath: string, data: string) {
-		console.log(rpath, data);
-		this.writer.update(rpath, data);
-		const root = this.writer.getRoot();
-		this.writer.saveRoots([CID.parse(root)]);
+	async update(rpath: string, data: Record<string, unknown>) {
+		this.db.update(rpath, data);
 	}
 
 	async delete(rpath: string) {
-		console.log(rpath);
-		this.writer.delete(rpath);
-		const root = this.writer.getRoot();
-		this.writer.saveRoots([CID.parse(root)]);
+		this.db.delete(rpath);
 	}
 
 	getDid() {
-		return `did:web:${this.domain}`;
+		return this.db.did;
 	}
 
 	static async start(domain: string) {
@@ -87,13 +71,12 @@ export class polkaRepo {
 		}
 		console.log("Repo initialized successfully!");
 
-		const writer = await init(sk, doc.didKey);
-		return new polkaRepo(domain, writer);
+		const db = await init(sk);
+		return new polkaRepo(domain, db);
 	}
 }
 
-// repoをinitする
-export async function init(sk: string, didKey: string) {
+async function init(sk: string) {
 	// ~/.polkaがあるか確認
 	if (!existsSync(join(homedir(), ".polka"))) {
 		mkdirSync(join(homedir(), ".polka"));
@@ -101,35 +84,13 @@ export async function init(sk: string, didKey: string) {
 
 	const path = POLKA_CAR_PATH;
 
+	const keypair = await Secp256k1Keypair.import(sk);
+
 	if (existsSync(path)) {
-		const writer = await DBWriter.open(
-			didKey,
-			new CarWriter(path, {
-				mkdir: mkdirSync,
-				readFile: readFileSync,
-				writeFile: writeFileSync,
-			}),
-			(bytes: Uint8Array) => {
-				const skBytes = hexToBytes(sk);
-				const sig = secp256k1.sign(bytes, skBytes);
-				return sig;
-			},
-		);
-		return writer;
+		const db = await DB.open(path, keypair);
+		return db;
 	} else {
-		const writer = await DBWriter.init(
-			didKey,
-			new CarWriter(path, {
-				mkdir: mkdirSync,
-				readFile: readFileSync,
-				writeFile: writeFileSync,
-			}),
-			(bytes: Uint8Array) => {
-				const skBytes = hexToBytes(sk);
-				const sig = secp256k1.sign(bytes, skBytes);
-				return sig;
-			},
-		);
-		return writer;
+		const db = await DB.init(path, keypair);
+		return db;
 	}
 }

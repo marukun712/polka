@@ -12,11 +12,11 @@ export class IPCClient {
 		return new IPCClient();
 	}
 
-	async create(rpath: string, data: string) {
+	async create(rpath: string, data: Record<string, unknown>) {
 		return await window.polka.create(rpath, data);
 	}
 
-	async update(rpath: string, data: string) {
+	async update(rpath: string, data: Record<string, unknown>) {
 		return await window.polka.update(rpath, data);
 	}
 
