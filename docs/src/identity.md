@@ -1,4 +1,4 @@
-# アイデンティティと認証
+# アイデンティティ
 
 polkaは、did:webを使ったドメインベースのアイデンティティ管理を採用しています。
 
@@ -62,16 +62,6 @@ did:webの解決は、HTTPSリクエストでDID Documentを取得するプロ�
 3. DID Documentを取得
 4. `verificationMethod`から公開鍵を抽出
 5. `service[0].serviceEndpoint`からリポジトリURLを解決
-
-### リポジトリURLの構築
-
-serviceEndpoint(例: `https://example.com`)に`/polka/repo.car`を結合し、最終的なリポジトリURLを構築します。
-
-```
-https://example.com/polka/repo.car
-```
-
-このURLから、ユーザーのすべてのデータを含むCARファイルを取得できます。
 
 ## 署名検証
 
