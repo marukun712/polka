@@ -5,6 +5,7 @@ import { CleanOptions, type SimpleGit, simpleGit } from "simple-git";
 
 export const POLKA_REPO_PATH = join(homedir(), ".polka/repo");
 export const POLKA_CAR_PATH = join(POLKA_REPO_PATH, "polka", "repo.car");
+export const POLKA_DIST_PATH = join(POLKA_REPO_PATH, "dist");
 
 const git: SimpleGit = simpleGit(POLKA_REPO_PATH).clean(CleanOptions.FORCE);
 

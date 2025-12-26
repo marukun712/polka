@@ -9,6 +9,7 @@ import {
 	commitAndPush,
 	existsRepository,
 	POLKA_CAR_PATH,
+	POLKA_DIST_PATH,
 	pullRepository,
 } from "./git.ts";
 import { resolve } from "./identity.ts";
@@ -16,11 +17,9 @@ import { resolve } from "./identity.ts";
 config();
 
 export class polkaRepo {
-	domain: string;
 	db: DB;
 
-	constructor(domain: string, db: DB) {
-		this.domain = domain;
+	constructor(db: DB) {
 		this.db = db;
 	}
 
@@ -38,14 +37,17 @@ export class polkaRepo {
 
 	async create(rpath: string, data: Record<string, unknown>) {
 		this.db.upsert(rpath, data);
+		this.db.build(POLKA_DIST_PATH);
 	}
 
 	async update(rpath: string, data: Record<string, unknown>) {
 		this.db.update(rpath, data);
+		this.db.build(POLKA_DIST_PATH);
 	}
 
 	async delete(rpath: string) {
 		this.db.delete(rpath);
+		this.db.build(POLKA_DIST_PATH);
 	}
 
 	getDid() {
@@ -72,7 +74,7 @@ export class polkaRepo {
 		console.log("Repo initialized successfully!");
 
 		const db = await init(sk);
-		return new polkaRepo(domain, db);
+		return new polkaRepo(db);
 	}
 }
 

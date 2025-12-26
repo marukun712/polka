@@ -12,6 +12,7 @@ import {
 	commitAndPush,
 	existsRepository,
 	POLKA_CAR_PATH,
+	POLKA_DIST_PATH,
 	pullRepository,
 } from "./lib/git.ts";
 import { generateDidDocument, resolve } from "./lib/identity.ts";
@@ -169,6 +170,7 @@ async function main() {
 				updatedAt: new Date().toISOString(),
 				followsCount: 0,
 			});
+			await db.build(POLKA_DIST_PATH);
 
 			// コミット
 			try {
