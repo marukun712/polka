@@ -34,14 +34,12 @@ export function useFeedItemResolver() {
 		if (!postRecord || !profileRecord) return null;
 
 		// プロフィール検証
-		const profileParsed = profileSchema.safeParse(
-			JSON.parse(profileRecord.data),
-		);
+		const profileParsed = profileSchema.safeParse(profileRecord.data);
 		if (!profileParsed.success) return null;
 
 		const postData = {
 			rpath: postRecord.rpath,
-			data: JSON.parse(postRecord.data),
+			data: postRecord.data,
 		};
 
 		// Post型として検証
