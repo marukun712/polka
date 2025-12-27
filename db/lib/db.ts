@@ -1,5 +1,13 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import {
+	existsSync,
+	mkdirSync,
+	readdirSync,
+	readFileSync,
+	rmSync,
+	writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
+import { now } from "@atcute/tid";
 import type { Secp256k1Keypair } from "@atproto/crypto";
 import {
 	blocksToCarFile,
@@ -181,9 +189,45 @@ export class DB {
 		writeFileSync(this.path, bytes);
 	}
 
+	async createIndex(collection: string, field: string) {
+		const found = await this.findMany(collection);
+		found.records.forEach((record) => {
+			if (!(field in record.data)) {
+				return;
+			}
+			const target = record.data[field];
+			if (Array.isArray(target)) {
+				target.forEach((t) => {
+					const key = `index/${collection}.${t}.${now()}`;
+					this.create(key, record.data);
+				});
+			} else {
+				const key = `index/${collection}.${target}.${now()}`;
+				this.create(key, record.data);
+			}
+		});
+
+		const bytes = await blocksToCarFile(this.repo.cid, this.storage.blocks);
+		writeFileSync(this.path, bytes);
+	}
+
+	async dropIndex(collection: string) {
+		const prefix = `index/${collection}.`;
+
+		for await (const { rkey } of this.repo.walkRecords(prefix)) {
+			await this.delete(prefix + rkey);
+		}
+
+		const bytes = await blocksToCarFile(this.repo.cid, this.storage.blocks);
+		writeFileSync(this.path, bytes);
+	}
+
 	async build(path: string) {
 		if (!existsSync(path)) {
 			mkdirSync(path);
+		}
+		for (const name of readdirSync(path)) {
+			rmSync(join(path, name));
 		}
 		this.storage.blocks.entries().forEach((entry) => {
 			writeFileSync(join(path, entry.cid.toString()), entry.bytes);
@@ -210,11 +254,12 @@ export class DB {
 	async findMany(
 		collection: string,
 		options?: {
+			query?: Record<string, unknown>;
 			limit?: number;
 			cursor?: string;
 		},
 	): Promise<{ records: GetResult[]; cursor?: string }> {
-		const { limit = 50, cursor } = options ?? {};
+		const { limit, cursor, query } = options ?? {};
 		const records: GetResult[] = [];
 		const prefix = `${collection}/`;
 
@@ -222,15 +267,26 @@ export class DB {
 			cursor ? `${prefix}${cursor}` : prefix,
 		)) {
 			if (col !== collection) continue;
-			if (records.length >= limit) {
+			if (limit && records.length >= limit) {
 				return {
 					records,
 					cursor: rkey,
 				};
 			}
+			if (query) {
+				const isMatch = Object.entries(query).every(([key, value]) => {
+					const target = record[key];
+					if (Array.isArray(target)) {
+						return target.includes(value);
+					}
+					return target === value;
+				});
+				if (!isMatch) {
+					continue;
+				}
+			}
 			records.push({ rpath: `${col}/${rkey}`, data: record });
 		}
-
 		return { records };
 	}
 
@@ -238,13 +294,13 @@ export class DB {
 		limit?: number;
 		cursor?: string;
 	}): Promise<{ records: GetResult[]; cursor?: string }> {
-		const { limit = 50, cursor } = options ?? {};
+		const { limit, cursor } = options ?? {};
 		const records: GetResult[] = [];
 
 		for await (const { collection: col, rkey, record } of this.repo.walkRecords(
 			cursor ? `${cursor}` : "",
 		)) {
-			if (records.length >= limit) {
+			if (limit && records.length >= limit) {
 				return {
 					records,
 					cursor: rkey,

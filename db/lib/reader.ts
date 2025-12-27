@@ -62,11 +62,12 @@ export class Reader {
 	async findMany(
 		collection: string,
 		options?: {
+			query?: Record<string, unknown>;
 			limit?: number;
 			cursor?: string;
 		},
 	): Promise<{ records: GetResult[]; cursor?: string }> {
-		const { limit = 50, cursor } = options ?? {};
+		const { limit, cursor, query } = options ?? {};
 		const records: GetResult[] = [];
 
 		const walker = await NodeWalker.create(this.store, this.commit.data.$link);
@@ -75,7 +76,7 @@ export class Reader {
 		const end = `${collection}/\xff`;
 
 		for await (const [rpath, cid] of walker.entriesInRange(start, end)) {
-			if (records.length >= limit) {
+			if (limit && records.length >= limit) {
 				return {
 					records,
 					cursor: rpath,
@@ -86,6 +87,18 @@ export class Reader {
 				continue;
 			}
 			const decoded = decode(block);
+			if (query) {
+				const isMatch = Object.entries(query).every(([key, value]) => {
+					const target = decoded[key];
+					if (Array.isArray(target)) {
+						return target.includes(value);
+					}
+					return target === value;
+				});
+				if (!isMatch) {
+					continue;
+				}
+			}
 			records.push({ rpath, data: decoded });
 		}
 
@@ -96,10 +109,10 @@ export class Reader {
 		limit?: number;
 		cursor?: string;
 	}): Promise<{ records: GetResult[]; cursor?: string }> {
-		const { limit = 50, cursor } = options ?? {};
+		const { limit, cursor } = options ?? {};
 		const records: GetResult[] = [];
 
-		const walker = await NodeWalker.create(this.store, this.commit.data.$link);
+		const walker = await NodeWalker.create(this.store, this.root);
 
 		if (cursor) {
 			while (true) {
@@ -114,7 +127,7 @@ export class Reader {
 		}
 
 		for await (const [rpath, cid] of walker.entries()) {
-			if (records.length >= limit) {
+			if (limit && records.length >= limit) {
 				return {
 					records,
 					cursor: rpath,
