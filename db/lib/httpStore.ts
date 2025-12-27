@@ -2,8 +2,11 @@ import { BlockMap, ReadableBlockstore } from "@atproto/repo";
 import { CID } from "multiformats/cid";
 
 export class HTTPStorage extends ReadableBlockstore {
-	constructor(public baseUrl: URL) {
+	baseUrl: URL;
+
+	constructor(baseUrl: URL) {
 		super();
+		this.baseUrl = baseUrl;
 	}
 
 	async getBytes(cid: CID): Promise<Uint8Array | null> {

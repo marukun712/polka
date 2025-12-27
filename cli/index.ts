@@ -1,18 +1,19 @@
 import { existsSync, mkdirSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
 import { Secp256k1Keypair } from "@atproto/crypto";
 import { DB } from "@polka/db/lib";
 import { config } from "dotenv";
 import Enquirer from "enquirer";
 import keytar from "keytar";
+import { type SimpleGit, simpleGit } from "simple-git";
 import { generate } from "./lib/crypto.ts";
 import {
 	cloneRepository,
 	commitAndPush,
 	existsRepository,
+	POLKA_BASE_PATH,
 	POLKA_CAR_PATH,
 	POLKA_DIST_PATH,
+	POLKA_REPO_PATH,
 	pullRepository,
 } from "./lib/git.ts";
 import { generateDidDocument, resolve } from "./lib/identity.ts";
@@ -117,14 +118,18 @@ async function main() {
 			remoteUrl = result.remoteUrl;
 		}
 
+		let git: SimpleGit;
+
 		// リポジトリをクローンかpull
 		if (!existsRepository()) {
 			console.log("Cloning repository...");
 			await cloneRepository(remoteUrl);
 			console.log("Repository cloned!");
+			git = simpleGit(POLKA_REPO_PATH);
 		} else {
+			git = simpleGit(POLKA_REPO_PATH);
 			console.log("Pulling latest changes...");
-			await pullRepository();
+			await pullRepository(git);
 			console.log("Repository updated!");
 		}
 
@@ -175,7 +180,7 @@ async function main() {
 			// コミット
 			try {
 				console.log("Committing and pushing...");
-				await commitAndPush();
+				await commitAndPush(git);
 				console.log("Committed and pushed!");
 			} catch (error) {
 				console.error("Failed to commit/push:", (error as Error).message);
@@ -183,6 +188,8 @@ async function main() {
 
 			console.log("Setup complete!");
 		}
+		await db.build(POLKA_DIST_PATH);
+		console.log(await db.all());
 	} catch (e) {
 		console.log(e);
 		process.exit(1);
@@ -191,20 +198,17 @@ async function main() {
 
 // repoをinitする
 async function init(sk: string) {
-	// ~/.polkaがあるか確認
-	if (!existsSync(join(homedir(), ".polka"))) {
-		mkdirSync(join(homedir(), ".polka"));
+	if (!existsSync(POLKA_BASE_PATH)) {
+		mkdirSync(POLKA_BASE_PATH);
 	}
-
-	const path = POLKA_CAR_PATH;
 
 	const keypair = await Secp256k1Keypair.import(sk);
 
-	if (existsSync(path)) {
-		const db = await DB.open(path, keypair);
+	if (existsSync(POLKA_CAR_PATH)) {
+		const db = await DB.open(POLKA_CAR_PATH, keypair);
 		return db;
 	} else {
-		const db = await DB.init(path, keypair);
+		const db = await DB.init(POLKA_CAR_PATH, keypair);
 		return db;
 	}
 }

@@ -3,10 +3,10 @@ import {
 	RepoVerificationError,
 	verifyCommitSig,
 } from "@atproto/repo";
-import { ReadableRepo } from "@atproto/repo/dist/readable-repo";
+import { ReadableRepo } from "@atproto/repo/dist/readable-repo.js";
 import type { CID } from "multiformats/cid";
-import HTTPStorage from "./httpStore";
-import type { GetResult } from "./types";
+import HTTPStorage from "./httpStore.ts";
+import type { GetResult } from "./types.ts";
 
 export class Reader {
 	private repo: ReadableRepo;
@@ -24,15 +24,19 @@ export class Reader {
 		return new Reader(repo);
 	}
 
-	async find(rpath: string): Promise<GetResult> {
+	async find(rpath: string) {
 		const collection = rpath.split("/")[0];
 		const rkey = rpath.split("/")[1];
 		if (!collection || !rkey) throw new Error("Invalid rpath");
 		const data = await this.repo.getRecord(collection, rkey);
-		return {
-			rpath,
-			data: data as Record<string, unknown>,
-		};
+		if (data) {
+			return {
+				rpath,
+				data: data as Record<string, unknown>,
+			};
+		} else {
+			return null;
+		}
 	}
 
 	async findMany(

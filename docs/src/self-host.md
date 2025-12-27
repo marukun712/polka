@@ -177,16 +177,16 @@ name: Deploy Files
 on: [push]
 
 jobs:
-  deploy:
-    runs-on: native
-    steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-      - name: Copy files
-        run: |
-          echo "Deploying..."
-          cp polka/repo.car /var/www/polka/polka/repo.car
-          echo "Done!"
+  deploy:
+    runs-on: native
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Copy files
+        run: |
+          echo "Deploying..."
+          cp -r polka/dist /var/www/polka/polka/dist
+          echo "Done!"
 ```
 
 runnerがディレクトリに書き込めるようにします。
