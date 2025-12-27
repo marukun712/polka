@@ -185,7 +185,7 @@ jobs:
       - name: Copy files
         run: |
           echo "Deploying..."
-          cp -r polka/dist /var/www/polka/polka/dist
+          cp -r polka/dist /var/www/polka/polka
           echo "Done!"
 ```
 

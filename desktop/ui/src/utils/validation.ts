@@ -1,4 +1,4 @@
-import type { GetResult } from "@polka/db/lib/types";
+import type { GetResult } from "@polka/db/types";
 import type { z } from "zod";
 
 export function validateRecord<T>(

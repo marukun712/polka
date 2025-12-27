@@ -27,7 +27,8 @@ export function useFeedData(did: string) {
 					}),
 				);
 				return { feed, followFeeds: followFeeds.flat() };
-			} catch {
+			} catch (e) {
+				console.error(e);
 				return null;
 			}
 		},

@@ -1,4 +1,4 @@
-import { Reader } from "@polka/db/lib/reader";
+import { Reader } from "@polka/db/reader";
 import { resolve } from "./identity.js";
 
 export class RepoReader {
@@ -11,7 +11,6 @@ export class RepoReader {
 	static async init(did: string) {
 		const doc = await resolve(did);
 		const path = doc.target;
-
 		const reader = await Reader.open(path);
 		return new RepoReader(reader);
 	}

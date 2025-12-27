@@ -98,7 +98,7 @@ export const generateFeed = async (
 						reader.getRecord("polka.profile/self"),
 					]);
 
-					const parsedPost = validateRecords([post], postSchema);
+					const parsedPost = post ? validateRecords([post], postSchema) : null;
 					const parsedProfile = validateRecord(profile, profileSchema);
 
 					if (!parsedPost || !parsedProfile) return;

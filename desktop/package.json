@@ -18,6 +18,8 @@
 	"dependencies": {
 		"@atcute/tid": "^1.0.3",
 		"@atproto/crypto": "^0.4.5",
+		"@atproto/repo": "^0.8.12",
+		"@polka/db": "workspace:*",
 		"did-resolver": "^4.1.0",
 		"dotenv": "^17.2.3",
 		"electron": "^39.2.7",
@@ -27,7 +29,6 @@
 		"simple-git": "^3.30.0",
 		"tsup": "^8.5.1",
 		"web-did-resolver": "^2.0.32",
-		"zod": "^4.1.13",
-		"@polka/db": "workspace:*"
+		"zod": "^4.1.13"
 	}
 }

@@ -1,4 +1,4 @@
-import { Reader } from "@polka/db/lib/reader";
+import { Reader } from "@polka/db/reader";
 import { resolve } from "./identity.js";
 
 export class RepoReader {

@@ -56,7 +56,7 @@ export async function resolve(domain: string) {
 	if (!multiHash) throw new Error("Failed to resolve did");
 	const didKey = `did:key:${multiHash.publicKeyMultibase}`;
 	const linked = new URL(service[0].serviceEndpoint.toString());
-	const target = new URL("/polka/repo.car", linked).toString();
+	const target = new URL("/polka/dist", linked).toString();
 	return {
 		didKey,
 		target,

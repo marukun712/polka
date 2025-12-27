@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { Secp256k1Keypair } from "@atproto/crypto";
-import { DB } from "@polka/db/lib";
+import { DB } from "@polka/db";
 import { config } from "dotenv";
 import Enquirer from "enquirer";
 import keytar from "keytar";

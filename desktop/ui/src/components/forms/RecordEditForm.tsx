@@ -1,4 +1,4 @@
-import type { GetResult } from "@polka/db/lib/types";
+import type { GetResult } from "@polka/db/types";
 import { createSignal } from "solid-js";
 import { useDialog } from "../../hooks/useDialog";
 import { useIPC } from "../../hooks/useIPC";

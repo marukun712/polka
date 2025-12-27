@@ -44,6 +44,18 @@ export class DB {
 		return new DB(path, repo, storage, keypair);
 	}
 
+	get root() {
+		return this.repo.cid;
+	}
+
+	get commit() {
+		return this.repo.commit;
+	}
+
+	get did() {
+		return this.repo.did;
+	}
+
 	async create(rpath: string, record: Record<string, unknown>) {
 		const collection = rpath.split("/")[0];
 		const rkey = rpath.split("/")[1];
@@ -176,9 +188,11 @@ export class DB {
 		this.storage.blocks.entries().forEach((entry) => {
 			writeFileSync(join(path, entry.cid.toString()), entry.bytes);
 		});
+		const root = this.repo.cid;
+		writeFileSync(join(path, "ROOT"), root.toString());
 	}
 
-	async find(rpath: string) {
+	async find(rpath: string): Promise<GetResult | null> {
 		const collection = rpath.split("/")[0];
 		const rkey = rpath.split("/")[1];
 		if (!collection || !rkey) throw new Error("Invalid rpath");
@@ -240,18 +254,5 @@ export class DB {
 		}
 
 		return { records };
-	}
-
-	async collections() {
-		const contents = await this.repo.getContents();
-		return Object.keys(contents);
-	}
-
-	get did() {
-		return this.repo.did;
-	}
-
-	get cid() {
-		return this.repo.cid;
 	}
 }

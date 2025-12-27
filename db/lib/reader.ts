@@ -1,42 +1,62 @@
+import { decode } from "@atcute/cbor";
 import {
-	type ReadableBlockstore,
-	RepoVerificationError,
-	verifyCommitSig,
-} from "@atproto/repo";
-import { ReadableRepo } from "@atproto/repo/dist/readable-repo.js";
-import type { CID } from "multiformats/cid";
+	MemoryBlockStore,
+	NodeStore,
+	NodeWalker,
+	OverlayBlockStore,
+} from "@atcute/mst";
+import { type Commit, isCommit } from "@atcute/repo";
 import HTTPStorage from "./httpStore.ts";
 import type { GetResult } from "./types.ts";
 
 export class Reader {
-	private repo: ReadableRepo;
+	private store: NodeStore;
+	private storage: HTTPStorage;
+	root: string;
+	commit: Commit;
+	did: string;
 
-	constructor(repo: ReadableRepo) {
-		this.repo = repo;
+	constructor(
+		store: NodeStore,
+		storage: HTTPStorage,
+		root: string,
+		commit: Commit,
+	) {
+		this.store = store;
+		this.storage = storage;
+		this.root = root;
+		this.commit = commit;
+		this.did = commit.did;
 	}
 
 	static async open(url: string) {
-		const storage = new HTTPStorage(new URL(url));
+		const storage = new HTTPStorage(url);
+		const store = new NodeStore(
+			new OverlayBlockStore(new MemoryBlockStore(), storage),
+		);
 		const root = await storage.getRoot();
-		if (!root) throw new Error("Root not found");
-
-		const repo = await verifyRepoRoot(storage, root);
-		return new Reader(repo);
+		if (!root) throw new Error("Failed to get repo root CID");
+		const block = await storage.get(root);
+		if (!block) throw new Error("Failed to get repo commit block");
+		const decoded = decode(block);
+		if (!isCommit(decoded)) {
+			throw new Error("Root block is not a valid commit");
+		}
+		return new Reader(store, storage, root, decoded);
 	}
 
-	async find(rpath: string) {
-		const collection = rpath.split("/")[0];
-		const rkey = rpath.split("/")[1];
-		if (!collection || !rkey) throw new Error("Invalid rpath");
-		const data = await this.repo.getRecord(collection, rkey);
-		if (data) {
-			return {
-				rpath,
-				data: data as Record<string, unknown>,
-			};
-		} else {
-			return null;
-		}
+	async find(rpath: string): Promise<GetResult | null> {
+		const walker = await NodeWalker.create(this.store, this.commit.data.$link);
+
+		const cid = await walker.findRpath(rpath);
+		if (!cid) return null;
+		const block = await this.storage.get(cid.$link);
+		if (!block) return null;
+		const decoded = decode(block);
+		return {
+			rpath,
+			data: decoded,
+		};
 	}
 
 	async findMany(
@@ -48,19 +68,25 @@ export class Reader {
 	): Promise<{ records: GetResult[]; cursor?: string }> {
 		const { limit = 50, cursor } = options ?? {};
 		const records: GetResult[] = [];
-		const prefix = `${collection}/`;
 
-		for await (const { collection: col, rkey, record } of this.repo.walkRecords(
-			cursor ? `${prefix}${cursor}` : prefix,
-		)) {
-			if (col !== collection) continue;
+		const walker = await NodeWalker.create(this.store, this.commit.data.$link);
+
+		const start = cursor ?? `${collection}/`;
+		const end = `${collection}/\xff`;
+
+		for await (const [rpath, cid] of walker.entriesInRange(start, end)) {
 			if (records.length >= limit) {
 				return {
 					records,
-					cursor: rkey,
+					cursor: rpath,
 				};
 			}
-			records.push({ rpath: `${col}/${rkey}`, data: record });
+			const block = await this.storage.get(cid.$link);
+			if (!block) {
+				continue;
+			}
+			const decoded = decode(block);
+			records.push({ rpath, data: decoded });
 		}
 
 		return { records };
@@ -73,52 +99,35 @@ export class Reader {
 		const { limit = 50, cursor } = options ?? {};
 		const records: GetResult[] = [];
 
-		for await (const { collection: col, rkey, record } of this.repo.walkRecords(
-			cursor ? `${cursor}` : "",
-		)) {
+		const walker = await NodeWalker.create(this.store, this.commit.data.$link);
+
+		if (cursor) {
+			while (true) {
+				while (walker.rpath < cursor) {
+					walker.rightOrUp();
+				}
+				if (!walker.subtree) {
+					break;
+				}
+				await walker.down();
+			}
+		}
+
+		for await (const [rpath, cid] of walker.entries()) {
 			if (records.length >= limit) {
 				return {
 					records,
-					cursor: rkey,
+					cursor: rpath,
 				};
 			}
-			records.push({ rpath: `${col}/${rkey}`, data: record });
+			const block = await this.storage.get(cid.$link);
+			if (!block) {
+				continue;
+			}
+			const decoded = decode(block);
+			records.push({ rpath, data: decoded });
 		}
 
 		return { records };
 	}
-
-	async collections() {
-		const contents = await this.repo.getContents();
-		return Object.keys(contents);
-	}
-
-	get did() {
-		return this.repo.did;
-	}
-
-	get cid() {
-		return this.repo.cid;
-	}
 }
-
-const verifyRepoRoot = async (
-	storage: ReadableBlockstore,
-	head: CID,
-	did?: string,
-	signingKey?: string,
-): Promise<ReadableRepo> => {
-	const repo = await ReadableRepo.load(storage, head);
-	if (did !== undefined && repo.did !== did) {
-		throw new RepoVerificationError(`Invalid repo did: ${repo.did}`);
-	}
-	if (signingKey !== undefined) {
-		const validSig = await verifyCommitSig(repo.commit, signingKey);
-		if (!validSig) {
-			throw new RepoVerificationError(
-				`Invalid signature on commit: ${repo.cid.toString()}`,
-			);
-		}
-	}
-	return repo;
-};

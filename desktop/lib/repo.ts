@@ -1,15 +1,15 @@
-import { existsSync, mkdirSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { existsSync } from "node:fs";
 import { Secp256k1Keypair } from "@atproto/crypto";
-import { DB } from "@polka/db/lib";
+import { DB } from "@polka/db";
 import { config } from "dotenv";
 import keytar from "keytar";
+import { type SimpleGit, simpleGit } from "simple-git";
 import {
 	commitAndPush,
 	existsRepository,
 	POLKA_CAR_PATH,
 	POLKA_DIST_PATH,
+	POLKA_REPO_PATH,
 	pullRepository,
 } from "./git.ts";
 import { resolve } from "./identity.ts";
@@ -18,15 +18,17 @@ config();
 
 export class polkaRepo {
 	db: DB;
+	git: SimpleGit;
 
-	constructor(db: DB) {
+	constructor(db: DB, git: SimpleGit) {
 		this.db = db;
+		this.git = git;
 	}
 
 	async commit() {
 		try {
 			console.log("Committing and pushing...");
-			await commitAndPush();
+			await commitAndPush(this.git);
 			console.log("Committed and pushed!");
 			return "Committed and pushed!";
 		} catch {
@@ -66,33 +68,30 @@ export class polkaRepo {
 		// リポジトリをクローンかpull
 		if (!existsRepository()) {
 			throw new Error("Please initialize Git remote first.");
-		} else {
-			console.log("Pulling latest changes...");
-			await pullRepository();
-			console.log("Repository updated!");
 		}
+
+		const git = simpleGit(POLKA_REPO_PATH);
+
+		console.log("Pulling latest changes...");
+		await pullRepository(git);
+		console.log("Repository updated!");
+
 		console.log("Repo initialized successfully!");
 
 		const db = await init(sk);
-		return new polkaRepo(db);
+		return new polkaRepo(db, git);
 	}
 }
 
+// repoをinitする
 async function init(sk: string) {
-	// ~/.polkaがあるか確認
-	if (!existsSync(join(homedir(), ".polka"))) {
-		mkdirSync(join(homedir(), ".polka"));
-	}
-
-	const path = POLKA_CAR_PATH;
-
 	const keypair = await Secp256k1Keypair.import(sk);
 
-	if (existsSync(path)) {
-		const db = await DB.open(path, keypair);
+	if (existsSync(POLKA_CAR_PATH)) {
+		const db = await DB.open(POLKA_CAR_PATH, keypair);
 		return db;
 	} else {
-		const db = await DB.init(path, keypair);
+		const db = await DB.init(POLKA_CAR_PATH, keypair);
 		return db;
 	}
 }

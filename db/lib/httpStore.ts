@@ -1,25 +1,25 @@
-import { BlockMap, ReadableBlockstore } from "@atproto/repo";
-import { CID } from "multiformats/cid";
+import type { BlockMap, ReadonlyBlockStore } from "@atcute/mst";
 
-export class HTTPStorage extends ReadableBlockstore {
-	baseUrl: URL;
+export class HTTPStorage implements ReadonlyBlockStore {
+	baseUrl: string;
 
-	constructor(baseUrl: URL) {
-		super();
+	constructor(baseUrl: string) {
 		this.baseUrl = baseUrl;
 	}
 
-	async getBytes(cid: CID): Promise<Uint8Array | null> {
-		const res = await fetch(new URL(cid.toString(), this.baseUrl));
+	async get(cid: string): Promise<Uint8Array<ArrayBuffer> | null> {
+		const res = await fetch(new URL(cid, this.baseUrl));
 		if (!res.ok) return null;
 		return new Uint8Array(await res.arrayBuffer());
 	}
 
-	async getBlocks(cids: CID[]): Promise<{ blocks: BlockMap; missing: CID[] }> {
-		const blocks = new BlockMap();
-		const missing: CID[] = [];
+	async getMany(
+		cids: string[],
+	): Promise<{ found: BlockMap; missing: string[] }> {
+		const blocks: BlockMap = new Map();
+		const missing: string[] = [];
 		for (const cid of cids) {
-			const bytes = await this.getBytes(cid);
+			const bytes = await this.get(cid);
 			if (bytes) {
 				blocks.set(cid, bytes);
 			} else {
@@ -27,14 +27,14 @@ export class HTTPStorage extends ReadableBlockstore {
 			}
 		}
 		return {
-			blocks,
+			found: blocks,
 			missing,
 		};
 	}
 
-	async has(cid: CID): Promise<boolean> {
+	async has(cid: string): Promise<boolean> {
 		try {
-			const res = await fetch(new URL(cid.toString(), this.baseUrl), {
+			const res = await fetch(new URL(cid, this.baseUrl), {
 				method: "HEAD",
 			});
 			return res.ok;
@@ -43,10 +43,11 @@ export class HTTPStorage extends ReadableBlockstore {
 		}
 	}
 
-	async getRoot(): Promise<CID | null> {
-		const res = await fetch(new URL("/root", this.baseUrl));
+	async getRoot(): Promise<string | null> {
+		const res = await fetch(new URL("ROOT", this.baseUrl));
 		if (!res.ok) return null;
-		return CID.parse(await res.text());
+		const text = await res.text();
+		return text;
 	}
 }
 
