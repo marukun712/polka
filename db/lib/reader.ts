@@ -105,6 +105,52 @@ export class Reader {
 		return { records };
 	}
 
+	async findKeys(
+		collection: string,
+		options?: {
+			query?: Record<string, unknown>;
+			limit?: number;
+			cursor?: string;
+		},
+	): Promise<{ keys: string[]; cursor?: string }> {
+		const { limit, cursor, query } = options ?? {};
+		const keys: string[] = [];
+
+		const walker = await NodeWalker.create(this.store, this.commit.data.$link);
+
+		const start = cursor ?? `${collection}/`;
+		const end = `${collection}/\xff`;
+
+		for await (const [rpath, cid] of walker.entriesInRange(start, end)) {
+			if (limit && keys.length >= limit) {
+				return {
+					keys,
+					cursor: rpath,
+				};
+			}
+			const block = await this.storage.get(cid.$link);
+			if (!block) {
+				continue;
+			}
+			const decoded = decode(block);
+			if (query) {
+				const isMatch = Object.entries(query).every(([key, value]) => {
+					const target = decoded[key];
+					if (Array.isArray(target)) {
+						return target.includes(value);
+					}
+					return target === value;
+				});
+				if (!isMatch) {
+					continue;
+				}
+			}
+			keys.push(rpath);
+		}
+
+		return { keys };
+	}
+
 	async all(options?: {
 		limit?: number;
 		cursor?: string;

@@ -199,24 +199,13 @@ export class DB {
 			if (Array.isArray(target)) {
 				target.forEach((t) => {
 					const key = `index/${collection}.${t}.${now()}`;
-					this.create(key, record.data);
+					this.create(key, { rpath: record.rpath });
 				});
 			} else {
 				const key = `index/${collection}.${target}.${now()}`;
-				this.create(key, record.data);
+				this.create(key, { rpath: record.rpath });
 			}
 		});
-
-		const bytes = await blocksToCarFile(this.repo.cid, this.storage.blocks);
-		writeFileSync(this.path, bytes);
-	}
-
-	async dropIndex(collection: string) {
-		const prefix = `index/${collection}.`;
-
-		for await (const { rkey } of this.repo.walkRecords(prefix)) {
-			await this.delete(prefix + rkey);
-		}
 
 		const bytes = await blocksToCarFile(this.repo.cid, this.storage.blocks);
 		writeFileSync(this.path, bytes);
@@ -288,6 +277,45 @@ export class DB {
 			records.push({ rpath: `${col}/${rkey}`, data: record });
 		}
 		return { records };
+	}
+
+	async findKeys(
+		collection: string,
+		options?: {
+			query?: Record<string, unknown>;
+			limit?: number;
+			cursor?: string;
+		},
+	): Promise<{ keys: string[]; cursor?: string }> {
+		const { limit, cursor, query } = options ?? {};
+		const keys: string[] = [];
+		const prefix = `${collection}/`;
+
+		for await (const { collection: col, rkey, record } of this.repo.walkRecords(
+			cursor ? `${prefix}${cursor}` : prefix,
+		)) {
+			if (col !== collection) continue;
+			if (limit && keys.length >= limit) {
+				return {
+					keys,
+					cursor: rkey,
+				};
+			}
+			if (query) {
+				const isMatch = Object.entries(query).every(([key, value]) => {
+					const target = record[key];
+					if (Array.isArray(target)) {
+						return target.includes(value);
+					}
+					return target === value;
+				});
+				if (!isMatch) {
+					continue;
+				}
+			}
+			keys.push(`${col}/${rkey}`);
+		}
+		return { keys };
 	}
 
 	async all(options?: {
