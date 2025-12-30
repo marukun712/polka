@@ -1,8 +1,8 @@
 import { For, Show } from "solid-js";
-import { useDialog } from "../hooks/useDialog";
-import { useIPC } from "../hooks/useIPC";
-import type { Follow } from "../types";
-import { Dialog } from "./ui/Dialog";
+import { useDialog } from "../../../hooks/useDialog";
+import { useIPC } from "../../../hooks/useIPC";
+import type { Follow } from "../../../types";
+import { Dialog } from "../Dialog";
 
 export default function FollowList({ follows }: { follows: Follow[] }) {
 	const ipc = useIPC();

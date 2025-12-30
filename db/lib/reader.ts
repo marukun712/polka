@@ -45,7 +45,7 @@ export class Reader {
 		return new Reader(store, storage, root, decoded);
 	}
 
-	async find(rpath: string): Promise<GetResult | null> {
+	async find(rpath: string) {
 		const walker = await NodeWalker.create(this.store, this.commit.data.$link);
 
 		const cid = await walker.findRpath(rpath);
@@ -63,25 +63,17 @@ export class Reader {
 		collection: string,
 		options?: {
 			query?: Record<string, unknown>;
-			limit?: number;
-			cursor?: string;
 		},
-	): Promise<{ records: GetResult[]; cursor?: string }> {
-		const { limit, cursor, query } = options ?? {};
+	) {
+		const { query } = options ?? {};
 		const records: GetResult[] = [];
 
 		const walker = await NodeWalker.create(this.store, this.commit.data.$link);
 
-		const start = cursor ?? `${collection}/`;
+		const start = `${collection}/`;
 		const end = `${collection}/\xff`;
 
 		for await (const [rpath, cid] of walker.entriesInRange(start, end)) {
-			if (limit && records.length >= limit) {
-				return {
-					records,
-					cursor: rpath,
-				};
-			}
 			const block = await this.storage.get(cid.$link);
 			if (!block) {
 				continue;
@@ -105,80 +97,27 @@ export class Reader {
 		return { records };
 	}
 
-	async findKeys(
-		collection: string,
-		options?: {
-			query?: Record<string, unknown>;
-			limit?: number;
-			cursor?: string;
-		},
-	): Promise<{ keys: string[]; cursor?: string }> {
-		const { limit, cursor, query } = options ?? {};
+	async walkMST(prefix: string) {
 		const keys: string[] = [];
 
 		const walker = await NodeWalker.create(this.store, this.commit.data.$link);
 
-		const start = cursor ?? `${collection}/`;
-		const end = `${collection}/\xff`;
+		const start = prefix;
+		const end = `${prefix}\xff`;
 
-		for await (const [rpath, cid] of walker.entriesInRange(start, end)) {
-			if (limit && keys.length >= limit) {
-				return {
-					keys,
-					cursor: rpath,
-				};
-			}
-			const block = await this.storage.get(cid.$link);
-			if (!block) {
-				continue;
-			}
-			const decoded = decode(block);
-			if (query) {
-				const isMatch = Object.entries(query).every(([key, value]) => {
-					const target = decoded[key];
-					if (Array.isArray(target)) {
-						return target.includes(value);
-					}
-					return target === value;
-				});
-				if (!isMatch) {
-					continue;
-				}
-			}
+		for await (const [rpath] of walker.entriesInRange(start, end)) {
 			keys.push(rpath);
 		}
 
 		return { keys };
 	}
 
-	async all(options?: {
-		limit?: number;
-		cursor?: string;
-	}): Promise<{ records: GetResult[]; cursor?: string }> {
-		const { limit, cursor } = options ?? {};
+	async all() {
 		const records: GetResult[] = [];
 
-		const walker = await NodeWalker.create(this.store, this.root);
-
-		if (cursor) {
-			while (true) {
-				while (walker.rpath < cursor) {
-					walker.rightOrUp();
-				}
-				if (!walker.subtree) {
-					break;
-				}
-				await walker.down();
-			}
-		}
+		const walker = await NodeWalker.create(this.store, this.commit.data.$link);
 
 		for await (const [rpath, cid] of walker.entries()) {
-			if (limit && records.length >= limit) {
-				return {
-					records,
-					cursor: rpath,
-				};
-			}
 			const block = await this.storage.get(cid.$link);
 			if (!block) {
 				continue;

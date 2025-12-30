@@ -1,30 +1,11 @@
 import type { GetResult } from "@polka/db/types";
-import { createSignal } from "solid-js";
 import { useDialog } from "../../hooks/useDialog";
 import { useIPC } from "../../hooks/useIPC";
 import { Dialog } from "../ui/Dialog";
 
 export default function RecordEditForm({ init }: { init: GetResult }) {
 	const ipc = useIPC();
-	const [data, setData] = createSignal(JSON.stringify(init.data));
-
 	const editDialog = useDialog();
-
-	const handleSave = async () => {
-		const parsed = JSON.parse(data());
-		await ipc.client.update(init.rpath, parsed);
-		await ipc.client.commit();
-
-		editDialog.close();
-		location.reload();
-	};
-
-	const handleDelete = async () => {
-		await ipc.client.delete(init.rpath);
-		await ipc.client.commit();
-		editDialog.close();
-		location.reload();
-	};
 
 	return (
 		<>
@@ -32,25 +13,57 @@ export default function RecordEditForm({ init }: { init: GetResult }) {
 
 			<Dialog
 				ref={editDialog.ref}
-				title="Edit post"
+				title="Edit record"
 				onClose={editDialog.close}
-				footer={
-					<>
-						<button class="secondary" onClick={editDialog.close}>
+			>
+				<form
+					onSubmit={async (e) => {
+						e.preventDefault();
+
+						const formData = new FormData(e.currentTarget);
+						const raw = formData.get("data") as string;
+
+						let parsed: Record<string, unknown>;
+						try {
+							parsed = JSON.parse(raw);
+						} catch (err) {
+							console.error("Invalid JSON:", err);
+							return;
+						}
+
+						await ipc.client.update(init.rpath, parsed);
+						await ipc.client.commit();
+
+						editDialog.close();
+						location.reload();
+					}}
+				>
+					<textarea
+						name="data"
+						placeholder="Content (JSON)"
+						value={JSON.stringify(init.data, null, 2)}
+						rows={8}
+					/>
+
+					<div class="dialog-footer">
+						<button type="button" class="secondary" onClick={editDialog.close}>
 							Cancel
 						</button>
-						<button onClick={handleSave}>Save</button>
-					</>
-				}
-			>
-				<textarea
-					placeholder="Content"
-					value={data()}
-					onInput={(e) => setData(e.currentTarget.value)}
-					rows={5}
-				/>
+						<button type="submit">Save</button>
+					</div>
+				</form>
 
-				<button class="contrast" onClick={handleDelete}>
+				<hr />
+
+				<button
+					class="contrast"
+					onClick={async () => {
+						await ipc.client.delete(init.rpath);
+						await ipc.client.commit();
+						editDialog.close();
+						location.reload();
+					}}
+				>
 					Delete
 				</button>
 			</Dialog>

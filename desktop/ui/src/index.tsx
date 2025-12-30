@@ -2,7 +2,7 @@ import "./index.css";
 import { HashRouter, Route } from "@solidjs/router";
 import { createResource } from "solid-js";
 import { render, Show } from "solid-js/web";
-import { CacheProvider, IPCProvider } from "./contexts";
+import { IPCProvider } from "./contexts";
 import { getDomain, setDomain } from "./lib/ipc";
 import InspectorPage from "./pages/InspectorPage";
 import TopPage from "./pages/TopPage";
@@ -27,7 +27,8 @@ render(
 						onSubmit={async (e) => {
 							e.preventDefault();
 							const formData = new FormData(e.currentTarget);
-							await setDomain(formData.get("domain") as string);
+							const domain = formData.get("domain") as string;
+							await setDomain(domain);
 							refetch();
 						}}
 						style="padding-top: 10rem;"
@@ -43,12 +44,10 @@ render(
 			}
 		>
 			<IPCProvider>
-				<CacheProvider>
-					<HashRouter>
-						<Route path="/" component={TopPage} />
-						<Route path="/inspector" component={InspectorPage} />
-					</HashRouter>
-				</CacheProvider>
+				<HashRouter>
+					<Route path="/" component={TopPage} />
+					<Route path="/inspector" component={InspectorPage} />
+				</HashRouter>
 			</IPCProvider>
 		</Show>
 	),

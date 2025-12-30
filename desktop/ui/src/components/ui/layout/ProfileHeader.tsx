@@ -1,11 +1,9 @@
 import { type Component, type JSX, Show } from "solid-js";
-import type { Profile } from "../../types";
+import type { Profile } from "../../../types";
 
 type ProfileHeaderProps = {
 	profile: Profile;
 	did: string;
-	followCount: number;
-	isOwner?: boolean;
 	headerAction?: JSX.Element;
 };
 
@@ -31,14 +29,9 @@ export const ProfileHeader: Component<ProfileHeaderProps> = (props) => {
 					<h1>{props.profile.name}</h1>
 					<p>{props.did}</p>
 				</hgroup>
-				<Show when={props.isOwner}>{props.headerAction}</Show>
+				{props.headerAction}
 			</header>
 			<p>{props.profile.description}</p>
-			<footer>
-				<p>
-					<strong>{props.followCount} ノード</strong> フォロー中
-				</p>
-			</footer>
 		</article>
 	);
 };

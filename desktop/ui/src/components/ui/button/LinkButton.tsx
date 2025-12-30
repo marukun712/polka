@@ -1,7 +1,7 @@
 import { now } from "@atcute/tid";
 import { Show } from "solid-js";
-import { useIPC } from "../hooks/useIPC";
-import { linkDataSchema, type Post } from "../types";
+import { useIPC } from "../../../hooks/useIPC";
+import { linkDataSchema, type Post } from "../../../types";
 
 export default function LinkButton({
 	did,
@@ -21,9 +21,7 @@ export default function LinkButton({
 				<form
 					onSubmit={async (e) => {
 						e.preventDefault();
-
 						await Promise.all(links.map((link) => ipc.client.delete(link)));
-
 						await ipc.client.commit();
 					}}
 				>

@@ -1,35 +1,24 @@
-import cytoscape from "cytoscape";
+import cytoscape, { type ElementDefinition } from "cytoscape";
 import dagre from "cytoscape-dagre";
-import { createEffect, onMount } from "solid-js";
-import {
-	collectChildPosts,
-	createGraphElements,
-} from "../../services/graphService";
-import type { Feed, Node, Ref } from "../../types";
+import { onMount } from "solid-js";
+import { collectChildPosts } from "../../lib/graph";
+import type { Ref } from "../../types";
 
 cytoscape.use(dagre);
 
 export default function GraphComponent({
-	feed,
-	follows,
-	node,
-	setNode,
+	graph,
 	setChildren,
 }: {
-	feed: Feed;
-	follows: Feed[];
-	node: () => Node | null;
-	setNode: (state: Node) => void;
+	graph: ElementDefinition[];
 	setChildren: (children: Set<Ref>) => void;
 }) {
 	let container!: HTMLDivElement;
 
 	onMount(() => {
-		const elements = createGraphElements(feed, follows);
-
 		const cy = cytoscape({
 			container,
-			elements,
+			elements: graph,
 			style: [
 				{
 					selector: "node",
@@ -88,19 +77,12 @@ export default function GraphComponent({
 			layout: { name: "dagre" },
 		});
 
-		// 選択状態の変更を監視して子要素を選択
-		createEffect(() => {
-			const n = node();
-			if (!n) return;
-			const paths = collectChildPosts(cy, n.id);
-			setChildren(new Set(paths));
-		});
-
 		// ノードクリック時のイベントハンドラ
 		cy.on("click", "node", (e) => {
-			const { id, type, label } = e.target.data();
+			const { id, type } = e.target.data();
 			if (type === "tag") {
-				setNode({ id, label });
+				const paths = collectChildPosts(cy, id);
+				setChildren(new Set(paths));
 			}
 		});
 	});

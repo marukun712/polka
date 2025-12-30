@@ -1,34 +1,31 @@
 import { Reader } from "@polka/db/reader";
 import { resolve } from "./identity.js";
 
-export class RepoReader {
-	reader: Reader;
+async function openReader(did: string): Promise<Reader> {
+	const doc = await resolve(did);
+	return Reader.open(doc.target);
+}
 
-	constructor(reader: Reader) {
-		this.reader = reader;
-	}
+export async function getRecord(did: string, rpath: string) {
+	const reader = await openReader(did);
+	return reader.find(rpath);
+}
 
-	static async init(did: string) {
-		const doc = await resolve(did);
-		const path = doc.target;
+export async function getRecords(did: string, nsid: string) {
+	const reader = await openReader(did);
+	return reader.findMany(nsid);
+}
+export async function walkMST(did: string, prefix: string) {
+	const reader = await openReader(did);
+	return reader.walkMST(prefix);
+}
 
-		const reader = await Reader.open(path);
-		return new RepoReader(reader);
-	}
+export async function allRecords(did: string) {
+	const reader = await openReader(did);
+	return reader.all();
+}
 
-	public getRecord(rpath: string) {
-		return this.reader.find(rpath);
-	}
-
-	public getRecords(nsid: string) {
-		return this.reader.findMany(nsid);
-	}
-
-	public allRecords() {
-		return this.reader.all();
-	}
-
-	public getDid() {
-		return this.reader.did;
-	}
+export async function getDid(did: string) {
+	const reader = await openReader(did);
+	return reader.did;
 }

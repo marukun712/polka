@@ -1,7 +1,7 @@
 import { now } from "@atcute/tid";
 import { createSignal } from "solid-js";
-import { useIPC } from "../hooks/useIPC";
-import { type PostData, postDataSchema } from "../types";
+import { useIPC } from "../../hooks/useIPC";
+import { type PostData, postDataSchema } from "../../types";
 
 export default function PostForm() {
 	const [text, setText] = createSignal("");
@@ -14,17 +14,13 @@ export default function PostForm() {
 				e.preventDefault();
 
 				const rpath = `polka.post/${now()}`;
-				const tags = tag().split("/");
+				const parents = tag().split(",");
 
 				const data: PostData = {
 					content: text(),
-					tags,
+					parents,
 					updatedAt: new Date().toISOString(),
 				};
-
-				if (tags.length > 0) {
-					data.tags = tags;
-				}
 
 				const parsed = postDataSchema.safeParse(data);
 				if (!parsed.success) {
@@ -47,7 +43,7 @@ export default function PostForm() {
 			<input
 				type="text"
 				value={tag()}
-				placeholder="Enter your tags..."
+				placeholder="Enter your parents..."
 				onInput={(e) => setTag(e.currentTarget.value)}
 			/>
 			<button type="submit">Post</button>

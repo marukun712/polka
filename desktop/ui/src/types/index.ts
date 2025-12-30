@@ -2,23 +2,11 @@ import { z } from "zod";
 
 export type Node = { id: string; label: string };
 
-export type Feed = {
-	id: string;
-	did: string;
-	pk: string;
-	ownerProfile: Profile;
-	feed: FeedItem[];
-	follows: Follow[];
-	rootTag?: string;
-};
-
-export type FeedItem = {
+export type Item = {
 	type: "post" | "link";
-	did: string;
-	profile: Profile;
-	rpath: string;
-	tags: string[];
 	post: Post;
+	did: string;
+	links: string[];
 };
 
 export const refSchema = z.object({
@@ -37,9 +25,22 @@ export const profileSchema = z
 	})
 	.strict();
 
+export const edgeDataSchema = z.object({
+	from: z.string().min(1).optional(),
+	to: z.string().min(1),
+	updatedAt: z.iso.datetime(),
+});
+
+export const edgeSchema = z
+	.object({
+		rpath: z.string(),
+		data: edgeDataSchema,
+	})
+	.strict();
+
 export const postDataSchema = z.object({
 	content: z.string().min(1),
-	tags: z.string().array(),
+	parents: z.string().array(),
 	updatedAt: z.iso.datetime(),
 });
 
@@ -52,7 +53,7 @@ export const postSchema = z
 
 export const linkDataSchema = z.object({
 	ref: refSchema,
-	tags: z.string().array(),
+	parents: z.string().array(),
 	updatedAt: z.iso.datetime(),
 });
 
@@ -78,11 +79,13 @@ export const followSchema = z
 	})
 	.strict();
 
-export type Profile = z.infer<typeof profileSchema>;
-export type Post = z.infer<typeof postSchema>;
-export type PostData = z.infer<typeof postDataSchema>;
-export type Link = z.infer<typeof linkSchema>;
-export type LinkData = z.infer<typeof linkDataSchema>;
+export type Edge = z.infer<typeof edgeSchema>;
+export type EdgeData = z.infer<typeof edgeDataSchema>;
 export type Ref = z.infer<typeof refSchema>;
-export type Follow = z.infer<typeof followSchema>;
+export type Profile = z.infer<typeof profileSchema>;
+export type PostData = z.infer<typeof postDataSchema>;
+export type Post = z.infer<typeof postSchema>;
+export type LinkData = z.infer<typeof linkDataSchema>;
+export type Link = z.infer<typeof linkSchema>;
 export type FollowData = z.infer<typeof followDataSchema>;
+export type Follow = z.infer<typeof followSchema>;

@@ -1,6 +1,6 @@
 import { now } from "@atcute/tid";
-import { useIPC } from "../hooks/useIPC";
-import { followDataSchema } from "../types";
+import { useIPC } from "../../hooks/useIPC";
+import { type FollowData, followDataSchema } from "../../types";
 
 export default function FollowForm() {
 	const ipc = useIPC();
@@ -20,7 +20,7 @@ export default function FollowForm() {
 
 					if (!did || !tag) return;
 
-					const raw = {
+					const raw: FollowData = {
 						did,
 						tag,
 						updatedAt: new Date().toISOString(),

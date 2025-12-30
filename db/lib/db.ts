@@ -107,10 +107,10 @@ export class DB {
 
 	async upsert(rpath: string, record: Record<string, unknown>) {
 		try {
-			this.find(rpath);
-			this.update(rpath, record);
+			await this.find(rpath);
+			await this.update(rpath, record);
 		} catch {
-			this.create(rpath, record);
+			await this.create(rpath, record);
 		}
 	}
 
@@ -191,6 +191,9 @@ export class DB {
 
 	async createIndex(collection: string, field: string) {
 		const found = await this.findMany(collection);
+		const indexEntries: { rpath: string; record: Record<string, unknown> }[] =
+			[];
+
 		found.records.forEach((record) => {
 			if (!(field in record.data)) {
 				return;
@@ -198,17 +201,18 @@ export class DB {
 			const target = record.data[field];
 			if (Array.isArray(target)) {
 				target.forEach((t) => {
-					const key = `index/${collection}.${t}.${now()}`;
-					this.create(key, { rpath: record.rpath });
+					const key = `index/${collection}.${field}.${t}.${now()}`;
+					indexEntries.push({ rpath: key, record: { rpath: record.rpath } });
 				});
 			} else {
-				const key = `index/${collection}.${target}.${now()}`;
-				this.create(key, { rpath: record.rpath });
+				const key = `index/${collection}.${field}.${target}.${now()}`;
+				indexEntries.push({ rpath: key, record: { rpath: record.rpath } });
 			}
 		});
 
-		const bytes = await blocksToCarFile(this.repo.cid, this.storage.blocks);
-		writeFileSync(this.path, bytes);
+		if (indexEntries.length > 0) {
+			await this.createMany(indexEntries);
+		}
 	}
 
 	async build(path: string) {
@@ -225,7 +229,7 @@ export class DB {
 		writeFileSync(join(path, "ROOT"), root.toString());
 	}
 
-	async find(rpath: string): Promise<GetResult | null> {
+	async find(rpath: string) {
 		const collection = rpath.split("/")[0];
 		const rkey = rpath.split("/")[1];
 		if (!collection || !rkey) throw new Error("Invalid rpath");
@@ -244,24 +248,16 @@ export class DB {
 		collection: string,
 		options?: {
 			query?: Record<string, unknown>;
-			limit?: number;
-			cursor?: string;
 		},
-	): Promise<{ records: GetResult[]; cursor?: string }> {
-		const { limit, cursor, query } = options ?? {};
+	) {
+		const { query } = options ?? {};
 		const records: GetResult[] = [];
 		const prefix = `${collection}/`;
 
 		for await (const { collection: col, rkey, record } of this.repo.walkRecords(
-			cursor ? `${prefix}${cursor}` : prefix,
+			prefix,
 		)) {
 			if (col !== collection) continue;
-			if (limit && records.length >= limit) {
-				return {
-					records,
-					cursor: rkey,
-				};
-			}
 			if (query) {
 				const isMatch = Object.entries(query).every(([key, value]) => {
 					const target = record[key];
@@ -278,62 +274,26 @@ export class DB {
 		}
 		return { records };
 	}
-
-	async findKeys(
-		collection: string,
-		options?: {
-			query?: Record<string, unknown>;
-			limit?: number;
-			cursor?: string;
-		},
-	): Promise<{ keys: string[]; cursor?: string }> {
-		const { limit, cursor, query } = options ?? {};
+	async walkMST(prefix: string) {
 		const keys: string[] = [];
-		const prefix = `${collection}/`;
-
-		for await (const { collection: col, rkey, record } of this.repo.walkRecords(
-			cursor ? `${prefix}${cursor}` : prefix,
+		for await (const { collection: col, rkey } of this.repo.walkRecords(
+			prefix,
 		)) {
-			if (col !== collection) continue;
-			if (limit && keys.length >= limit) {
-				return {
-					keys,
-					cursor: rkey,
-				};
-			}
-			if (query) {
-				const isMatch = Object.entries(query).every(([key, value]) => {
-					const target = record[key];
-					if (Array.isArray(target)) {
-						return target.includes(value);
-					}
-					return target === value;
-				});
-				if (!isMatch) {
-					continue;
-				}
-			}
-			keys.push(`${col}/${rkey}`);
+			const key = `${col}/${rkey}`;
+			if (!key.startsWith(prefix)) break;
+			keys.push(key);
 		}
 		return { keys };
 	}
 
-	async all(options?: {
-		limit?: number;
-		cursor?: string;
-	}): Promise<{ records: GetResult[]; cursor?: string }> {
-		const { limit, cursor } = options ?? {};
+	async all() {
 		const records: GetResult[] = [];
 
-		for await (const { collection: col, rkey, record } of this.repo.walkRecords(
-			cursor ? `${cursor}` : "",
-		)) {
-			if (limit && records.length >= limit) {
-				return {
-					records,
-					cursor: rkey,
-				};
-			}
+		for await (const {
+			collection: col,
+			rkey,
+			record,
+		} of this.repo.walkRecords()) {
 			records.push({ rpath: `${col}/${rkey}`, data: record });
 		}
 

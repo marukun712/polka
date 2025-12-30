@@ -1,4 +1,3 @@
-import { createSignal } from "solid-js";
 import { useDialog } from "../../hooks/useDialog";
 import { useIPC } from "../../hooks/useIPC";
 import { type Profile, profileSchema } from "../../types";
@@ -6,35 +5,7 @@ import { Dialog } from "../ui/Dialog";
 
 export default function ProfileEdit({ init }: { init: Profile }) {
 	const ipc = useIPC();
-	const [name, setName] = createSignal(init.name);
-	const [description, setDescription] = createSignal(init.description);
-	const [icon, setIcon] = createSignal(init.icon);
-	const [banner, setBanner] = createSignal(init.banner ?? "");
-
 	const dialog = useDialog();
-
-	const handleSave = async () => {
-		const data = {
-			name: name(),
-			description: description(),
-			icon: icon(),
-			banner: banner() || undefined,
-			followsCount: init.followsCount,
-			updatedAt: new Date().toISOString(),
-		};
-
-		const parsed = profileSchema.safeParse(data);
-		if (!parsed.success) {
-			console.error("Failed to parse profile:", parsed.error);
-			return;
-		}
-
-		await ipc.client.update("polka.profile/self", parsed.data);
-		await ipc.client.commit();
-
-		dialog.close();
-		location.reload();
-	};
 
 	return (
 		<>
@@ -47,43 +18,62 @@ export default function ProfileEdit({ init }: { init: Profile }) {
 				</ul>
 			</details>
 
-			<Dialog
-				ref={dialog.ref}
-				title="Edit Profile"
-				onClose={dialog.close}
-				footer={
-					<>
-						<button class="secondary" onClick={dialog.close}>
+			<Dialog ref={dialog.ref} title="Edit Profile" onClose={dialog.close}>
+				<form
+					onSubmit={async (e) => {
+						e.preventDefault();
+
+						const formData = new FormData(e.currentTarget);
+
+						const data: Profile = {
+							name: formData.get("name") as string,
+							description: formData.get("description") as string,
+							icon: formData.get("icon") as string,
+							banner: (formData.get("banner") as string) || undefined,
+							followsCount: init.followsCount,
+							updatedAt: new Date().toISOString(),
+						};
+
+						const parsed = profileSchema.safeParse(data);
+						if (!parsed.success) {
+							console.error("Failed to parse profile:", parsed.error);
+							return;
+						}
+
+						await ipc.client.update("polka.profile/self", parsed.data);
+						await ipc.client.commit();
+
+						dialog.close();
+						location.reload();
+					}}
+				>
+					<input type="text" name="name" placeholder="Name" value={init.name} />
+					<textarea
+						name="description"
+						placeholder="Description"
+						value={init.description}
+						rows={3}
+					/>
+					<input
+						type="url"
+						name="icon"
+						placeholder="Icon URL"
+						value={init.icon}
+					/>
+					<input
+						type="url"
+						name="banner"
+						placeholder="Banner URL (optional)"
+						value={init.banner ?? ""}
+					/>
+
+					<div class="dialog-footer">
+						<button type="button" class="secondary" onClick={dialog.close}>
 							Cancel
 						</button>
-						<button onClick={handleSave}>Save</button>
-					</>
-				}
-			>
-				<input
-					type="text"
-					placeholder="Name"
-					value={name()}
-					onInput={(e) => setName(e.currentTarget.value)}
-				/>
-				<textarea
-					placeholder="Description"
-					value={description()}
-					onInput={(e) => setDescription(e.currentTarget.value)}
-					rows={3}
-				/>
-				<input
-					type="url"
-					placeholder="Icon URL"
-					value={icon()}
-					onInput={(e) => setIcon(e.currentTarget.value)}
-				/>
-				<input
-					type="url"
-					placeholder="Banner URL (optional)"
-					value={banner()}
-					onInput={(e) => setBanner(e.currentTarget.value)}
-				/>
+						<button type="submit">Save</button>
+					</div>
+				</form>
 			</Dialog>
 		</>
 	);
