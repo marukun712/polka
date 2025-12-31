@@ -9,9 +9,11 @@ import {
 	type Ref,
 } from "../../../types";
 import { validateRecord } from "../../../utils/validation";
+import PostEdit from "../../forms/PostEditForm";
 
 type PostCardProps = {
 	recordRef: Ref;
+	user: string;
 };
 
 const fetcher = async (ref: Ref) => {
@@ -28,7 +30,9 @@ const fetcher = async (ref: Ref) => {
 		return {
 			type: "post",
 			profile: parsedProfile,
+			rpath: ref.rpath,
 			data: parsed,
+			author: ref.did,
 		};
 	} else if (type === "polka.link") {
 		const parsed = validateRecord(record, linkDataSchema);
@@ -47,7 +51,9 @@ const fetcher = async (ref: Ref) => {
 		return {
 			type: "link",
 			profile: parsedProfile,
+			rpath: parsed.ref.rpath,
 			data: parsedPost.data,
+			author: parsed.ref.did,
 		};
 	} else {
 		return null;
@@ -71,7 +77,7 @@ export default function PostCard(props: PostCardProps) {
 								<img
 									src={item().profile.icon}
 									alt={item().profile.name}
-									style="border-radius: 50%; width: 48px; height: 48px;"
+									style="border-radius: 50%; width: 48px; height: 48px; object-fit: cover;"
 								/>
 								<div>
 									<strong>{item().profile.name}</strong>
@@ -84,6 +90,9 @@ export default function PostCard(props: PostCardProps) {
 								</div>
 							</div>
 						</hgroup>
+						<Show when={item().author === props.user}>
+							<PostEdit post={item()} />
+						</Show>
 					</header>
 					{item().data.content}
 				</article>

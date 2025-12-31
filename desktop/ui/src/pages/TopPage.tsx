@@ -16,23 +16,27 @@ import { ProfileHeader } from "../components/ui/layout/ProfileHeader";
 import { useIPC } from "../hooks/useIPC";
 import { getRecord, getRecords } from "../lib/client";
 import { createGraphElements } from "../lib/graph";
-import { edgeSchema, profileSchema, type Ref } from "../types";
+import { followSchema, profileSchema, type Ref } from "../types";
 import { validateRecord, validateRecords } from "../utils/validation";
 
 const fetcher = async (did: string) => {
-	const edges = await getRecords(did, "polka.edge");
 	const profile = await getRecord(did, "polka.profile/self");
 	if (!profile) throw new Error("Profile not found");
 	const parsedProfile = validateRecord(profile, profileSchema);
 	if (!parsedProfile) throw new Error("Profile not found");
-	const parsedEdges = validateRecords(edges.records, edgeSchema);
-	const graph = await createGraphElements(
-		crypto.randomUUID(),
-		parsedProfile.name,
-		parsedEdges,
-		did,
-	);
-	return { graph, profile: parsedProfile, did };
+
+	const follows = await getRecords(did, "polka.follow");
+	const parsedFollows = validateRecords(follows.records, followSchema);
+	console.log(parsedFollows);
+
+	const graph = await Promise.all([
+		createGraphElements(parsedProfile.name, did),
+		...parsedFollows.map((follow) =>
+			createGraphElements("following", follow.data.did, follow.data.tag),
+		),
+	]);
+	const flat = graph.flat();
+	return { graph: flat, profile: parsedProfile, did };
 };
 
 const TopPage: Component = () => {
@@ -59,7 +63,7 @@ const TopPage: Component = () => {
 						<GraphComponent graph={f().graph} setChildren={setChildren} />
 						<article>
 							<For each={children()}>
-								{(child) => <PostCard recordRef={child} />}
+								{(child) => <PostCard recordRef={child} user={ipc.did} />}
 							</For>
 						</article>
 					</>
