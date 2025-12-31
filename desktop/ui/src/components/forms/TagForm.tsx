@@ -1,3 +1,4 @@
+import { now } from "@atcute/tid";
 import { useIPC } from "../../hooks/useIPC";
 import { type EdgeData, edgeDataSchema } from "../../types";
 
@@ -13,7 +14,7 @@ export default function TagForm() {
 				const raw = formData.get("tags") as string;
 
 				const tags = raw
-					.split(",")
+					.split("/")
 					.map((t) => t.trim())
 					.filter(Boolean);
 
@@ -21,23 +22,22 @@ export default function TagForm() {
 					const tag = tags[i];
 					const parent = i === 0 ? undefined : tags[i - 1];
 
-					const rpath = parent
-						? `polka.edge/${parent}:${tag}`
-						: `polka.edge/root:${tag}`;
-
 					const data: EdgeData = {
-						from: parent,
 						to: tag,
 						updatedAt: new Date().toISOString(),
 					};
 
+					if (parent) {
+						data.from = parent;
+					}
+
 					const parsed = edgeDataSchema.safeParse(data);
 					if (!parsed.success) {
 						console.error("Failed to parse edge:", parsed.error);
-						return;
+						continue;
 					}
 
-					await ipc.client.create(rpath, parsed.data);
+					await ipc.client.create(`polka.edge/${now()}`, parsed.data);
 				}
 
 				await ipc.client.commit();

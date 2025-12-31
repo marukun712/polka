@@ -19,10 +19,12 @@ config();
 export class polkaRepo {
 	db: DB;
 	git: SimpleGit;
+	domain: string;
 
-	constructor(db: DB, git: SimpleGit) {
+	constructor(db: DB, git: SimpleGit, domain: string) {
 		this.db = db;
 		this.git = git;
+		this.domain = domain;
 	}
 
 	async commit() {
@@ -53,7 +55,7 @@ export class polkaRepo {
 	}
 
 	getDid() {
-		return this.db.did;
+		return `did:web:${this.domain}`;
 	}
 
 	static async start(domain: string) {
@@ -79,7 +81,7 @@ export class polkaRepo {
 		console.log("Repo initialized successfully!");
 
 		const db = await init(sk);
-		return new polkaRepo(db, git);
+		return new polkaRepo(db, git, domain);
 	}
 }
 

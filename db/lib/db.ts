@@ -202,11 +202,17 @@ export class DB {
 			if (Array.isArray(target)) {
 				target.forEach((t) => {
 					const key = `index/${collection}.${field}.${t}.${now()}`;
-					indexEntries.push({ rpath: key, record: { rpath: record.rpath } });
+					indexEntries.push({
+						rpath: encodeURIComponent(key),
+						record: { rpath: record.rpath },
+					});
 				});
 			} else {
 				const key = `index/${collection}.${field}.${target}.${now()}`;
-				indexEntries.push({ rpath: key, record: { rpath: record.rpath } });
+				indexEntries.push({
+					rpath: encodeURIComponent(key),
+					record: { rpath: record.rpath },
+				});
 			}
 		});
 
@@ -274,14 +280,34 @@ export class DB {
 		}
 		return { records };
 	}
-	async walkMST(prefix: string) {
+
+	async findKeys(
+		collection: string,
+		options?: {
+			query?: Record<string, unknown>;
+		},
+	) {
+		const { query } = options ?? {};
 		const keys: string[] = [];
-		for await (const { collection: col, rkey } of this.repo.walkRecords(
+		const prefix = `${collection}/`;
+
+		for await (const { collection: col, rkey, record } of this.repo.walkRecords(
 			prefix,
 		)) {
-			const key = `${col}/${rkey}`;
-			if (!key.startsWith(prefix)) break;
-			keys.push(key);
+			if (col !== collection) continue;
+			if (query) {
+				const isMatch = Object.entries(query).every(([key, value]) => {
+					const target = record[key];
+					if (Array.isArray(target)) {
+						return target.includes(value);
+					}
+					return target === value;
+				});
+				if (!isMatch) {
+					continue;
+				}
+			}
+			keys.push(`${col}/${rkey}`);
 		}
 		return { keys };
 	}

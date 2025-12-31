@@ -1,6 +1,6 @@
 import cytoscape, { type ElementDefinition } from "cytoscape";
 import dagre from "cytoscape-dagre";
-import { onMount } from "solid-js";
+import { createEffect, createSignal, onMount } from "solid-js";
 import { collectChildPosts } from "../../lib/graph";
 import type { Ref } from "../../types";
 
@@ -11,9 +11,10 @@ export default function GraphComponent({
 	setChildren,
 }: {
 	graph: ElementDefinition[];
-	setChildren: (children: Set<Ref>) => void;
+	setChildren: (children: Ref[]) => void;
 }) {
 	let container!: HTMLDivElement;
+	const [current, setCurrent] = createSignal<string | null>(null);
 
 	onMount(() => {
 		const cy = cytoscape({
@@ -77,12 +78,19 @@ export default function GraphComponent({
 			layout: { name: "dagre" },
 		});
 
+		createEffect(() => {
+			const c = current();
+			if (c) {
+				const childPosts = collectChildPosts(cy, c);
+				setChildren(childPosts);
+			}
+		});
+
 		// ノードクリック時のイベントハンドラ
 		cy.on("click", "node", (e) => {
 			const { id, type } = e.target.data();
 			if (type === "tag") {
-				const paths = collectChildPosts(cy, id);
-				setChildren(new Set(paths));
+				setCurrent(id);
 			}
 		});
 	});

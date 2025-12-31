@@ -1,6 +1,5 @@
 import { Resolver } from "did-resolver";
 import { getResolver } from "web-did-resolver";
-import { RepoReader } from "./client";
 
 const webResolver = getResolver();
 
@@ -34,13 +33,4 @@ export async function resolve(did: string) {
 		target,
 		doc: res.didDocument,
 	};
-}
-
-export async function resolveRecord(did: string, rpath: string) {
-	try {
-		const client = await RepoReader.init(did);
-		return client.getRecord(rpath);
-	} catch {
-		return null;
-	}
 }

@@ -29,7 +29,8 @@ export default function PostEdit({ post }: { post: Post }) {
 						e.preventDefault();
 
 						const formData = new FormData(e.currentTarget);
-						const parents = (formData.get("tags") as string)
+						const tags = formData.get("tags") as string;
+						const parents = tags
 							.split(",")
 							.map((t) => t.trim())
 							.filter(Boolean);

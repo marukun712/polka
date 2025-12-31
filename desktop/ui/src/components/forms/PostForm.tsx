@@ -43,7 +43,7 @@ export default function PostForm() {
 			<input
 				type="text"
 				value={tag()}
-				placeholder="Enter your parents..."
+				placeholder="Enter parent tags..."
 				onInput={(e) => setTag(e.currentTarget.value)}
 			/>
 			<button type="submit">Post</button>

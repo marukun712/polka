@@ -7,9 +7,6 @@ export default function FollowForm() {
 
 	return (
 		<article>
-			<header>
-				<h1>タグノードをフォロー</h1>
-			</header>
 			<form
 				onSubmit={async (e) => {
 					e.preventDefault();
@@ -38,20 +35,14 @@ export default function FollowForm() {
 					form.reset();
 				}}
 			>
-				<label>
-					DID
-					<input
-						type="text"
-						name="did"
-						placeholder="did:web:example.com"
-						required
-					/>
-				</label>
-				<label>
-					タグ名
-					<input type="text" name="tag" required />
-				</label>
-				<button type="submit">フォロー</button>
+				<input
+					type="text"
+					name="did"
+					placeholder="did:web:example.com"
+					required
+				/>
+				<input type="text" name="tag" required />
+				<button type="submit">Follow</button>
 			</form>
 		</article>
 	);

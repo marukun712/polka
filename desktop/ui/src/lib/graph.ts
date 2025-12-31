@@ -1,6 +1,6 @@
 import type { ElementDefinition } from "cytoscape";
 import type { Edge, EdgeData, Ref } from "../types";
-import { walkMST } from "./client";
+import { getKeys } from "./client";
 
 export function buildTagHierarchy(items: EdgeData[]) {
 	const tagParentMap = new Map<string, Set<string>>(); // 親 -> 子のセット
@@ -10,7 +10,9 @@ export function buildTagHierarchy(items: EdgeData[]) {
 		if (from) {
 			const has = tagParentMap.get(from);
 			if (!has) {
-				tagParentMap.set(from, new Set());
+				const set = new Set<string>();
+				set.add(to);
+				tagParentMap.set(from, set);
 				return;
 			}
 			has.add(to);
@@ -22,12 +24,12 @@ export function buildTagHierarchy(items: EdgeData[]) {
 	return { tagParentMap, roots };
 }
 
-export function createGraphElements(
+export async function createGraphElements(
 	id: string,
 	root: string,
 	edges: Edge[],
 	did: string,
-): ElementDefinition[] {
+): Promise<ElementDefinition[]> {
 	const elements = new Map<string, ElementDefinition>();
 
 	const edgeKey = (s: string, t: string) => `edge:${s}->${t}`;
@@ -45,29 +47,29 @@ export function createGraphElements(
 	};
 
 	const findChildItem = async (item: string) => {
-		const posts = await walkMST(did, `index/polka.post.tags.${item}`);
-		const links = await walkMST(did, `index/polka.link.tags.${item}`);
+		const posts = await getKeys(did, "polka.post", { parents: item });
+		const links = await getKeys(did, "polka.link", { parents: item });
 		posts.keys.forEach((key) => {
-			addNode(key, {
+			addNode(`${id}:${key}`, {
 				data: {
-					id: key,
+					id: `${id}:${key}`,
 					label: key,
 					type: "post",
 					ref: { did, rpath: key },
 				},
 			});
-			addEdge(`${id}:${item}`, key);
+			addEdge(`${id}:${item}`, `${id}:${key}`);
 		});
 		links.keys.forEach((key) => {
-			addNode(key, {
+			addNode(`${id}:${key}`, {
 				data: {
-					id: key,
+					id: `${id}:${key}`,
 					label: key,
 					type: "link",
 					ref: { did, rpath: key },
 				},
 			});
-			addEdge(`${id}:${item}`, key);
+			addEdge(`${id}:${item}`, `${id}:${key}`);
 		});
 	};
 
@@ -79,23 +81,23 @@ export function createGraphElements(
 	// タグの親子関係を解析
 	const { tagParentMap, roots } = buildTagHierarchy(edges.map((e) => e.data));
 
-	roots.forEach(async (item) => {
+	for (const item of roots) {
 		addNode(`${id}:${item}`, {
 			data: { id: `${id}:${item}`, label: item, type: "tag" },
 		});
 		addEdge(id, `${id}:${item}`);
 		await findChildItem(item);
-	});
+	}
 
-	tagParentMap.forEach(async (children, parent) => {
-		children.forEach(async (child) => {
+	for (const [parent, children] of tagParentMap) {
+		for (const child of children) {
 			addNode(`${id}:${child}`, {
 				data: { id: `${id}:${child}`, label: child, type: "tag" },
 			});
 			addEdge(`${id}:${parent}`, `${id}:${child}`);
 			await findChildItem(child);
-		});
-	});
+		}
+	}
 
 	return [...elements.values()];
 }

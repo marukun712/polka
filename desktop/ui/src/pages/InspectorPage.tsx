@@ -1,10 +1,17 @@
-import { type Component, For, Show } from "solid-js";
+import { type Component, createResource, For, Show } from "solid-js";
 import RecordEditForm from "../components/forms/RecordEditForm";
 import Loading from "../components/ui/Loading";
-import { useAllRecords } from "../hooks/useAllRecords";
+import { useIPC } from "../hooks/useIPC";
+import { allRecords } from "../lib/client";
+
+const fetcher = async (did: string) => {
+	const res = await allRecords(did);
+	return res;
+};
 
 const InspectorPage: Component = () => {
-	const res = useAllRecords();
+	const ipc = useIPC();
+	const [res] = createResource(ipc.did, fetcher);
 
 	return (
 		<main class="container-fluid">
@@ -12,14 +19,6 @@ const InspectorPage: Component = () => {
 			<Show when={res()} fallback={<Loading />}>
 				{(r) => (
 					<>
-						<article>
-							<h1>Your identity:</h1>
-							<h4>did:web: {r().ipc.did}</h4>
-							<h4>did:key(pk to verify): {r().doc.didKey}</h4>
-							<pre style="max-height: 12rem; overflow: auto;">
-								{JSON.stringify(r().doc.doc, null, 2)}
-							</pre>
-						</article>
 						<figure>
 							<table class="striped hoverable">
 								<thead>
@@ -30,7 +29,7 @@ const InspectorPage: Component = () => {
 									</tr>
 								</thead>
 								<tbody>
-									<For each={r().records.records}>
+									<For each={r().records}>
 										{(item) => (
 											<tr>
 												<th scope="row" style="white-space: nowrap;">

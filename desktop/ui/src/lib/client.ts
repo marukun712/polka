@@ -11,13 +11,22 @@ export async function getRecord(did: string, rpath: string) {
 	return reader.find(rpath);
 }
 
-export async function getRecords(did: string, nsid: string) {
+export async function getRecords(
+	did: string,
+	nsid: string,
+	query?: Record<string, unknown>,
+) {
 	const reader = await openReader(did);
-	return reader.findMany(nsid);
+	return reader.findMany(nsid, { query });
 }
-export async function walkMST(did: string, prefix: string) {
+
+export async function getKeys(
+	did: string,
+	nsid: string,
+	query?: Record<string, unknown>,
+) {
 	const reader = await openReader(did);
-	return reader.walkMST(prefix);
+	return reader.findKeys(nsid, { query });
 }
 
 export async function allRecords(did: string) {

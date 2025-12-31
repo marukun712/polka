@@ -97,15 +97,38 @@ export class Reader {
 		return { records };
 	}
 
-	async walkMST(prefix: string) {
+	async findKeys(
+		collection: string,
+		options?: {
+			query?: Record<string, unknown>;
+		},
+	) {
+		const { query } = options ?? {};
 		const keys: string[] = [];
 
 		const walker = await NodeWalker.create(this.store, this.commit.data.$link);
 
-		const start = prefix;
-		const end = `${prefix}\xff`;
+		const start = `${collection}/`;
+		const end = `${collection}/\xff`;
 
-		for await (const [rpath] of walker.entriesInRange(start, end)) {
+		for await (const [rpath, cid] of walker.entriesInRange(start, end)) {
+			const block = await this.storage.get(cid.$link);
+			if (!block) {
+				continue;
+			}
+			const decoded = decode(block);
+			if (query) {
+				const isMatch = Object.entries(query).every(([key, value]) => {
+					const target = decoded[key];
+					if (Array.isArray(target)) {
+						return target.includes(value);
+					}
+					return target === value;
+				});
+				if (!isMatch) {
+					continue;
+				}
+			}
 			keys.push(rpath);
 		}
 
