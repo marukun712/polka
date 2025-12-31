@@ -27,7 +27,6 @@ const fetcher = async (did: string) => {
 
 	const follows = await getRecords(did, "polka.follow");
 	const parsedFollows = validateRecords(follows.records, followSchema);
-	console.log(parsedFollows);
 
 	const graph = await Promise.all([
 		createGraphElements(parsedProfile.name, did),
@@ -57,9 +56,21 @@ const TopPage: Component = () => {
 							headerAction={<ProfileEdit init={f().profile} />}
 						/>
 
-						<TagForm />
-						<PostForm />
-						<FollowForm />
+						<section>
+							<h3>タグ階層を作成</h3>
+							<TagForm />
+						</section>
+
+						<section>
+							<h3>投稿する</h3>
+							<PostForm />
+						</section>
+
+						<section>
+							<h3>タグをフォロー</h3>
+							<FollowForm />
+						</section>
+
 						<GraphComponent graph={f().graph} setChildren={setChildren} />
 						<article>
 							<For each={children()}>

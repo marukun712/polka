@@ -9,6 +9,7 @@ import {
 	type Ref,
 } from "../../../types";
 import { validateRecord } from "../../../utils/validation";
+import LinkButton from "../../button/LinkButton";
 import PostEdit from "../../forms/PostEditForm";
 
 type PostCardProps = {
@@ -92,6 +93,9 @@ export default function PostCard(props: PostCardProps) {
 						</hgroup>
 						<Show when={item().author === props.user}>
 							<PostEdit post={item()} />
+						</Show>
+						<Show when={item().author !== props.user && item().type === "post"}>
+							<LinkButton ref={{ did: item().author, rpath: item().rpath }} />
 						</Show>
 					</header>
 					{item().data.content}
