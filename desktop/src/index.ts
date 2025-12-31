@@ -77,6 +77,32 @@ app.whenReady().then(() => {
 		return true;
 	});
 
+	ipcMain.handle("getRecord", async (_, rpath: string) => {
+		if (!polka) throw new Error("Polka not initialized");
+		return await polka.db.find(rpath);
+	});
+
+	ipcMain.handle(
+		"getRecords",
+		async (_, nsid: string, query?: Record<string, unknown>) => {
+			if (!polka) throw new Error("Polka not initialized");
+			return await polka.db.findMany(nsid, { query });
+		},
+	);
+
+	ipcMain.handle(
+		"getKeys",
+		async (_, nsid: string, query?: Record<string, unknown>) => {
+			if (!polka) throw new Error("Polka not initialized");
+			return await polka.db.findKeys(nsid, { query });
+		},
+	);
+
+	ipcMain.handle("allRecords", async () => {
+		if (!polka) throw new Error("Polka not initialized");
+		return await polka.db.all();
+	});
+
 	app.on("activate", () => {
 		if (BrowserWindow.getAllWindows().length === 0) {
 			createWindow();

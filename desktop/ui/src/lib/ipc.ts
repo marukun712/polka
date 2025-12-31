@@ -31,6 +31,22 @@ export class IPCClient {
 	async getDid() {
 		return await window.polka.did();
 	}
+
+	async getRecord(rpath: string) {
+		return await window.polka.getRecord(rpath);
+	}
+
+	async getRecords(nsid: string, query?: Record<string, unknown>) {
+		return await window.polka.getRecords(nsid, query);
+	}
+
+	async getKeys(nsid: string, query?: Record<string, unknown>) {
+		return await window.polka.getKeys(nsid, query);
+	}
+
+	async allRecords() {
+		return await window.polka.allRecords();
+	}
 }
 
 export function getDomain() {
