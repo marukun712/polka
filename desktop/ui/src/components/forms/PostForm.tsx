@@ -1,12 +1,11 @@
 import { now } from "@atcute/tid";
-import { createSignal, Show } from "solid-js";
+import { createSignal, For, Show } from "solid-js";
 import z from "zod";
 import { useIPC } from "../../hooks/useIPC";
 import { type PostData, postDataSchema } from "../../types";
 
-export default function PostForm() {
+export default function PostForm(props: { availableTags: string[] }) {
 	const [text, setText] = createSignal("");
-	const [tag, setTag] = createSignal("");
 	const [error, setError] = createSignal<string | null>(null);
 	const ipc = useIPC();
 
@@ -17,10 +16,9 @@ export default function PostForm() {
 				setError(null);
 
 				const rpath = `polka.post/${now()}`;
-				const parents = tag()
-					.split(",")
-					.map((t) => t.trim())
-					.filter(Boolean);
+				const formData = new FormData(e.currentTarget);
+				const selectedTags = formData.getAll("tags") as string[];
+				const parents = selectedTags.filter(Boolean);
 
 				const data: PostData = {
 					content: text(),
@@ -38,7 +36,7 @@ export default function PostForm() {
 				await ipc.client.commit();
 
 				setText("");
-				setTag("");
+				e.currentTarget.reset();
 			}}
 		>
 			<label for="post-content">投稿内容</label>
@@ -49,14 +47,12 @@ export default function PostForm() {
 				rows={6}
 				onInput={(e) => setText(e.currentTarget.value)}
 			/>
-			<label for="post-tags">親タグ(カンマ区切り)</label>
-			<input
-				id="post-tags"
-				type="text"
-				value={tag()}
-				placeholder="タグ1, タグ2"
-				onInput={(e) => setTag(e.currentTarget.value)}
-			/>
+			<label for="post-tags">親タグ (Ctrl/Cmd+クリックで複数選択)</label>
+			<select id="post-tags" multiple name="tags" size={5}>
+				<For each={props.availableTags}>
+					{(tag) => <option value={tag}>{tag}</option>}
+				</For>
+			</select>
 			<Show when={error()}>
 				<p role="alert" style="color: red;">
 					{error()}

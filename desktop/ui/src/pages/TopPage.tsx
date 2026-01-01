@@ -19,7 +19,7 @@ import TagManager from "../components/ui/layout/TagManager";
 import { useIPC } from "../hooks/useIPC";
 import { getRecord, getRecords } from "../lib/client";
 import { createGraphElements } from "../lib/graph";
-import { followSchema, profileSchema, type Ref } from "../types";
+import { edgeSchema, followSchema, profileSchema, type Ref } from "../types";
 import { validateRecord, validateRecords } from "../utils/validation";
 
 const fetcher = async (did: string) => {
@@ -31,6 +31,11 @@ const fetcher = async (did: string) => {
 	const follows = await getRecords(did, "polka.follow");
 	const parsedFollows = validateRecords(follows.records, followSchema);
 
+	// エッジを取得してタグリストを作成
+	const edges = await getRecords(did, "polka.edge");
+	const parsedEdges = validateRecords(edges.records, edgeSchema);
+	const availableTags = [...new Set(parsedEdges.map((e) => e.data.to))];
+
 	const graph = await Promise.all([
 		createGraphElements(parsedProfile.name, did),
 		...parsedFollows.map((follow) =>
@@ -38,7 +43,7 @@ const fetcher = async (did: string) => {
 		),
 	]);
 	const flat = graph.flat();
-	return { graph: flat, profile: parsedProfile, did };
+	return { graph: flat, profile: parsedProfile, did, availableTags };
 };
 
 const TopPage: Component = () => {
@@ -66,7 +71,7 @@ const TopPage: Component = () => {
 
 						<section>
 							<h3>投稿する</h3>
-							<PostForm />
+							<PostForm availableTags={f().availableTags} />
 						</section>
 
 						<section>
@@ -88,7 +93,13 @@ const TopPage: Component = () => {
 						<GraphComponent graph={f().graph} setChildren={setChildren} />
 						<article>
 							<For each={children()}>
-								{(child) => <PostCard recordRef={child} user={ipc.did} />}
+								{(child) => (
+									<PostCard
+										recordRef={child}
+										user={ipc.did}
+										availableTags={f().availableTags}
+									/>
+								)}
 							</For>
 						</article>
 					</>

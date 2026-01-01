@@ -1,10 +1,20 @@
+import { createSignal, For } from "solid-js";
 import { useDialog } from "../../hooks/useDialog";
 import { useIPC } from "../../hooks/useIPC";
 import { type Post, type PostData, postDataSchema } from "../../types";
 import { Dialog } from "../ui/Dialog";
 
-export default function PostEdit({ post }: { post: Post }) {
+export default function PostEdit({
+	post,
+	availableTags,
+}: {
+	post: Post;
+	availableTags: string[];
+}) {
 	const ipc = useIPC();
+	const [selectedTags, setSelectedTags] = createSignal<string[]>(
+		post.data.parents,
+	);
 
 	const editDialog = useDialog();
 	const deleteDialog = useDialog();
@@ -29,11 +39,8 @@ export default function PostEdit({ post }: { post: Post }) {
 						e.preventDefault();
 
 						const formData = new FormData(e.currentTarget);
-						const tags = formData.get("tags") as string;
-						const parents = tags
-							.split(",")
-							.map((t) => t.trim())
-							.filter(Boolean);
+						const selectedTagsData = formData.getAll("tags") as string[];
+						const parents = selectedTagsData.filter(Boolean);
 
 						const data: PostData = {
 							parents,
@@ -54,12 +61,27 @@ export default function PostEdit({ post }: { post: Post }) {
 						location.reload();
 					}}
 				>
-					<input
-						type="text"
+					<label for="edit-tags">親タグ (Ctrl/Cmd+クリックで複数選択)</label>
+					<select
+						id="edit-tags"
+						multiple
 						name="tags"
-						placeholder="Tag"
-						value={post.data.parents.join(", ")}
-					/>
+						size={5}
+						onChange={(e) => {
+							const selected = Array.from(e.currentTarget.selectedOptions).map(
+								(opt) => opt.value,
+							);
+							setSelectedTags(selected);
+						}}
+					>
+						<For each={availableTags}>
+							{(tag) => (
+								<option value={tag} selected={selectedTags().includes(tag)}>
+									{tag}
+								</option>
+							)}
+						</For>
+					</select>
 					<textarea
 						name="content"
 						placeholder="Content"

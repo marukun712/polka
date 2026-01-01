@@ -18,6 +18,7 @@ import "zenn-content-css";
 type PostCardProps = {
 	recordRef: Ref;
 	user: string;
+	availableTags: string[];
 };
 
 function MD(props: { content: string }) {
@@ -123,10 +124,13 @@ export default function PostCard(props: PostCardProps) {
 							</div>
 						</hgroup>
 						<Show when={item().author === props.user}>
-							<PostEdit post={item()} />
+							<PostEdit post={item()} availableTags={props.availableTags} />
 						</Show>
 						<Show when={item().author !== props.user && item().type === "post"}>
-							<LinkButton ref={{ did: item().author, rpath: item().rpath }} />
+							<LinkButton
+								ref={{ did: item().author, rpath: item().rpath }}
+								availableTags={props.availableTags}
+							/>
 						</Show>
 					</header>
 					<Suspense>

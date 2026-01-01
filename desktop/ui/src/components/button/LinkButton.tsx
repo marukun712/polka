@@ -1,11 +1,18 @@
 import { now } from "@atcute/tid";
 import { IoLink } from "solid-icons/io";
+import { For } from "solid-js";
 import { useDialog } from "../../hooks/useDialog";
 import { useIPC } from "../../hooks/useIPC";
 import { type LinkData, linkDataSchema, type Ref } from "../../types";
 import { Dialog } from "../ui/Dialog";
 
-export default function LinkButton({ ref }: { ref: Ref }) {
+export default function LinkButton({
+	ref,
+	availableTags,
+}: {
+	ref: Ref;
+	availableTags: string[];
+}) {
 	const ipc = useIPC();
 	const linkDialog = useDialog();
 
@@ -25,11 +32,8 @@ export default function LinkButton({ ref }: { ref: Ref }) {
 						e.preventDefault();
 
 						const formData = new FormData(e.currentTarget);
-						const tags = formData.get("tags") as string;
-						const parents = tags
-							.split(",")
-							.map((t) => t.trim())
-							.filter(Boolean);
+						const selectedTags = formData.getAll("tags") as string[];
+						const parents = selectedTags.filter(Boolean);
 
 						const linkRpath = `polka.link/${now()}`;
 
@@ -55,7 +59,12 @@ export default function LinkButton({ ref }: { ref: Ref }) {
 						location.reload();
 					}}
 				>
-					<input type="text" name="tags" placeholder="タグ1, タグ2" />
+					<label for="link-tags">親タグ (Ctrl/Cmd+クリックで複数選択)</label>
+					<select id="link-tags" multiple name="tags" size={5}>
+						<For each={availableTags}>
+							{(tag) => <option value={tag}>{tag}</option>}
+						</For>
+					</select>
 					<div class="dialog-footer">
 						<button type="button" class="secondary" onClick={linkDialog.close}>
 							キャンセル
