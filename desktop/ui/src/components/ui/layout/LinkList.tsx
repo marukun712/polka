@@ -2,23 +2,23 @@ import { createResource, For, Show } from "solid-js";
 import { useDialog } from "../../../hooks/useDialog";
 import { useIPC } from "../../../hooks/useIPC";
 import { getRecords } from "../../../lib/client";
-import { followSchema } from "../../../types";
+import { linkSchema } from "../../../types";
 import { validateRecords } from "../../../utils/validation";
 import { Dialog } from "../Dialog";
 
-export default function FollowList({ user }: { user: string }) {
+export default function LinkList({ user }: { user: string }) {
 	const ipc = useIPC();
 	const listDialog = useDialog();
 
-	const [follows] = createResource(
+	const [links] = createResource(
 		() => user,
 		async (did: string) => {
-			const records = await getRecords(did, "polka.follow");
-			return validateRecords(records.records, followSchema);
+			const records = await getRecords(did, "polka.link");
+			return validateRecords(records.records, linkSchema);
 		},
 	);
 
-	const handleUnfollow = async (rpath: string) => {
+	const handleDelete = async (rpath: string) => {
 		await ipc.client.delete(rpath);
 		await ipc.client.commit();
 		listDialog.close();
@@ -27,11 +27,11 @@ export default function FollowList({ user }: { user: string }) {
 
 	return (
 		<article>
-			<button onClick={listDialog.open}>フォロー中のタグを表示</button>
+			<button onClick={listDialog.open}>リンク一覧を表示</button>
 
 			<Dialog
 				ref={listDialog.ref}
-				title="フォロー中のタグノード"
+				title="保存したリンク"
 				onClose={listDialog.close}
 				footer={
 					<button class="secondary" onClick={listDialog.close}>
@@ -39,33 +39,44 @@ export default function FollowList({ user }: { user: string }) {
 					</button>
 				}
 			>
-				<Show when={follows()} fallback={<p>読み込み中...</p>}>
+				<Show when={links()} fallback={<p>読み込み中...</p>}>
 					{(items) => (
 						<Show
 							when={items().length > 0}
-							fallback={<p>フォロー中のタグノードはありません</p>}
+							fallback={<p>保存されたリンクはありません</p>}
 						>
 							<For each={items()}>
-								{(follow) => (
+								{(link) => (
 									<article style={{ "margin-bottom": "1rem" }}>
 										<header>
-											<strong>Tag: #{follow.data.tag}</strong>
+											<strong>リンク先</strong>
 										</header>
 										<p style={{ margin: "0.5rem 0" }}>
-											<small>DID: {follow.data.did}</small>
+											<small>DID: {link.data.ref.did}</small>
+										</p>
+										<p style={{ margin: "0.5rem 0" }}>
+											<small>Path: {link.data.ref.rpath}</small>
 										</p>
 										<p style={{ margin: "0.5rem 0" }}>
 											<small>
-												Updated:{" "}
-												{new Date(follow.data.updatedAt).toLocaleString()}
+												タグ:{" "}
+												{link.data.parents.length > 0
+													? link.data.parents.join(", ")
+													: "なし"}
+											</small>
+										</p>
+										<p style={{ margin: "0.5rem 0" }}>
+											<small>
+												作成日時:{" "}
+												{new Date(link.data.updatedAt).toLocaleString()}
 											</small>
 										</p>
 										<footer>
 											<button
 												class="contrast"
-												onClick={() => handleUnfollow(follow.rpath)}
+												onClick={() => handleDelete(link.rpath)}
 											>
-												解除
+												削除
 											</button>
 										</footer>
 									</article>

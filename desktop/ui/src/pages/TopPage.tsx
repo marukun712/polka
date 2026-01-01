@@ -12,7 +12,10 @@ import TagForm from "../components/forms/TagForm";
 import GraphComponent from "../components/graph/Graph";
 import PostCard from "../components/ui/card/PostCard";
 import Loading from "../components/ui/Loading";
+import FollowList from "../components/ui/layout/FollowList";
+import LinkList from "../components/ui/layout/LinkList";
 import { ProfileHeader } from "../components/ui/layout/ProfileHeader";
+import TagManager from "../components/ui/layout/TagManager";
 import { useIPC } from "../hooks/useIPC";
 import { getRecord, getRecords } from "../lib/client";
 import { createGraphElements } from "../lib/graph";
@@ -69,6 +72,17 @@ const TopPage: Component = () => {
 						<section>
 							<h3>タグをフォロー</h3>
 							<FollowForm />
+						</section>
+
+						<section>
+							<h3>データ管理</h3>
+							<div
+								style={{ display: "flex", gap: "1rem", "flex-wrap": "wrap" }}
+							>
+								<FollowList user={ipc.did} />
+								<LinkList user={ipc.did} />
+								<TagManager user={ipc.did} />
+							</div>
 						</section>
 
 						<GraphComponent graph={f().graph} setChildren={setChildren} />
