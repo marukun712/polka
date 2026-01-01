@@ -3,6 +3,7 @@ import { contextBridge, ipcRenderer } from "electron";
 export type PolkaAPI = {
 	setDomain(domain: string): Promise<boolean>;
 	getDomain(): Promise<string>;
+	parseMd(md: string): Promise<string>;
 	did(): Promise<string>;
 	init(): Promise<boolean>;
 	create(rpath: string, data: Record<string, unknown>): Promise<boolean>;
@@ -28,6 +29,7 @@ export type PolkaAPI = {
 contextBridge.exposeInMainWorld("polka", {
 	setDomain: (domain: string) => ipcRenderer.invoke("setDomain", domain),
 	getDomain: () => ipcRenderer.invoke("getDomain"),
+	parseMd: (md: string) => ipcRenderer.invoke("parseMd", md),
 	did: () => ipcRenderer.invoke("did"),
 	init: () => ipcRenderer.invoke("init"),
 	create: (rpath: string, data: Record<string, unknown>) =>

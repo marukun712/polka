@@ -12,6 +12,10 @@ export class IPCClient {
 		return new IPCClient();
 	}
 
+	async parseMd(md: string) {
+		return await window.polka.parseMd(md);
+	}
+
 	async create(rpath: string, data: Record<string, unknown>) {
 		return await window.polka.create(rpath, data);
 	}

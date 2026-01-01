@@ -1,5 +1,7 @@
+import type { GetResult } from "@polka/db/types";
 import { IoLink } from "solid-icons/io";
-import { createResource, Show } from "solid-js";
+import { createResource, Show, Suspense } from "solid-js";
+import { useIPC } from "../../../hooks/useIPC";
 import { getRecord } from "../../../lib/client";
 import {
 	linkDataSchema,
@@ -11,67 +13,96 @@ import {
 import { validateRecord } from "../../../utils/validation";
 import LinkButton from "../../button/LinkButton";
 import PostEdit from "../../forms/PostEditForm";
+import "zenn-content-css";
 
 type PostCardProps = {
 	recordRef: Ref;
 	user: string;
 };
 
-const fetcher = async (ref: Ref) => {
+function MD(props: { content: string }) {
+	const ipc = useIPC();
+	const [html] = createResource(
+		() => props.content,
+		async (md: string) => {
+			const res = await ipc.client.parseMd(md);
+			return String(res);
+		},
+	);
+	return (
+		<div class="znc">
+			<div innerHTML={html()} />
+		</div>
+	);
+}
+
+async function fetchPostData(ref: Ref) {
 	const type = ref.rpath.split("/")[0];
 	const record = await getRecord(ref.did, ref.rpath);
+	if (!record) throw new Error("Record not found.");
+
 	if (type === "polka.post") {
-		const profile = await getRecord(ref.did, "polka.profile/self");
-		if (!profile) return null;
-		const parsedProfile = validateRecord(profile, profileSchema);
-		if (!parsedProfile) return null;
-
-		const parsed = validateRecord(record, postDataSchema);
-		if (!parsed) return null;
-		return {
-			type: "post",
-			profile: parsedProfile,
-			rpath: ref.rpath,
-			data: parsed,
-			author: ref.did,
-		};
+		return fetchPostType(ref.did, ref.rpath, record);
 	} else if (type === "polka.link") {
-		const parsed = validateRecord(record, linkDataSchema);
-		if (!parsed) return null;
-
-		const profile = await getRecord(parsed.ref.did, "polka.profile/self");
-		if (!profile) return null;
-		const parsedProfile = validateRecord(profile, profileSchema);
-		if (!parsedProfile) return null;
-
-		const post = await getRecord(parsed.ref.did, parsed.ref.rpath);
-		if (!post) return null;
-		const parsedPost = validateRecord(post, postSchema);
-		if (!parsedPost) return null;
-
-		return {
-			type: "link",
-			profile: parsedProfile,
-			rpath: parsed.ref.rpath,
-			data: parsedPost.data,
-			author: parsed.ref.did,
-		};
-	} else {
-		return null;
+		return fetchLinkType(record);
 	}
-};
+	return null;
+}
+
+async function fetchPostType(did: string, rpath: string, record: GetResult) {
+	// 投稿者のプロフィールを取得する
+	const profile = await getRecord(did, "polka.profile/self");
+	if (!profile) return null;
+
+	const parsedProfile = validateRecord(profile, profileSchema);
+	const parsedData = validateRecord(record, postDataSchema);
+
+	if (!parsedProfile || !parsedData) return null;
+
+	return {
+		type: "post",
+		profile: parsedProfile,
+		rpath,
+		data: parsedData,
+		author: did,
+	};
+}
+
+async function fetchLinkType(record: GetResult) {
+	const parsed = validateRecord(record, linkDataSchema);
+	if (!parsed) return null;
+
+	// リンク先の投稿者のプロフィールを取得する
+	const profile = await getRecord(parsed.ref.did, "polka.profile/self");
+	if (!profile) return null;
+	const parsedProfile = validateRecord(profile, profileSchema);
+	if (!parsedProfile) return null;
+
+	// リンク先の投稿を取得する
+	const post = await getRecord(parsed.ref.did, parsed.ref.rpath);
+	if (!post) return null;
+	const parsedPost = validateRecord(post, postSchema);
+	if (!parsedPost) return null;
+
+	return {
+		type: "link",
+		profile: parsedProfile,
+		rpath: parsed.ref.rpath,
+		data: parsedPost.data,
+		author: parsed.ref.did,
+	};
+}
 
 export default function PostCard(props: PostCardProps) {
-	const [res] = createResource(props.recordRef, fetcher);
+	const [data] = createResource(() => props.recordRef, fetchPostData);
 
 	return (
-		<Show when={res()}>
+		<Show when={data()}>
 			{(item) => (
 				<article>
 					<Show when={item().type === "link"}>
 						<IoLink />
 					</Show>
-
 					<header style="display:flex; justify-content: space-between">
 						<hgroup>
 							<div style="display: flex; align-items: center; gap: 1rem;">
@@ -98,7 +129,9 @@ export default function PostCard(props: PostCardProps) {
 							<LinkButton ref={{ did: item().author, rpath: item().rpath }} />
 						</Show>
 					</header>
-					{item().data.content}
+					<Suspense>
+						<MD content={item().data.content} />
+					</Suspense>
 				</article>
 			)}
 		</Show>

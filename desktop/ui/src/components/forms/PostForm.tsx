@@ -46,6 +46,7 @@ export default function PostForm() {
 				id="post-content"
 				value={text()}
 				placeholder="投稿内容を入力..."
+				rows={6}
 				onInput={(e) => setText(e.currentTarget.value)}
 			/>
 			<label for="post-tags">親タグ(カンマ区切り)</label>

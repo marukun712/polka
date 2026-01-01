@@ -1,7 +1,11 @@
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, ipcMain } from "electron";
 import Store from "electron-store";
+import lib from "zenn-markdown-html";
 import { polkaRepo } from "../lib/repo.ts";
+
+// @ts-expect-error
+const markdownToHtml = lib.default ? lib.default : lib;
 
 let polka: polkaRepo | null;
 
@@ -32,6 +36,11 @@ app.whenReady().then(() => {
 		if (!domain || typeof domain !== "string")
 			throw new Error("Domain not found");
 		return domain;
+	});
+
+	ipcMain.handle("parseMd", async (_, text: string) => {
+		const content = markdownToHtml(text);
+		return content;
 	});
 
 	ipcMain.handle("did", () => {

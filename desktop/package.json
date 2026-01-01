@@ -20,6 +20,7 @@
 		"@atproto/crypto": "^0.4.5",
 		"@atproto/repo": "^0.8.12",
 		"@polka/db": "workspace:*",
+		"@types/markdown-it": "^14.1.2",
 		"did-resolver": "^4.1.0",
 		"dotenv": "^17.2.3",
 		"electron": "^39.2.7",
@@ -29,6 +30,8 @@
 		"simple-git": "^3.30.0",
 		"tsup": "^8.5.1",
 		"web-did-resolver": "^2.0.32",
+		"zenn-content-css": "^0.2.11",
+		"zenn-markdown-html": "^0.2.11",
 		"zod": "^4.1.13"
 	}
 }

@@ -52,7 +52,7 @@ export default function ProfileEdit({ init }: { init: Profile }) {
 						name="description"
 						placeholder="Description"
 						value={init.description}
-						rows={3}
+						rows={6}
 					/>
 					<input
 						type="url"
