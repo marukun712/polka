@@ -1,3 +1,4 @@
+import { useSearchParams } from "@solidjs/router";
 import {
 	type Component,
 	createResource,
@@ -5,17 +6,10 @@ import {
 	For,
 	Show,
 } from "solid-js";
-import FollowForm from "../components/forms/FollowForm";
-import PostForm from "../components/forms/PostForm";
-import ProfileEdit from "../components/forms/ProfileEditForm";
-import TagForm from "../components/forms/TagForm";
 import GraphComponent from "../components/graph/Graph";
 import PostCard from "../components/ui/card/PostCard";
 import Loading from "../components/ui/Loading";
-import FollowList from "../components/ui/layout/FollowList";
-import LinkList from "../components/ui/layout/LinkList";
 import { ProfileHeader } from "../components/ui/layout/ProfileHeader";
-import TagManager from "../components/ui/layout/TagManager";
 import { useIPC } from "../hooks/useIPC";
 import { getRecord, getRecords } from "../lib/client";
 import { createGraphElements } from "../lib/graph";
@@ -45,9 +39,10 @@ const fetcher = async (did: string) => {
 	return { graph: flat, profile: parsedProfile, did, availableTags };
 };
 
-const TopPage: Component = () => {
+const UserPage: Component = () => {
+	const [params] = useSearchParams();
 	const ipc = useIPC();
-	const [res] = createResource(ipc.did, fetcher);
+	const [res] = createResource(() => params.did as string, fetcher);
 
 	const [children, setChildren] = createSignal<Ref[]>([]);
 
@@ -56,60 +51,8 @@ const TopPage: Component = () => {
 			<Show when={res()} fallback={<Loading />}>
 				{(f) => (
 					<>
-						<a href="/inspector">View inspector</a>
-						<ProfileHeader
-							profile={f().profile}
-							did={f().did}
-							headerAction={<ProfileEdit init={f().profile} />}
-						/>
-
-						<section>
-							<h3>ユーザープロフィール検索</h3>
-							<form
-								onSubmit={(e) => {
-									e.preventDefault();
-									const formData = new FormData(e.currentTarget);
-									const did = formData.get("did") as string;
-									if (did.trim()) {
-										window.location.hash = `#/user?did=${did}`;
-									}
-								}}
-							>
-								<input
-									type="text"
-									name="did"
-									placeholder="Enter user DID..."
-									required
-								/>
-								<button type="submit">View Profile</button>
-							</form>
-						</section>
-
-						<section>
-							<h3>タグ階層を作成</h3>
-							<TagForm />
-						</section>
-
-						<section>
-							<h3>投稿する</h3>
-							<PostForm availableTags={f().availableTags} />
-						</section>
-
-						<section>
-							<h3>タグをフォロー</h3>
-							<FollowForm />
-						</section>
-
-						<section>
-							<h3>データ管理</h3>
-							<div
-								style={{ display: "flex", gap: "1rem", "flex-wrap": "wrap" }}
-							>
-								<FollowList user={ipc.did} />
-								<LinkList user={ipc.did} />
-								<TagManager user={ipc.did} />
-							</div>
-						</section>
+						<a href="/">トップページに戻る</a>
+						<ProfileHeader profile={f().profile} did={f().did} />
 
 						<GraphComponent graph={f().graph} setChildren={setChildren} />
 						<article>
@@ -130,4 +73,4 @@ const TopPage: Component = () => {
 	);
 };
 
-export default TopPage;
+export default UserPage;

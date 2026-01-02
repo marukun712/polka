@@ -6,6 +6,7 @@ import { IPCProvider } from "./contexts";
 import { getDomain, setDomain } from "./lib/ipc";
 import InspectorPage from "./pages/InspectorPage";
 import TopPage from "./pages/TopPage";
+import UserPage from "./pages/UserPage";
 
 const root = document.getElementById("root");
 
@@ -47,6 +48,7 @@ render(
 				<HashRouter>
 					<Route path="/" component={TopPage} />
 					<Route path="/inspector" component={InspectorPage} />
+					<Route path="/user" component={UserPage} />
 				</HashRouter>
 			</IPCProvider>
 		</Show>

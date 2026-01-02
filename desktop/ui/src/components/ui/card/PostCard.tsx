@@ -1,4 +1,5 @@
 import type { GetResult } from "@polka/db/types";
+import { useNavigate } from "@solidjs/router";
 import { IoLink } from "solid-icons/io";
 import { createResource, Show, Suspense } from "solid-js";
 import { useIPC } from "../../../hooks/useIPC";
@@ -95,6 +96,7 @@ async function fetchLinkType(record: GetResult) {
 }
 
 export default function PostCard(props: PostCardProps) {
+	const navigate = useNavigate();
 	const [data] = createResource(() => props.recordRef, fetchPostData);
 
 	return (
@@ -110,10 +112,22 @@ export default function PostCard(props: PostCardProps) {
 								<img
 									src={item().profile.icon}
 									alt={item().profile.name}
-									style="border-radius: 50%; width: 48px; height: 48px; object-fit: cover;"
+									style="border-radius: 50%; width: 48px; height: 48px; object-fit: cover; cursor: pointer;"
+									onKeyUp={(e) => {
+										e.preventDefault();
+										navigate(`/user?did=${item().author}`);
+									}}
 								/>
 								<div>
-									<strong>{item().profile.name}</strong>
+									<strong
+										style="cursor: pointer;"
+										onKeyUp={(e) => {
+											e.preventDefault();
+											navigate(`/user?did=${item().author}`);
+										}}
+									>
+										{item().profile.name}
+									</strong>
 									<br />
 									<small>
 										<time>

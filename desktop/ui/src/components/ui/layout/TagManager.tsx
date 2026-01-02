@@ -118,7 +118,6 @@ export default function TagManager({ user }: { user: string }) {
 				</Dialog>
 			</article>
 
-			{/* Edit Dialog */}
 			<Dialog
 				ref={editDialog.ref}
 				title="タグを編集"
