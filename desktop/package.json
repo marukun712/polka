@@ -27,6 +27,7 @@
 		"electron-store": "^11.0.2",
 		"keytar": "^7.9.0",
 		"multiformats": "^13.4.1",
+		"nostr-tools": "^2.19.4",
 		"simple-git": "^3.30.0",
 		"tsup": "^8.5.1",
 		"web-did-resolver": "^2.0.32",

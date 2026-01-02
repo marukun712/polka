@@ -1,6 +1,9 @@
 import { fileURLToPath } from "node:url";
 import { app, BrowserWindow, ipcMain } from "electron";
 import Store from "electron-store";
+import keytar from "keytar";
+import { finalizeEvent, type NostrEvent, SimplePool } from "nostr-tools";
+import { hexToBytes } from "nostr-tools/utils";
 import lib from "zenn-markdown-html";
 import { polkaRepo } from "../lib/repo.ts";
 
@@ -20,6 +23,8 @@ const createWindow = () => {
 
 	win.loadFile("index.html");
 };
+
+const pool = new SimplePool();
 
 app.whenReady().then(() => {
 	const store = new Store();
@@ -53,6 +58,25 @@ app.whenReady().then(() => {
 		if (!domain || typeof domain !== "string")
 			throw new Error("Domain not found");
 		polka = await polkaRepo.start(domain);
+		return true;
+	});
+
+	ipcMain.handle("ad", async (_, tags: string[]) => {
+		if (!polka) throw new Error("Polka not initialized");
+		const sk = await keytar.getPassword("polka", "user");
+		if (!sk) {
+			throw new Error("Please initialize private key first.");
+		}
+		const signedEvent: NostrEvent = finalizeEvent(
+			{
+				kind: 25565,
+				created_at: Math.floor(Date.now() / 1000),
+				tags: [],
+				content: JSON.stringify({ tags, did: polka.getDid() }),
+			},
+			hexToBytes(sk),
+		);
+		await pool.publish(["ws://localhost:7777"], signedEvent);
 		return true;
 	});
 

@@ -9,6 +9,11 @@ export type Item = {
 	links: string[];
 };
 
+export const adSchema = z.object({
+	did: z.string().min(1),
+	tags: z.string().array(),
+});
+
 export const refSchema = z.object({
 	did: z.string().min(1),
 	rpath: z.string().min(1),
@@ -79,6 +84,7 @@ export const followSchema = z
 	})
 	.strict();
 
+export type Ad = z.infer<typeof adSchema>;
 export type Edge = z.infer<typeof edgeSchema>;
 export type EdgeData = z.infer<typeof edgeDataSchema>;
 export type Ref = z.infer<typeof refSchema>;
