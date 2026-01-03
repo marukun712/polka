@@ -65,6 +65,22 @@ export default function GraphComponent({
 					},
 				},
 				{
+					selector: 'node[type="user"]',
+					style: {
+						"background-image": "data(icon)",
+						"background-fit": "cover",
+						"background-clip": "none",
+						shape: "ellipse",
+						width: "40px",
+						height: "40px",
+						"font-size": "8px",
+						"text-valign": "bottom",
+						"text-margin-y": 3,
+						"border-width": 2,
+						"border-color": "#50E3C2",
+					},
+				},
+				{
 					selector: "edge",
 					style: {
 						width: 2,
@@ -75,7 +91,43 @@ export default function GraphComponent({
 					},
 				},
 			],
-			layout: { name: "dagre" },
+			layout: { name: "preset" },
+		});
+
+		createEffect(() => {
+			const elements = graph;
+			cy.elements().remove();
+			cy.add(elements);
+
+			elements.forEach((el) => {
+				if (el.data?.type === "user" && el.data?.offsetX !== undefined) {
+					const tagNode = cy.getElementById(el.data.tagId);
+					if (tagNode.length > 0) {
+						const tagPos = tagNode.position();
+						const userNode = cy.getElementById(el.data.id as string);
+						userNode.position({
+							x: tagPos.x + el.data.offsetX,
+							y: tagPos.y + el.data.offsetY,
+						});
+					}
+				}
+			});
+
+			cy.layout({ name: "dagre" }).run();
+
+			cy.nodes('[type="user"]').forEach((node) => {
+				const data = node.data();
+				if (data.offsetX !== undefined) {
+					const tagNode = cy.getElementById(data.tagId);
+					if (tagNode.length > 0) {
+						const tagPos = tagNode.position();
+						node.position({
+							x: tagPos.x + data.offsetX,
+							y: tagPos.y + data.offsetY,
+						});
+					}
+				}
+			});
 		});
 
 		createEffect(() => {
@@ -88,9 +140,11 @@ export default function GraphComponent({
 
 		// ノードクリック時のイベントハンドラ
 		cy.on("click", "node", (e) => {
-			const { id, type } = e.target.data();
+			const { id, type, did } = e.target.data();
 			if (type === "tag") {
 				setCurrent(id);
+			} else if (type === "user" && did) {
+				window.location.hash = `#/user?did=${did}`;
 			}
 		});
 	});
