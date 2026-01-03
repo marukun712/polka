@@ -1,6 +1,8 @@
-import { verifySignature } from "@atproto/crypto";
-import { SimplePool } from "nostr-tools";
-import { hexToBytes } from "nostr-tools/utils";
+import { parseDidKey, secp256k1Plugin } from "@atproto/crypto";
+import { schnorr } from "@noble/curves/secp256k1.js";
+import { sha256 } from "@noble/hashes/sha2.js";
+import { SimplePool, serializeEvent } from "nostr-tools";
+import { hexToBytes, utf8Encoder } from "nostr-tools/utils";
 import { type Ad, adSchema } from "../types";
 import { resolve } from "./identity";
 
@@ -24,10 +26,12 @@ export function subscribe(onEvent: (event: Ad) => void) {
 					return;
 				}
 				const { sig, ...rest } = event;
-				const verified = verifySignature(
-					didKey,
-					new TextEncoder().encode(JSON.stringify(rest)),
+				const pk = secp256k1Plugin.compressPubkey(parseDidKey(didKey).keyBytes);
+				const eventHash = sha256(utf8Encoder.encode(serializeEvent(rest)));
+				const verified = schnorr.verify(
 					hexToBytes(sig),
+					eventHash,
+					pk.slice(1),
 				);
 				if (!verified) return;
 				onEvent(ad.data);

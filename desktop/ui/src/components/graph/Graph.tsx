@@ -10,7 +10,7 @@ export default function GraphComponent({
 	graph,
 	setChildren,
 }: {
-	graph: ElementDefinition[];
+	graph: () => Set<ElementDefinition>;
 	setChildren: (children: Ref[]) => void;
 }) {
 	let container!: HTMLDivElement;
@@ -19,7 +19,7 @@ export default function GraphComponent({
 	onMount(() => {
 		const cy = cytoscape({
 			container,
-			elements: graph,
+			elements: [...graph()],
 			style: [
 				{
 					selector: "node",
@@ -69,15 +69,9 @@ export default function GraphComponent({
 					style: {
 						"background-image": "data(icon)",
 						"background-fit": "cover",
-						"background-clip": "none",
 						shape: "ellipse",
 						width: "40px",
 						height: "40px",
-						"font-size": "8px",
-						"text-valign": "bottom",
-						"text-margin-y": 3,
-						"border-width": 2,
-						"border-color": "#50E3C2",
 					},
 				},
 				{
@@ -91,43 +85,32 @@ export default function GraphComponent({
 					},
 				},
 			],
-			layout: { name: "preset" },
 		});
 
+		cy.layout({ name: "dagre" }).run();
+
 		createEffect(() => {
-			const elements = graph;
-			cy.elements().remove();
-			cy.add(elements);
+			const elements = [...graph()];
+			const existingIds = new Set(cy.nodes().map((n) => n.id()));
 
-			elements.forEach((el) => {
-				if (el.data?.type === "user" && el.data?.offsetX !== undefined) {
-					const tagNode = cy.getElementById(el.data.tagId);
-					if (tagNode.length > 0) {
-						const tagPos = tagNode.position();
-						const userNode = cy.getElementById(el.data.id as string);
-						userNode.position({
-							x: tagPos.x + el.data.offsetX,
-							y: tagPos.y + el.data.offsetY,
-						});
-					}
-				}
-			});
+			const newNodes = elements.filter(
+				(el) => !existingIds.has(el.data.id as string),
+			);
 
-			cy.layout({ name: "dagre" }).run();
+			if (newNodes.length > 0) {
+				const nodesWithStyle = newNodes.map((node) => ({
+					...node,
+					style: { opacity: 0 },
+				}));
 
-			cy.nodes('[type="user"]').forEach((node) => {
-				const data = node.data();
-				if (data.offsetX !== undefined) {
-					const tagNode = cy.getElementById(data.tagId);
-					if (tagNode.length > 0) {
-						const tagPos = tagNode.position();
-						node.position({
-							x: tagPos.x + data.offsetX,
-							y: tagPos.y + data.offsetY,
-						});
-					}
-				}
-			});
+				const added = cy.add(nodesWithStyle);
+
+				added.animate({
+					style: { opacity: 1 },
+					duration: 800,
+					easing: "ease-out",
+				});
+			}
 		});
 
 		createEffect(() => {

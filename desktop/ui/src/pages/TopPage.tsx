@@ -1,10 +1,10 @@
 import type { ElementDefinition } from "cytoscape";
 import {
 	type Component,
+	createEffect,
 	createResource,
 	createSignal,
 	For,
-	onCleanup,
 	onMount,
 	Show,
 } from "solid-js";
@@ -60,94 +60,55 @@ const TopPage: Component = () => {
 	const [res] = createResource(ipc.did, fetcher);
 
 	const [children, setChildren] = createSignal<Ref[]>([]);
-	const [discoveredUsers, setDiscoveredUsers] = createSignal<
-		Map<string, Set<string>>
-	>(new Map());
+	const [graph, setGraph] = createSignal<Set<ElementDefinition>>(new Set());
 
-	onMount(() => {
-		const interval = setInterval(() => {
-			const r = res();
-			if (r) {
-				ipc.client.ad(r.availableTags);
-			}
-		}, 30000);
-
-		onCleanup(() => clearInterval(interval));
+	createEffect(() => {
+		const r = res();
+		if (r) {
+			setGraph(new Set(r.graph));
+			setInterval(
+				() => {
+					ipc.client.ad(r.availableTags);
+				},
+				60 * 5 * 30,
+			);
+		}
 	});
 
 	onMount(() => {
-		subscribe((ad: Ad) => {
+		subscribe(async (ad: Ad) => {
 			const myTags = res()?.availableTags || [];
 			const matchingTags = ad.tags.filter((tag) => myTags.includes(tag));
 
 			if (matchingTags.length > 0) {
-				setDiscoveredUsers((prev) => {
-					const next = new Map(prev);
-					for (const tag of matchingTags) {
-						const users = next.get(tag) || new Set();
-						users.add(ad.did);
-						next.set(tag, users);
-					}
-					return next;
-				});
+				const profile = await getRecord(ad.did, "polka.profile/self");
+				const parsed = validateRecord(profile, profileSchema);
+				const nodes: ElementDefinition[] = [];
+
+				if (parsed) {
+					const angle = Math.random() * 2 * Math.PI;
+					const minRadius = 150;
+					const maxRadius = 300;
+					const radius = minRadius + Math.random() * (maxRadius - minRadius);
+
+					const x = Math.cos(angle) * radius;
+					const y = Math.sin(angle) * radius;
+
+					nodes.push({
+						data: {
+							id: ad.did,
+							type: "user",
+							did: ad.did,
+							icon: parsed.icon,
+						},
+						position: { x, y },
+					});
+					const set = new Set([...graph(), ...nodes]);
+					setGraph(set);
+				}
 			}
 		});
 	});
-
-	const enhancedGraph = () => {
-		const r = res();
-		if (!r) return [];
-
-		const baseGraph = r.graph;
-		const discovered = discoveredUsers();
-		const userNodes: ElementDefinition[] = [];
-		const userEdges: ElementDefinition[] = [];
-
-		discovered.forEach((dids, tag) => {
-			const tagNode = baseGraph.find(
-				(el) => el.data?.label === tag && el.data?.type === "tag",
-			);
-
-			if (tagNode) {
-				const tagId = tagNode.data.id;
-				const users = Array.from(dids);
-				const radius = 100;
-				const angleStep = (2 * Math.PI) / users.length;
-
-				users.forEach(async (did, index) => {
-					const profile = await getRecord(did, "polka.profile/self");
-					const parsed = validateRecord(profile, profileSchema);
-					if (parsed) {
-						const angle = index * angleStep;
-						const offsetX = Math.cos(angle) * radius;
-						const offsetY = Math.sin(angle) * radius;
-
-						userNodes.push({
-							data: {
-								id: `user:${tagId}:${did}`,
-								label: parsed.name || did.slice(0, 8),
-								type: "user",
-								icon: parsed.icon,
-								did: did,
-								tagId: tagId,
-								offsetX,
-								offsetY,
-							},
-						});
-
-						userEdges.push({
-							data: {
-								source: tagId,
-								target: `user:${tagId}:${did}`,
-							},
-						});
-					}
-				});
-			}
-		});
-
-		return [...baseGraph, ...userNodes, ...userEdges];
-	};
 
 	return (
 		<main class="container">
@@ -209,7 +170,7 @@ const TopPage: Component = () => {
 							</div>
 						</section>
 
-						<GraphComponent graph={enhancedGraph()} setChildren={setChildren} />
+						<GraphComponent graph={graph} setChildren={setChildren} />
 						<article>
 							<For each={children()}>
 								{(child) => (

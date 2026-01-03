@@ -19,6 +19,8 @@
 		"@atcute/tid": "^1.0.3",
 		"@atproto/crypto": "^0.4.5",
 		"@atproto/repo": "^0.8.12",
+		"@noble/curves": "^2.0.1",
+		"@noble/hashes": "^2.0.1",
 		"@polka/db": "workspace:*",
 		"@types/markdown-it": "^14.1.2",
 		"did-resolver": "^4.1.0",
