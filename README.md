@@ -1,2 +1,6 @@
 # polka
-polka is a decentralized protocol for taking ownership of your personal data.
+polka is an experimental ATProtocol AppView that makes the social graph independent of large-scale relays.
+
+# Docs
+
+https://polka-docs.netlify.app
