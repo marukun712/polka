@@ -12,6 +12,7 @@ import type { Secp256k1Keypair } from "@atproto/crypto";
 import {
 	blocksToCarFile,
 	MemoryBlockstore,
+	parseDataKey,
 	Repo,
 	readCarWithRoot,
 	WriteOpAction,
@@ -65,9 +66,7 @@ export class DB {
 	}
 
 	async create(rpath: string, record: Record<string, unknown>) {
-		const collection = rpath.split("/")[0];
-		const rkey = rpath.split("/")[1];
-		if (!collection || !rkey) throw new Error("Invalid rpath");
+		const { collection, rkey } = parseDataKey(rpath);
 		this.repo = await this.repo.applyWrites(
 			{
 				action: WriteOpAction.Create,
@@ -89,9 +88,7 @@ export class DB {
 	) {
 		this.repo = await this.repo.applyWrites(
 			data.map(({ rpath, record }) => {
-				const collection = rpath.split("/")[0];
-				const rkey = rpath.split("/")[1];
-				if (!collection || !rkey) throw new Error("Invalid rpath");
+				const { collection, rkey } = parseDataKey(rpath);
 				return {
 					action: WriteOpAction.Create,
 					collection: collection,
@@ -106,18 +103,16 @@ export class DB {
 	}
 
 	async upsert(rpath: string, record: Record<string, unknown>) {
-		try {
-			await this.find(rpath);
+		const existing = await this.find(rpath);
+		if (existing !== null) {
 			await this.update(rpath, record);
-		} catch {
+		} else {
 			await this.create(rpath, record);
 		}
 	}
 
 	async update(rpath: string, record: Record<string, unknown>) {
-		const collection = rpath.split("/")[0];
-		const rkey = rpath.split("/")[1];
-		if (!collection || !rkey) throw new Error("Invalid rpath");
+		const { collection, rkey } = parseDataKey(rpath);
 		this.repo = await this.repo.applyWrites(
 			{
 				action: WriteOpAction.Update,
@@ -139,9 +134,7 @@ export class DB {
 	) {
 		this.repo = await this.repo.applyWrites(
 			data.map(({ rpath, record }) => {
-				const collection = rpath.split("/")[0];
-				const rkey = rpath.split("/")[1];
-				if (!collection || !rkey) throw new Error("Invalid rpath");
+				const { collection, rkey } = parseDataKey(rpath);
 				return {
 					action: WriteOpAction.Update,
 					collection: collection,
@@ -156,9 +149,7 @@ export class DB {
 	}
 
 	async delete(rpath: string) {
-		const collection = rpath.split("/")[0];
-		const rkey = rpath.split("/")[1];
-		if (!collection || !rkey) throw new Error("Invalid rpath");
+		const { collection, rkey } = parseDataKey(rpath);
 		this.repo = await this.repo.applyWrites(
 			{
 				action: WriteOpAction.Delete,
@@ -174,9 +165,7 @@ export class DB {
 	async deleteMany(data: { rpath: string }[]) {
 		this.repo = await this.repo.applyWrites(
 			data.map(({ rpath }) => {
-				const collection = rpath.split("/")[0];
-				const rkey = rpath.split("/")[1];
-				if (!collection || !rkey) throw new Error("Invalid rpath");
+				const { collection, rkey } = parseDataKey(rpath);
 				return {
 					action: WriteOpAction.Delete,
 					collection: collection,
@@ -236,9 +225,7 @@ export class DB {
 	}
 
 	async find(rpath: string) {
-		const collection = rpath.split("/")[0];
-		const rkey = rpath.split("/")[1];
-		if (!collection || !rkey) throw new Error("Invalid rpath");
+		const { collection, rkey } = parseDataKey(rpath);
 		const data = await this.repo.getRecord(collection, rkey);
 		if (data) {
 			return {

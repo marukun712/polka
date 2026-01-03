@@ -5,6 +5,7 @@ import {
 	createResource,
 	createSignal,
 	For,
+	onCleanup,
 	onMount,
 	Show,
 } from "solid-js";
@@ -68,17 +69,19 @@ const TopPage: Component = () => {
 			setGraph(new Set(r.graph));
 			if (r.availableTags.length === 0) return;
 			ipc.client.ad(r.availableTags);
-			setInterval(
+
+			const intervalId = setInterval(
 				() => {
 					ipc.client.ad(r.availableTags);
 				},
 				60 * 5 * 1000,
 			);
+			onCleanup(() => clearInterval(intervalId));
 		}
 	});
 
 	onMount(() => {
-		subscribe(async (ad: Ad) => {
+		const close = subscribe(async (ad: Ad) => {
 			const myTags = res()?.availableTags || [];
 			const matchingTags = ad.tags.filter((tag) => myTags.includes(tag));
 
@@ -110,6 +113,7 @@ const TopPage: Component = () => {
 				}
 			}
 		});
+		onCleanup(() => close());
 	});
 
 	return (
@@ -132,7 +136,7 @@ const TopPage: Component = () => {
 									const formData = new FormData(e.currentTarget);
 									const did = formData.get("did") as string;
 									if (did.trim()) {
-										window.location.hash = `#/user?did=${did}`;
+										window.location.hash = `#/user?did=${encodeURIComponent(did)}`;
 									}
 								}}
 							>

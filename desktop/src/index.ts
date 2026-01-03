@@ -64,7 +64,7 @@ app.whenReady().then(() => {
 			hexToBytes(sk),
 		);
 		console.log(signedEvent);
-		await pool.publish(["ws://localhost:7777"], signedEvent);
+		await pool.publish(["wss://yabu.me/"], signedEvent);
 		return true;
 	});
 

@@ -33,7 +33,7 @@ export class Reader {
 
 	static async open(did: string, url: string) {
 		const doc = await resolve(did);
-		if (!doc) throw "Failed to resolve did:web";
+		if (!doc) throw new Error("Failed to resolve did:web");
 		const pk = doc.didKey;
 		const storage = new HTTPStorage(url);
 		const store = new NodeStore(

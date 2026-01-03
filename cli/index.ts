@@ -91,35 +91,20 @@ async function getOrCreatePrivateKey(
 		if (doc) {
 			const keypair = await Secp256k1Keypair.import(sk);
 			if (doc.didKey !== keypair.did()) {
-				console.warn(
+				throw new Error(
 					"Warning: Saved private key doesn't match did:web document!",
 				);
-				const { action } = await prompt<{ action: string }>({
-					type: "select",
-					name: "action",
-					message: "What would you like to do?",
-					choices: [
-						"Use saved private key (will overwrite did:web)",
-						"Import correct private key",
-						"Cancel",
-					],
-				});
-
-				if (action === "Cancel") {
-					throw new Error("Setup cancelled");
-				} else if (action === "Import correct private key") {
-					sk = await importPrivateKey();
-				}
+			} else {
+				return sk;
 			}
 		}
-		return sk;
 	}
 
 	// 秘密鍵がない場合、did:webの解決を試みる
 	const doc = await resolve(did);
 
 	if (doc) {
-		// did:webは存在するが秘密鍵がない -> インポート
+		// did:webは存在するが秘密鍵がない
 		console.log(`did:web resolved for ${domain}`);
 		console.log("Private key not found in OS Keyring");
 		console.log("\nYou need to import your existing private key.");
@@ -134,7 +119,7 @@ async function getOrCreatePrivateKey(
 
 		console.log("Private key verified and saved");
 	} else {
-		// did:webもなく秘密鍵もない → 新規生成
+		// did:webもなく秘密鍵もない -> 新規生成
 		console.log(`did:web cannot be resolved for ${domain}`);
 		console.log("Private key not found in OS Keyring");
 		console.log("\nGenerating new keypair...");

@@ -40,18 +40,18 @@ export class polkaRepo {
 	}
 
 	async create(rpath: string, data: Record<string, unknown>) {
-		this.db.upsert(rpath, data);
-		this.db.build(POLKA_DIST_PATH);
+		await this.db.upsert(rpath, data);
+		await this.db.build(POLKA_DIST_PATH);
 	}
 
 	async update(rpath: string, data: Record<string, unknown>) {
-		this.db.update(rpath, data);
-		this.db.build(POLKA_DIST_PATH);
+		await this.db.update(rpath, data);
+		await this.db.build(POLKA_DIST_PATH);
 	}
 
 	async delete(rpath: string) {
-		this.db.delete(rpath);
-		this.db.build(POLKA_DIST_PATH);
+		await this.db.delete(rpath);
+		await this.db.build(POLKA_DIST_PATH);
 	}
 
 	getDid() {

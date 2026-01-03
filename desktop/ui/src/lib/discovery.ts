@@ -9,7 +9,7 @@ import { type Ad, adSchema } from "../types";
 export function subscribe(onEvent: (event: Ad) => void) {
 	const pool = new SimplePool();
 	pool.subscribe(
-		["ws://localhost:7777"],
+		["wss://yabu.me/"],
 		{
 			kinds: [25565],
 		},
@@ -34,4 +34,5 @@ export function subscribe(onEvent: (event: Ad) => void) {
 			},
 		},
 	);
+	return () => pool.close(["wss://yabu.me/"]);
 }

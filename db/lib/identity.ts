@@ -28,6 +28,9 @@ export async function resolve(did: string) {
 	const didKey = `did:key:${multiHash.publicKeyMultibase}`;
 	const linked = new URL(service[0].serviceEndpoint.toString());
 	const target = new URL("/polka/dist/", linked).toString();
+	if (!linked.protocol.startsWith("https:")) {
+		throw new Error("Only https:// is allowed");
+	}
 	return {
 		didKey,
 		target,
