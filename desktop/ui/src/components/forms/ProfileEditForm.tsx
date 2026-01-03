@@ -30,7 +30,6 @@ export default function ProfileEdit({ init }: { init: Profile }) {
 							description: formData.get("description") as string,
 							icon: formData.get("icon") as string,
 							banner: (formData.get("banner") as string) || undefined,
-							followsCount: init.followsCount,
 							updatedAt: new Date().toISOString(),
 						};
 

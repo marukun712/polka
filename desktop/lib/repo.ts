@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { Secp256k1Keypair } from "@atproto/crypto";
 import { DB } from "@polka/db";
+import { resolve } from "@polka/db/identity";
 import { config } from "dotenv";
 import keytar from "keytar";
 import { type SimpleGit, simpleGit } from "simple-git";
@@ -12,7 +13,6 @@ import {
 	POLKA_REPO_PATH,
 	pullRepository,
 } from "./git.ts";
-import { resolve } from "./identity.ts";
 
 config();
 
@@ -55,12 +55,17 @@ export class polkaRepo {
 	}
 
 	getDid() {
-		return `did:web:${this.domain}`;
+		return this.db.did;
+	}
+
+	getCommit() {
+		return this.db.commit;
 	}
 
 	static async start(domain: string) {
-		const doc = await resolve(domain);
-		if (!doc.didKey && doc.target) {
+		const did = `did:web:${domain}`;
+		const doc = await resolve(did);
+		if (!doc) {
 			throw new Error("Please initialize repository first.");
 		}
 		const sk = await keytar.getPassword("polka", "user");
@@ -80,20 +85,20 @@ export class polkaRepo {
 
 		console.log("Repo initialized successfully!");
 
-		const db = await init(sk);
+		const db = await init(sk, did);
 		return new polkaRepo(db, git, domain);
 	}
 }
 
 // repoをinitする
-async function init(sk: string) {
+async function init(sk: string, did: string) {
 	const keypair = await Secp256k1Keypair.import(sk);
 
 	if (existsSync(POLKA_CAR_PATH)) {
 		const db = await DB.open(POLKA_CAR_PATH, keypair);
 		return db;
 	} else {
-		const db = await DB.init(POLKA_CAR_PATH, keypair);
+		const db = await DB.init(POLKA_CAR_PATH, did, keypair);
 		return db;
 	}
 }

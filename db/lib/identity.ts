@@ -9,7 +9,7 @@ const didResolver = new Resolver({
 
 export async function resolve(did: string) {
 	const res = await didResolver.resolve(did);
-	if (!res.didDocument) throw new Error("Failed to resolve did");
+	if (!res.didDocument) return null;
 	const keyring = res.didDocument.verificationMethod;
 	const method = res.didDocument.assertionMethod;
 	const service = res.didDocument.service;
@@ -21,16 +21,15 @@ export async function resolve(did: string) {
 		!method[0] ||
 		!service[0]
 	)
-		throw new Error("Failed to resolve did");
+		return null;
 	const didPtr = method[0].toString();
 	const multiHash = keyring.find((key) => key.id === didPtr);
-	if (!multiHash) throw new Error("Failed to resolve did");
+	if (!multiHash) return null;
 	const didKey = `did:key:${multiHash.publicKeyMultibase}`;
 	const linked = new URL(service[0].serviceEndpoint.toString());
 	const target = new URL("/polka/dist/", linked).toString();
 	return {
 		didKey,
 		target,
-		doc: res.didDocument,
 	};
 }

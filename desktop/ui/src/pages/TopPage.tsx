@@ -66,11 +66,13 @@ const TopPage: Component = () => {
 		const r = res();
 		if (r) {
 			setGraph(new Set(r.graph));
+			if (r.availableTags.length === 0) return;
+			ipc.client.ad(r.availableTags);
 			setInterval(
 				() => {
 					ipc.client.ad(r.availableTags);
 				},
-				60 * 5 * 30,
+				60 * 5 * 1000,
 			);
 		}
 	});

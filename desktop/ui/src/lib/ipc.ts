@@ -12,12 +12,12 @@ export class IPCClient {
 		return new IPCClient();
 	}
 
-	async ad(tags: string[]) {
-		return await window.polka.ad(tags);
-	}
-
 	async parseMd(md: string) {
 		return await window.polka.parseMd(md);
+	}
+
+	async ad(tags: string[]) {
+		return await window.polka.ad(tags);
 	}
 
 	async create(rpath: string, data: Record<string, unknown>) {
@@ -37,7 +37,11 @@ export class IPCClient {
 	}
 
 	async getDid() {
-		return await window.polka.did();
+		return await window.polka.getDid();
+	}
+
+	async getCommit() {
+		return await window.polka.getCommit();
 	}
 
 	async getRecord(rpath: string) {

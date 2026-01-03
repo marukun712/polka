@@ -1,14 +1,15 @@
+import { resolve } from "@polka/db/identity";
 import { Reader } from "@polka/db/reader";
-import { resolve } from "./identity.js";
 
 async function openReader(did: string): Promise<Reader> {
 	const doc = await resolve(did);
-	return Reader.open(doc.target);
+	if (!doc) throw new Error("Failed to resolve did:web");
+	return Reader.open(did, doc.target);
 }
 
 async function isOwnDid(did: string): Promise<boolean> {
 	try {
-		const ownDid = await window.polka.did();
+		const ownDid = await window.polka.getDid();
 		return did === ownDid;
 	} catch {
 		return false;

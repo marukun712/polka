@@ -11,7 +11,8 @@ export function validateRecord<T>(
 		const json = record.data;
 		const parsed = schema.safeParse(json);
 		return parsed.success ? parsed.data : null;
-	} catch {
+	} catch (e) {
+		console.log(e);
 		return null;
 	}
 }
@@ -25,7 +26,8 @@ export function validateRecords<T extends { rpath: string }>(
 			const json = record.data;
 			const parsed = schema.safeParse({ rpath: record.rpath, data: json });
 			return parsed.success ? [parsed.data] : [];
-		} catch {
+		} catch (e) {
+			console.log(e);
 			return [];
 		}
 	});

@@ -36,6 +36,7 @@ export default function PostForm(props: { availableTags: string[] }) {
 				await ipc.client.commit();
 
 				setText("");
+				location.reload();
 				e.currentTarget.reset();
 			}}
 		>

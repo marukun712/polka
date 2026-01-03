@@ -54,7 +54,10 @@ const UserPage: Component = () => {
 						<a href="/">トップページに戻る</a>
 						<ProfileHeader profile={f().profile} did={f().did} />
 
-						<GraphComponent graph={f().graph} setChildren={setChildren} />
+						<GraphComponent
+							graph={() => new Set(f().graph)}
+							setChildren={setChildren}
+						/>
 						<article>
 							<For each={children()}>
 								{(child) => (

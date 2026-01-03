@@ -25,7 +25,6 @@ export const profileSchema = z
 		description: z.string(),
 		icon: z.string(),
 		banner: z.string().optional(),
-		followsCount: z.number(),
 		updatedAt: z.iso.datetime(),
 	})
 	.strict();

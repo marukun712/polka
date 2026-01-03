@@ -45,7 +45,7 @@ export default function TagForm() {
 				}
 
 				await ipc.client.commit();
-
+				location.reload();
 				e.currentTarget.reset();
 			}}
 		>

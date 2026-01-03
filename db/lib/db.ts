@@ -36,9 +36,9 @@ export class DB {
 		this.keypair = keypair;
 	}
 
-	static async init(path: string, keypair: Secp256k1Keypair) {
+	static async init(path: string, did: string, keypair: Secp256k1Keypair) {
 		const storage = new MemoryBlockstore();
-		const repo = await Repo.create(storage, keypair.did(), keypair);
+		const repo = await Repo.create(storage, did, keypair);
 		const bytes = await blocksToCarFile(repo.cid, storage.blocks);
 		writeFileSync(path, bytes);
 		return new DB(path, repo, storage, keypair);

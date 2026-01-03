@@ -16,6 +16,7 @@
 		"typescript": "^5"
 	},
 	"dependencies": {
+		"@atcute/repo": "^0.1.1",
 		"@atcute/tid": "^1.0.3",
 		"@atproto/crypto": "^0.4.5",
 		"@atproto/repo": "^0.8.12",

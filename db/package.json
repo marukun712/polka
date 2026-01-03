@@ -8,11 +8,13 @@
 	"private": true,
 	"exports": {
 		".": "./lib/db.ts",
+		"./identity": "./lib/identity.ts",
 		"./reader": "./lib/reader.ts",
 		"./types": "./lib/types.ts"
 	},
 	"dependencies": {
 		"@atcute/cbor": "^2.2.8",
+		"@atcute/crypto": "^2.3.0",
 		"@atcute/mst": "^0.1.1",
 		"@atcute/repo": "^0.1.1",
 		"@atcute/tid": "^1.0.3",
@@ -22,7 +24,9 @@
 		"@atproto/repo": "^0.8.12",
 		"@ipld/dag-cbor": "^9.2.5",
 		"@types/node": "^25.0.3",
-		"multiformats": "^13.4.1"
+		"did-resolver": "^4.1.0",
+		"multiformats": "^13.4.1",
+		"web-did-resolver": "^2.0.32"
 	},
 	"devDependencies": {
 		"@types/bun": "latest"

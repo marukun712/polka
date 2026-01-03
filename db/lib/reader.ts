@@ -1,4 +1,5 @@
-import { decode } from "@atcute/cbor";
+import { decode, encode, fromBytes } from "@atcute/cbor";
+import { verifySigWithDidKey } from "@atcute/crypto";
 import {
 	MemoryBlockStore,
 	NodeStore,
@@ -7,6 +8,7 @@ import {
 } from "@atcute/mst";
 import { type Commit, isCommit } from "@atcute/repo";
 import HTTPStorage from "./httpStore.ts";
+import { resolve } from "./identity.ts";
 import type { GetResult } from "./types.ts";
 
 export class Reader {
@@ -29,7 +31,10 @@ export class Reader {
 		this.did = commit.did;
 	}
 
-	static async open(url: string) {
+	static async open(did: string, url: string) {
+		const doc = await resolve(did);
+		if (!doc) throw "Failed to resolve did:web";
+		const pk = doc.didKey;
 		const storage = new HTTPStorage(url);
 		const store = new NodeStore(
 			new OverlayBlockStore(new MemoryBlockStore(), storage),
@@ -41,6 +46,19 @@ export class Reader {
 		const decoded = decode(block);
 		if (!isCommit(decoded)) {
 			throw new Error("Root block is not a valid commit");
+		}
+		if (decoded.did !== did) {
+			throw new Error(`Invalid repo did: ${decoded.did}`);
+		}
+		const { sig, ...rest } = decoded;
+		const encoded = encode(rest);
+		const verified = await verifySigWithDidKey(
+			pk,
+			new Uint8Array(fromBytes(sig)),
+			encoded,
+		);
+		if (!verified) {
+			throw new Error(`Invalid signature`);
 		}
 		return new Reader(store, storage, root, decoded);
 	}

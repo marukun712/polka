@@ -4,14 +4,15 @@ import Loading from "../components/ui/Loading";
 import { useIPC } from "../hooks/useIPC";
 import { allRecords } from "../lib/client";
 
-const fetcher = async (did: string) => {
-	const res = await allRecords(did);
-	return res;
+const fetcher = async () => {
+	const ipc = useIPC();
+	const res = await allRecords(ipc.did);
+	const commit = await ipc.client.getCommit();
+	return { res, commit };
 };
 
 const InspectorPage: Component = () => {
-	const ipc = useIPC();
-	const [res] = createResource(ipc.did, fetcher);
+	const [res] = createResource(fetcher);
 
 	return (
 		<main class="container-fluid">
@@ -20,6 +21,12 @@ const InspectorPage: Component = () => {
 				{(r) => (
 					<>
 						<figure>
+							<article>
+								<h1>Your Commit:</h1>
+								<pre style="max-height: 12rem; overflow: auto;">
+									{JSON.stringify(r().commit, null, 2)}
+								</pre>
+							</article>
 							<table class="striped hoverable">
 								<thead>
 									<tr>
@@ -29,7 +36,7 @@ const InspectorPage: Component = () => {
 									</tr>
 								</thead>
 								<tbody>
-									<For each={r().records}>
+									<For each={r().res.records}>
 										{(item) => (
 											<tr>
 												<th scope="row" style="white-space: nowrap;">

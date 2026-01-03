@@ -31,6 +31,11 @@ app.whenReady().then(() => {
 
 	createWindow();
 
+	ipcMain.handle("parseMd", async (_, text: string) => {
+		const content = markdownToHtml(text);
+		return content;
+	});
+
 	ipcMain.handle("setDomain", (_, domain: string) => {
 		store.set("domain", domain);
 		return true;
@@ -41,24 +46,6 @@ app.whenReady().then(() => {
 		if (!domain || typeof domain !== "string")
 			throw new Error("Domain not found");
 		return domain;
-	});
-
-	ipcMain.handle("parseMd", async (_, text: string) => {
-		const content = markdownToHtml(text);
-		return content;
-	});
-
-	ipcMain.handle("did", () => {
-		if (!polka) throw new Error("Polka not initialized");
-		return polka.getDid();
-	});
-
-	ipcMain.handle("init", async () => {
-		const domain = store.get("domain");
-		if (!domain || typeof domain !== "string")
-			throw new Error("Domain not found");
-		polka = await polkaRepo.start(domain);
-		return true;
 	});
 
 	ipcMain.handle("ad", async (_, tags: string[]) => {
@@ -78,6 +65,14 @@ app.whenReady().then(() => {
 		);
 		console.log(signedEvent);
 		await pool.publish(["ws://localhost:7777"], signedEvent);
+		return true;
+	});
+
+	ipcMain.handle("init", async () => {
+		const domain = store.get("domain");
+		if (!domain || typeof domain !== "string")
+			throw new Error("Domain not found");
+		polka = await polkaRepo.start(domain);
 		return true;
 	});
 
@@ -109,6 +104,16 @@ app.whenReady().then(() => {
 		if (!polka) throw new Error("Polka not initialized");
 		await polka.commit();
 		return true;
+	});
+
+	ipcMain.handle("getDid", () => {
+		if (!polka) throw new Error("Polka not initialized");
+		return polka.getDid();
+	});
+
+	ipcMain.handle("getCommit", () => {
+		if (!polka) throw new Error("Polka not initialized");
+		return polka.getCommit();
 	});
 
 	ipcMain.handle("getRecord", async (_, rpath: string) => {
