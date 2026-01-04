@@ -1,3 +1,4 @@
+import { BloomFilter } from "bloomfilter";
 import type { ElementDefinition } from "cytoscape";
 import {
 	type Component,
@@ -83,9 +84,10 @@ const TopPage: Component = () => {
 	onMount(() => {
 		const close = subscribe(async (ad: Ad) => {
 			const myTags = res()?.availableTags || [];
-			const matchingTags = ad.tags.filter((tag) => myTags.includes(tag));
+			const loadedBloom = new BloomFilter(JSON.parse(ad.bloom), 16);
+			const isMatch = myTags.some((tag) => loadedBloom.test(tag));
 
-			if (matchingTags.length > 0) {
+			if (isMatch) {
 				const profile = await getRecord(ad.did, "polka.profile/self");
 				const parsed = validateRecord(profile, profileSchema);
 				const nodes: ElementDefinition[] = [];

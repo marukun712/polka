@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import { BloomFilter } from "bloomfilter";
 import { app, BrowserWindow, ipcMain } from "electron";
 import Store from "electron-store";
 import keytar from "keytar";
@@ -54,12 +55,22 @@ app.whenReady().then(() => {
 		if (!sk) {
 			throw new Error("Please initialize private key first.");
 		}
+		const bloom = new BloomFilter(
+			32 * 256, // number of bits to allocate.
+			16, // number of hash functions.
+		);
+		tags.forEach((tag) => {
+			bloom.add(tag);
+		});
 		const signedEvent: NostrEvent = finalizeEvent(
 			{
 				kind: 25565,
 				created_at: Math.floor(Date.now() / 1000),
 				tags: [],
-				content: JSON.stringify({ tags, did: polka.getDid() }),
+				content: JSON.stringify({
+					bloom: JSON.stringify(Array.from(bloom.buckets)),
+					did: polka.getDid(),
+				}),
 			},
 			hexToBytes(sk),
 		);

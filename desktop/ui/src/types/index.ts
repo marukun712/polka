@@ -11,7 +11,7 @@ export type Item = {
 
 export const adSchema = z.object({
 	did: z.string().min(1),
-	tags: z.string().array(),
+	bloom: z.string().min(1),
 });
 
 export const refSchema = z.object({
