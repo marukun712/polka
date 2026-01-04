@@ -127,7 +127,7 @@ export default function GraphComponent({
 			if (type === "tag") {
 				setCurrent(id);
 			} else if (type === "user" && did) {
-				window.location.hash = `#/user?did=${did}`;
+				window.location.hash = `#/user?did=${encodeURIComponent(did)}`;
 			}
 		});
 	});
