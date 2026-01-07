@@ -37,12 +37,12 @@ git clone https://github.com/marukun712/polka
 
 nix develop
 cd polka/cli
-pnpm i
+bun i
 ```
 
 CLIを起動します。
 ```
-pnpm run setup
+bun run setup
 ```
 
 すると、polkaで使用したいあなたのドメインが尋ねられます。
@@ -198,7 +198,7 @@ sudo chown -R gitea-runner:gitea-runner /var/www/polka
 ## ユーザー情報の入力
 CLIを起動します。
 ```
-pnpm run setup
+bun run setup
 ```
 
 ユーザー情報の入力を求められます。これらは必須となっているので、入力しましょう。
@@ -212,9 +212,9 @@ pnpm run setup
 アプリをセットアップします。
 ```
 cd desktop
-pnpm i
-pnpm run build
-pnpm run start
+bun i
+bun run build
+bun run start
 ```
 
 すると、デスクトップアプリが起動します。
