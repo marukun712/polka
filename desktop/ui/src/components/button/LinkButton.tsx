@@ -7,10 +7,10 @@ import { type LinkData, linkDataSchema, type Ref } from "../../types";
 import { Dialog } from "../ui/Dialog";
 
 export default function LinkButton({
-	ref,
+	recordRef,
 	availableTags,
 }: {
-	ref: Ref;
+	recordRef: Ref;
 	availableTags: string[];
 }) {
 	const ipc = useIPC();
@@ -39,8 +39,8 @@ export default function LinkButton({
 
 						const data: LinkData = {
 							ref: {
-								did: ref.did,
-								rpath: ref.rpath,
+								did: recordRef.did,
+								rpath: recordRef.rpath,
 							},
 							parents,
 							updatedAt: new Date().toISOString(),

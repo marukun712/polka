@@ -1,13 +1,11 @@
 import type { GetResult } from "@polka/db/types";
 import { useNavigate } from "@solidjs/router";
-import { IoLink } from "solid-icons/io";
 import { createResource, Show, Suspense } from "solid-js";
 import { useIPC } from "../../../hooks/useIPC";
 import { getRecord } from "../../../lib/client";
 import {
 	linkDataSchema,
 	postDataSchema,
-	postSchema,
 	profileSchema,
 	type Ref,
 } from "../../../types";
@@ -83,14 +81,14 @@ async function fetchLinkType(record: GetResult) {
 	// リンク先の投稿を取得する
 	const post = await getRecord(parsed.ref.did, parsed.ref.rpath);
 	if (!post) return null;
-	const parsedPost = validateRecord(post, postSchema);
+	const parsedPost = validateRecord(post, postDataSchema);
 	if (!parsedPost) return null;
 
 	return {
 		type: "link",
 		profile: parsedProfile,
 		rpath: parsed.ref.rpath,
-		data: parsedPost.data,
+		data: parsedPost,
 		author: parsed.ref.did,
 	};
 }
@@ -103,9 +101,6 @@ export default function PostCard(props: PostCardProps) {
 		<Show when={data()}>
 			{(item) => (
 				<article>
-					<Show when={item().type === "link"}>
-						<IoLink />
-					</Show>
 					<header style="display:flex; justify-content: space-between">
 						<hgroup>
 							<div style="display: flex; align-items: center; gap: 1rem;">
@@ -142,7 +137,7 @@ export default function PostCard(props: PostCardProps) {
 						</Show>
 						<Show when={item().author !== props.user && item().type === "post"}>
 							<LinkButton
-								ref={{ did: item().author, rpath: item().rpath }}
+								recordRef={{ did: item().author, rpath: item().rpath }}
 								availableTags={props.availableTags}
 							/>
 						</Show>
