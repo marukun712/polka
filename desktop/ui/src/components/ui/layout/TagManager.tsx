@@ -42,7 +42,7 @@ export default function TagManager({ user }: { user: string }) {
 		const formData = new FormData(e.currentTarget as HTMLFormElement);
 
 		const data: EdgeData = {
-			from: (formData.get("from") as string) || undefined,
+			from: formData.get("from") as string,
 			to: formData.get("to") as string,
 			updatedAt: new Date().toISOString(),
 		};

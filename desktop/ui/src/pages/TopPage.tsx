@@ -1,5 +1,6 @@
 import { BloomFilter } from "bloomfilter";
 import type { ElementDefinition } from "cytoscape";
+import { hexToBytes } from "nostr-tools/utils";
 import {
 	type Component,
 	createEffect,
@@ -84,7 +85,13 @@ const TopPage: Component = () => {
 	onMount(() => {
 		const close = subscribe(async (ad: Ad) => {
 			const myTags = res()?.availableTags || [];
-			const loadedBloom = new BloomFilter(JSON.parse(ad.bloom), 16);
+			const bytes = hexToBytes(ad.bloom);
+			const bloom = new Int32Array(
+				bytes.buffer,
+				bytes.byteOffset,
+				bytes.byteLength / 4,
+			);
+			const loadedBloom = new BloomFilter(bloom, 16);
 			const isMatch = myTags.some((tag) => loadedBloom.test(tag));
 
 			if (isMatch) {

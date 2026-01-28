@@ -4,7 +4,7 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import Store from "electron-store";
 import keytar from "keytar";
 import { finalizeEvent, type NostrEvent, SimplePool } from "nostr-tools";
-import { hexToBytes } from "nostr-tools/utils";
+import { bytesToHex, hexToBytes } from "nostr-tools/utils";
 import lib from "zenn-markdown-html";
 import { polkaRepo } from "../lib/repo.ts";
 
@@ -62,13 +62,18 @@ app.whenReady().then(() => {
 		tags.forEach((tag) => {
 			bloom.add(tag);
 		});
+		const bytes = new Uint8Array(
+			bloom.buckets.buffer,
+			bloom.buckets.byteOffset,
+			bloom.buckets.byteLength,
+		);
 		const signedEvent: NostrEvent = finalizeEvent(
 			{
 				kind: 25565,
 				created_at: Math.floor(Date.now() / 1000),
 				tags: [],
 				content: JSON.stringify({
-					bloom: JSON.stringify(Array.from(bloom.buckets)),
+					bloom: bytesToHex(bytes),
 					did: polka.getDid(),
 				}),
 			},

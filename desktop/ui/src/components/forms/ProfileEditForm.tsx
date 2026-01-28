@@ -29,7 +29,7 @@ export default function ProfileEdit({ init }: { init: Profile }) {
 							name: formData.get("name") as string,
 							description: formData.get("description") as string,
 							icon: formData.get("icon") as string,
-							banner: (formData.get("banner") as string) || undefined,
+							banner: formData.get("banner") as string,
 							updatedAt: new Date().toISOString(),
 						};
 

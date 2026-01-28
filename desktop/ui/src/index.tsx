@@ -16,7 +16,7 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
 	);
 }
 
-const [domain, { refetch }] = createResource(getDomain);
+const [domain] = createResource(getDomain);
 
 render(
 	() => (
@@ -30,7 +30,7 @@ render(
 							const formData = new FormData(e.currentTarget);
 							const domain = formData.get("domain") as string;
 							await setDomain(domain);
-							refetch();
+							location.reload();
 						}}
 						style="padding-top: 10rem;"
 					>

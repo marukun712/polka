@@ -16,7 +16,7 @@ import { createGraphElements } from "../lib/graph";
 import { edgeSchema, followSchema, profileSchema, type Ref } from "../types";
 import { validateRecord, validateRecords } from "../utils/validation";
 
-const fetcher = async (did: string) => {
+const fetcher = async (did: string, myDid: string) => {
 	const profile = await getRecord(did, "polka.profile/self");
 	if (!profile) throw new Error("Profile not found");
 	const parsedProfile = validateRecord(profile, profileSchema);
@@ -25,7 +25,7 @@ const fetcher = async (did: string) => {
 	const follows = await getRecords(did, "polka.follow");
 	const parsedFollows = validateRecords(follows.records, followSchema);
 
-	const edges = await getRecords(did, "polka.edge");
+	const edges = await getRecords(myDid, "polka.edge");
 	const parsedEdges = validateRecords(edges.records, edgeSchema);
 	const availableTags = [...new Set(parsedEdges.map((e) => e.data.to))];
 
@@ -42,7 +42,10 @@ const fetcher = async (did: string) => {
 const UserPage: Component = () => {
 	const [params] = useSearchParams();
 	const ipc = useIPC();
-	const [res] = createResource(() => params.did as string, fetcher);
+	const [res] = createResource(
+		() => [params.did as string, ipc.did] as const,
+		([did, myDid]) => fetcher(did, myDid),
+	);
 
 	const [children, setChildren] = createSignal<Ref[]>([]);
 
