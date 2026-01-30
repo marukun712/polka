@@ -5,7 +5,7 @@ export type PolkaAPI = {
 	parseMd(md: string): Promise<string>;
 
 	setDomain(domain: string): Promise<boolean>;
-	getDomain(): Promise<string>;
+	getDomain(): Promise<string | null>;
 
 	ad(tags: string[]): Promise<boolean>;
 

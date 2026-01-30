@@ -88,6 +88,7 @@ async function getOrCreatePrivateKey(
 
 		// 念のため、保存されている鍵が正しいか確認
 		const doc = await resolve(did);
+
 		if (doc) {
 			const keypair = await Secp256k1Keypair.import(sk);
 			if (doc.didKey !== keypair.did()) {
@@ -97,6 +98,31 @@ async function getOrCreatePrivateKey(
 			} else {
 				return sk;
 			}
+		}
+
+		// 鍵はあるが、did:webが解決できない場合
+		console.log("Private key found in OS Keyring, but did:web is not resolved");
+
+		// ローカルの鍵を優先し、解決できるようになるまで待つ
+		await waitForDidResolution(did);
+
+		const d = await resolve(did);
+
+		if (d) {
+			// 鍵が正しいか検証して返す
+			const keypair = await Secp256k1Keypair.import(sk);
+			if (d.didKey !== keypair.did()) {
+				throw new Error(
+					"Warning: Saved private key doesn't match did:web document!",
+				);
+			} else {
+				return sk;
+			}
+		} else {
+			// さっきは解決できたのに急に解決できなくなったとき
+			throw new Error(
+				"The did:web issue was resolved before, but it could not be resolved this time.",
+			);
 		}
 	}
 

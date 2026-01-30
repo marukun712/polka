@@ -44,8 +44,7 @@ app.whenReady().then(() => {
 
 	ipcMain.handle("getDomain", () => {
 		const domain = store.get("domain");
-		if (!domain || typeof domain !== "string")
-			throw new Error("Domain not found");
+		if (!domain || typeof domain !== "string") return null;
 		return domain;
 	});
 
