@@ -1,6 +1,6 @@
 import { BloomFilter } from "bloomfilter";
 import type { ElementDefinition } from "cytoscape";
-import { hexToBytes } from "nostr-tools/utils";
+import { base58btc } from "multiformats/bases/base58";
 import {
 	type Component,
 	createEffect,
@@ -85,7 +85,7 @@ const TopPage: Component = () => {
 	onMount(() => {
 		const close = subscribe(async (ad: Ad) => {
 			const myTags = res()?.availableTags || [];
-			const bytes = hexToBytes(ad.bloom);
+			const bytes = base58btc.decode(ad.bloom);
 			const bloom = new Int32Array(
 				bytes.buffer,
 				bytes.byteOffset,

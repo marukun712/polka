@@ -1,41 +1,23 @@
 # セルフホストガイド
 
-polkaをセルフホストする手順。ファイルを管理するためのGit RemoteやWebサーバー含めて、すべてセルフホストする方法を説明します。
+# didの用意
 
-## 環境
-NixOS 25.05
-
-## Setup
-polkaをセルフホストするためには、ファイルを公開するWebサーバーなどが必要です。
-また、投稿の世代管理などを行うため、Gitのようなバージョン管理ツールを使用することを強く推奨しています。
-
-このガイドでは、Git、Webサーバー、Actionsなどすべての要素をセルフホストする例です。
-これらの手順はGitHub、GitHub Pagesのようなプラットフォームでも同じように動作します。適宜読み替えてください。
-
-## didの用意
-polkaでは、did:webという技術を使って、あなたのドメインをidとすることができます。
+polkaでは、did:webという技術を使って、あなたのドメインを公開鍵のハンドルとすることができます。
 
 DIDとは、Decentralized Identifierの略で、ユーザーが自分のアイデンティティを任意の場所に置くことができる仕組みです。
 
-DIDは
-```
-did:method:pointer
-```
-という構造になっており、pointerの値を使ってmethodごとの方法で、DID Documentというあなたを表すJSONドキュメントをresolveします。
+たとえば、`did:web:example.com`のユーザーの公開鍵は、DID Documentと呼ばれるJSONに紐づけられます。
 
-did:webでは
-```
-did:web:example.com
-```
-という構造になっており、DID Documentは`https://example.com/.well-known/did.json`でアクセス可能である必要があります。
+そのDID Documentは`https://example.com/.well-known/did.json`でアクセス可能である必要があります。
 
-polka CLIでは、DID Documentの生成をサポートします。
+通常、DID Documentは、W3Cの仕様に従って記述する必要がありますが、polka CLIでは、DID Documentの自動生成をサポートします。
 
-まず、polka CLIをセットアップします。
+まず、polkaを日常的に使用するクライアント端末に、polka CLIをインストールします。
+
+polka CLIはクレデンシャルをOS Keyringに保存するため、デスクトップ環境がない場合動作しないことがあります。
+
 ```
 git clone https://github.com/marukun712/polka
-
-nix develop
 cd polka/cli
 bun i
 ```
@@ -46,15 +28,20 @@ bun run setup
 ```
 
 すると、polkaで使用したいあなたのドメインが尋ねられます。
-このドメインはあなたを表すidとなるため、慎重に選択しましょう。
 
-ドメインを入力すると、DID Documentと鍵ペアが生成されます。この鍵ペアはあなたのデータリポジトリ全体を署名するための鍵となるため、漏洩するとアカウントが乗っ取られてしまいます。パスワードと異なり、回復することもできません。厳重に保管しましょう。
+ドメインを入力すると、DID Documentと鍵ペアが生成されます。
 
-デフォルトではOSのKeyringに保存されています。
-OSごとのパスワード管理アプリなどからご確認ください。
+この鍵はあなたのアイデンティティそのものになります。絶対に漏洩しないように、厳重に保管してください。
 
 秘密鍵を保存したら、DID Documentを.well-known/did.jsonにアップロードします。
 
+ここからは、自分のデータをホスティングするサーバー側での操作になります。
+
+ここではCaddy + NixOSのサーバーを例にとってご紹介しますが、実際の操作は単なる静的ファイルのホスティングです。
+
+GitHub PagesやNetlifyなどでも同様に動作するので、適宜読み替えてください。
+
+まず、
 `/var/www/polka`を作成します。
 ```
 sudo mkdir /var/www/polka
@@ -72,7 +59,7 @@ sudo nano /var/www/polka/.well-known/did.json
 sudo mkdir /var/www/polka/polka
 ```
 
-次に、Caddyを有効にします。
+Caddyを有効にします。
 `configuration.nix`に以下を記述します。
 ```
 services.caddy = {
@@ -99,21 +86,19 @@ services.caddy = {
 sudo nixos-rebuild switch --flake .#{flake-name}
 ```
 
-ブラウザで、
+ビルドが完了したらブラウザで
 ```
 https://${domain}/.well-known/did.json
 ```
 にアクセスして、DID Documentが返ってくることを確認します。
 
-確認出来たら、CLIフォルダに.envを作成し、
-```
-POLKA_DOMAIN=
-```
-環境変数`POLKA_DOMAIN`にドメインを入力します。
+これで、DIDのセットアップが完了しました。クライアント端末に戻ります。
 
-## Git Remoteの用意
+クライアント側のpolka CLIでEnterをクリックし、didが解決されていることを確認します。
+
+# Git Remoteの用意
 次に、リポジトリを管理するためのGit Remoteを設定します。
-このガイドでは、Giteaをセルフホストします。
+先ほどCaddyをホストしたサーバー側にもどり、今回はGiteaを例にご紹介します。
 
 `configuration.nix`に以下を記述します。
 ```
@@ -139,12 +124,8 @@ sudo nixos-rebuild switch --flake .#{flake-name}
 
 セットアップを済ませたら、リポジトリを作成します。
 
-`POLKA_MAIN_REMOTE`環境変数を、以下のように設定します。
-```
-POLKA_MAIN_REMOTE=ssh://gitea@{ip}:2222/{user}/{repo-name}
-```
+# Actionsの設定
 
-## Actionsの設定
 次に、リポジトリへのpush時に自動的に`/var/www/polka/polka`にリポジトリファイルがコピーされるように設定します。
 
 Giteaの設定から、Actionsトークンを取得し、保存します。
@@ -195,29 +176,42 @@ sudo chown -R gitea-runner:gitea-runner /var/www/polka
 
 これで、push時に自動的にCaddyでリポジトリファイルが公開されます。
 
-## ユーザー情報の入力
-CLIを起動します。
-```
-bun run setup
-```
+# クライアントの初期化
 
-ユーザー情報の入力を求められます。これらは必須となっているので、入力しましょう。
+自動的にCommitしたファイルが公開されるGit Remoteができたので、クライアントにRemoteのURLを登録します。
+
+CLIでDIDの解決が完了すると、Git RemoteのSSH URLの入力を求められるので、入力します。
+
+すると、~/.polka/repoに対象のリポジトリがクローンされ、そこにpolka DBが初期化されます。
+
+初期化が完了したら、ユーザー情報の入力を求められます。
+
 - name
 - description
-- iconのURL
+- icon URL
 
-## デスクトップアプリの起動
-次に、デスクトップアプリから投稿をしてみましょう。
+これらの情報を入力すると、その情報がpolka DBに書き込まれ、セットアップスクリプトが完了します。
 
-アプリをセットアップします。
+# デスクトップアプリ
+
+ここまでの手順で、あなたの端末でpolka DBに書き込み、サーバーにPushして公開をする一連の流れが完成しました。
+
+デスクトップアプリをセットアップして、polka Viewを利用しましょう！
+
+デスクトップアプリはElectron製です。まず、インストールしてビルドします。
+
 ```
-cd desktop
+cd ./desktop
 bun i
 bun run build
+```
+
+実行します。
+```
 bun run start
 ```
 
-すると、デスクトップアプリが起動します。
-入力フォームで使用しているドメインを尋ねられるので、セットアップ時に入力したものと同じドメインを入力してください。
+すると、ドメインの入力フォームが開くので、セットアップしたドメインを入力します。
+`example.com`のような形で入力してください。
 
-自分のプロフィールが表示されたらセットアップは完了です！
+Submitすると、あなたのプロフィール画面が表示されます。これにて、polkaのセットアップは完了です！

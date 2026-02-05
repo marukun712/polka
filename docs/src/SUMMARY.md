@@ -1,6 +1,10 @@
 # Summary
 
-- [分散型SNSとは?](./intro.md)
-- [What is polka?](./polka.md)
-- [リポジトリ仕様](./repo.md)
+# コンセプト
+- [はじめに](./introduction.md)
+- [ネットワークとユーザー発見](./network.md)
+- [データ構造](./data_structure.md)
+- [アイデンティティと検証](./identity.md)
+
+# polkaをつかう
 - [セルフホストガイド](./self-host.md)

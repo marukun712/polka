@@ -4,9 +4,10 @@ import { app, BrowserWindow, ipcMain } from "electron";
 import Store from "electron-store";
 import keytar from "keytar";
 import { finalizeEvent, type NostrEvent, SimplePool } from "nostr-tools";
-import { bytesToHex, hexToBytes } from "nostr-tools/utils";
+import { hexToBytes } from "nostr-tools/utils";
 import lib from "zenn-markdown-html";
 import { polkaRepo } from "../lib/repo.ts";
+import { base58btc } from "multiformats/bases/base58";
 
 // @ts-expect-error
 const markdownToHtml = lib.default ? lib.default : lib;
@@ -72,7 +73,7 @@ app.whenReady().then(() => {
 				created_at: Math.floor(Date.now() / 1000),
 				tags: [],
 				content: JSON.stringify({
-					bloom: bytesToHex(bytes),
+					bloom: base58btc.encode(bytes),
 					did: polka.getDid(),
 				}),
 			},
