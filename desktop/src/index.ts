@@ -3,11 +3,11 @@ import { BloomFilter } from "bloomfilter";
 import { app, BrowserWindow, ipcMain } from "electron";
 import Store from "electron-store";
 import keytar from "keytar";
+import { base58btc } from "multiformats/bases/base58";
 import { finalizeEvent, type NostrEvent, SimplePool } from "nostr-tools";
 import { hexToBytes } from "nostr-tools/utils";
 import lib from "zenn-markdown-html";
 import { polkaRepo } from "../lib/repo.ts";
-import { base58btc } from "multiformats/bases/base58";
 
 // @ts-expect-error
 const markdownToHtml = lib.default ? lib.default : lib;
@@ -80,7 +80,7 @@ app.whenReady().then(() => {
 			hexToBytes(sk),
 		);
 		console.log(signedEvent);
-		await pool.publish(["wss://yabu.me/"], signedEvent);
+		pool.publish(["wss://yabu.me/"], signedEvent);
 		return true;
 	});
 

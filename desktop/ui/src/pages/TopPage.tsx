@@ -101,10 +101,9 @@ const TopPage: Component = () => {
 
 				if (parsed) {
 					const angle = Math.random() * 2 * Math.PI;
-					const minRadius = 150;
-					const maxRadius = 300;
+					const minRadius = 300;
+					const maxRadius = 500;
 					const radius = minRadius + Math.random() * (maxRadius - minRadius);
-
 					const x = Math.cos(angle) * radius;
 					const y = Math.sin(angle) * radius;
 

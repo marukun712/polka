@@ -31,11 +31,11 @@ export class Reader {
 		this.did = commit.did;
 	}
 
-	static async open(did: string, url: string) {
+	static async open(did: string) {
 		const doc = await resolve(did);
 		if (!doc) throw new Error("Failed to resolve did:web");
 		const pk = doc.didKey;
-		const storage = new HTTPStorage(url);
+		const storage = new HTTPStorage(doc.service);
 		const store = new NodeStore(
 			new OverlayBlockStore(new MemoryBlockStore(), storage),
 		);

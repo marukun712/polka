@@ -1,10 +1,7 @@
-import { resolve } from "@polka/db/identity";
 import { Reader } from "@polka/db/reader";
 
 async function openReader(did: string): Promise<Reader> {
-	const doc = await resolve(did);
-	if (!doc) throw new Error("Failed to resolve did:web");
-	return Reader.open(did, doc.target);
+	return Reader.open(did);
 }
 
 async function isOwnDid(did: string): Promise<boolean> {

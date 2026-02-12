@@ -72,7 +72,6 @@ export class polkaRepo {
 		if (!sk) {
 			throw new Error("Please initialize private key first.");
 		}
-		// リポジトリをクローンかpull
 		if (!existsRepository()) {
 			throw new Error("Please initialize Git remote first.");
 		}
