@@ -34,8 +34,8 @@ export class Reader {
 	static async open(did: string) {
 		const doc = await resolve(did);
 		if (!doc) throw new Error("Failed to resolve did:web");
-		const pk = doc.didKey;
-		const storage = new HTTPStorage(doc.service);
+		const keys = doc.keys;
+		const storage = new HTTPStorage(doc.serviceEndpoint);
 		const store = new NodeStore(
 			new OverlayBlockStore(new MemoryBlockStore(), storage),
 		);
@@ -52,14 +52,19 @@ export class Reader {
 		}
 		const { sig, ...rest } = decoded;
 		const encoded = encode(rest);
-		const verified = await verifySigWithDidKey(
-			pk,
-			new Uint8Array(fromBytes(sig)),
-			encoded,
-		);
-		if (!verified) {
-			throw new Error(`Invalid signature`);
+		let verified = false;
+		for await (const k of keys) {
+			const v = await verifySigWithDidKey(
+				k,
+				new Uint8Array(fromBytes(sig)),
+				encoded,
+			);
+			if (v) {
+				verified = true;
+				break;
+			}
 		}
+		if (!verified) throw new Error("Invalid Sig");
 		return new Reader(store, storage, root, decoded);
 	}
 

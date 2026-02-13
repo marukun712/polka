@@ -14,7 +14,7 @@ type IPCContextType = {
 export const ipcContext = createContext<IPCContextType | null>(null);
 
 const fetchClient = async () => {
-	const client = await IPCClient.init();
+	const client = new IPCClient();
 	const did = await client.getDid();
 	return { did, client };
 };

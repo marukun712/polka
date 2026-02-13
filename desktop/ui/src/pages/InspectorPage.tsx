@@ -2,7 +2,7 @@ import { type Component, createResource, For, Show } from "solid-js";
 import RecordEditForm from "../components/forms/RecordEditForm";
 import Loading from "../components/ui/Loading";
 import { useIPC } from "../hooks/useIPC";
-import { allRecords } from "../lib/client";
+import { allRecords } from "../lib/reader";
 
 const fetcher = async () => {
 	const ipc = useIPC();

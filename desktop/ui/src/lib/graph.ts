@@ -1,7 +1,7 @@
 import type { ElementDefinition } from "cytoscape";
 import { type EdgeData, edgeSchema, type Ref } from "../types";
 import { validateRecords } from "../utils/validation";
-import { getKeys, getRecords } from "./client";
+import { getKeys, getRecords } from "./reader";
 
 export function buildTagHierarchy(items: EdgeData[], from?: string) {
 	const tagParentMap = new Map<string, Set<string>>();

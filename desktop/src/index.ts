@@ -2,17 +2,18 @@ import { fileURLToPath } from "node:url";
 import { BloomFilter } from "bloomfilter";
 import { app, BrowserWindow, ipcMain } from "electron";
 import Store from "electron-store";
-import keytar from "keytar";
 import { base58btc } from "multiformats/bases/base58";
 import { finalizeEvent, type NostrEvent, SimplePool } from "nostr-tools";
-import { hexToBytes } from "nostr-tools/utils";
+import { bytesToHex, hexToBytes } from "nostr-tools/utils";
 import lib from "zenn-markdown-html";
 import { polkaRepo } from "../lib/repo.ts";
+import { decryptVault, findKeyByKid, parseDidWithKid } from "../lib/vault.ts";
 
 // @ts-expect-error
 const markdownToHtml = lib.default ? lib.default : lib;
 
 let polka: polkaRepo | null;
+let pass: string | null = null;
 
 const createWindow = () => {
 	const win = new BrowserWindow({
@@ -38,23 +39,37 @@ app.whenReady().then(() => {
 		return content;
 	});
 
-	ipcMain.handle("setDomain", (_, domain: string) => {
-		store.set("domain", domain);
+	ipcMain.handle("setDidWithKid", (_, didWithKid: string) => {
+		store.set("didWithKid", didWithKid.trim());
 		return true;
 	});
 
-	ipcMain.handle("getDomain", () => {
-		const domain = store.get("domain");
-		if (!domain || typeof domain !== "string") return null;
-		return domain;
+	ipcMain.handle("getDidWithKid", () => {
+		const didWithKid = store.get("didWithKid");
+		if (!didWithKid || typeof didWithKid !== "string") return null;
+		return didWithKid;
 	});
 
 	ipcMain.handle("ad", async (_, tags: string[]) => {
-		if (!polka) throw new Error("Polka not initialized");
-		const sk = await keytar.getPassword("polka", "user");
-		if (!sk) {
-			throw new Error("Please initialize private key first.");
+		if (!polka) throw new Error("Polka is not initialized.");
+		if (!pass) throw new Error("Polka is not found.");
+
+		const didWithKid = store.get("didWithKid");
+		if (!didWithKid || typeof didWithKid !== "string") {
+			throw new Error("DID not found");
 		}
+
+		const { kid } = parseDidWithKid(didWithKid);
+		const vaultKeys = await decryptVault(pass);
+		const key = findKeyByKid(vaultKeys, kid);
+
+		if (!key) {
+			throw new Error(`Key with kid "${kid}" not found in vault`);
+		}
+
+		const skBytes = base58btc.decode(key.sk);
+		const sk = bytesToHex(skBytes);
+
 		const bloom = new BloomFilter(
 			32 * 256, // number of bits to allocate.
 			16, // number of hash functions.
@@ -84,11 +99,25 @@ app.whenReady().then(() => {
 		return true;
 	});
 
-	ipcMain.handle("init", async () => {
-		const domain = store.get("domain");
-		if (!domain || typeof domain !== "string")
-			throw new Error("Domain not found");
-		polka = await polkaRepo.start(domain);
+	ipcMain.handle("init", async (_, password: string) => {
+		const didWithKid = store.get("didWithKid");
+		if (!didWithKid || typeof didWithKid !== "string") {
+			throw new Error("DID not found");
+		}
+
+		const { did, kid } = parseDidWithKid(didWithKid);
+		const vaultKeys = await decryptVault(password);
+		const key = findKeyByKid(vaultKeys, kid);
+
+		if (!key) {
+			throw new Error(`Key with kid "${kid}" not found in vault`);
+		}
+
+		const skBytes = base58btc.decode(key.sk);
+		const sk = bytesToHex(skBytes);
+
+		pass = password;
+		polka = await polkaRepo.start(did, sk);
 		return true;
 	});
 

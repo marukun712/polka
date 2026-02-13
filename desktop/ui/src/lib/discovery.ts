@@ -20,17 +20,21 @@ export function subscribe(onEvent: (event: Ad) => void) {
 				const did = ad.data.did;
 				const doc = await resolve(did);
 				if (!doc) return;
-				const didKey = doc.didKey;
+				const keys = doc.keys;
 				const { sig, ...rest } = event;
-				const pk = secp256k1Plugin.compressPubkey(parseDidKey(didKey).keyBytes);
-				const eventHash = sha256(utf8Encoder.encode(serializeEvent(rest)));
-				const verified = schnorr.verify(
-					hexToBytes(sig),
-					eventHash,
-					pk.slice(1),
+				const parsedKeys = keys.map((k) =>
+					secp256k1Plugin.compressPubkey(parseDidKey(k).keyBytes),
 				);
-				if (!verified) return;
-				onEvent(ad.data);
+				const eventHash = sha256(utf8Encoder.encode(serializeEvent(rest)));
+				let verified = false;
+				for (const k of parsedKeys) {
+					const v = schnorr.verify(hexToBytes(sig), eventHash, k.slice(1));
+					if (v) {
+						verified = true;
+						break;
+					}
+				}
+				if (verified) onEvent(ad.data);
 			},
 		},
 	);

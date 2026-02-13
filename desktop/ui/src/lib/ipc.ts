@@ -1,5 +1,7 @@
 import type { PolkaAPI } from "../../../src/preload";
 
+// IPC経由で直接ローカルのリポジトリ(自分のリポジトリ)を読み取る実装(高速)
+
 declare global {
 	interface Window {
 		polka: PolkaAPI;
@@ -7,11 +9,6 @@ declare global {
 }
 
 export class IPCClient {
-	static async init() {
-		await window.polka.init();
-		return new IPCClient();
-	}
-
 	async parseMd(md: string) {
 		return await window.polka.parseMd(md);
 	}
@@ -61,10 +58,10 @@ export class IPCClient {
 	}
 }
 
-export function getDomain() {
-	return window.polka.getDomain();
+export function getDidWithKid() {
+	return window.polka.getDidWithKid();
 }
 
-export function setDomain(domain: string) {
-	return window.polka.setDomain(domain);
+export function setDidWithKid(didWithKid: string) {
+	return window.polka.setDidWithKid(didWithKid);
 }

@@ -2,7 +2,7 @@ import type { GetResult } from "@polka/db/types";
 import { useNavigate } from "@solidjs/router";
 import { createResource, Show, Suspense } from "solid-js";
 import { useIPC } from "../../../hooks/useIPC";
-import { getRecord } from "../../../lib/client";
+import { getRecord } from "../../../lib/reader";
 import {
 	linkDataSchema,
 	postDataSchema,

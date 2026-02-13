@@ -23,9 +23,9 @@ import LinkList from "../components/ui/layout/LinkList";
 import { ProfileHeader } from "../components/ui/layout/ProfileHeader";
 import TagManager from "../components/ui/layout/TagManager";
 import { useIPC } from "../hooks/useIPC";
-import { getRecord, getRecords } from "../lib/client";
 import { subscribe } from "../lib/discovery";
 import { createGraphElements } from "../lib/graph";
+import { getRecord, getRecords } from "../lib/reader";
 import {
 	type Ad,
 	edgeSchema,
@@ -101,8 +101,8 @@ const TopPage: Component = () => {
 
 				if (parsed) {
 					const angle = Math.random() * 2 * Math.PI;
-					const minRadius = 300;
-					const maxRadius = 500;
+					const minRadius = 250;
+					const maxRadius = 300;
 					const radius = minRadius + Math.random() * (maxRadius - minRadius);
 					const x = Math.cos(angle) * radius;
 					const y = Math.sin(angle) * radius;

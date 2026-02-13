@@ -1,12 +1,11 @@
 import { existsSync, mkdirSync } from "node:fs";
 import { Secp256k1Keypair } from "@atproto/crypto";
+import { bytesToHex } from "@noble/curves/utils.js";
 import { DB } from "@polka/db";
-import { resolve } from "@polka/db/identity";
 import { config } from "dotenv";
 import Enquirer from "enquirer";
-import keytar from "keytar";
+import { base58btc } from "multiformats/bases/base58";
 import { type SimpleGit, simpleGit } from "simple-git";
-import { generate } from "./lib/crypto.ts";
 import {
 	cloneRepository,
 	commitAndPush,
@@ -17,7 +16,7 @@ import {
 	POLKA_REPO_PATH,
 	pullRepository,
 } from "./lib/git.ts";
-import { generateDidDocument } from "./lib/identity.ts";
+import { decryptVault, findKeyByKid, parseDidWithKid } from "./lib/vault.ts";
 
 config();
 
@@ -25,24 +24,39 @@ const { prompt } = Enquirer;
 
 async function main() {
 	try {
-		// ステップ1: ドメインの取得
-		const domain = await getDomain();
-		const did = `did:web:${domain}`;
+		const { didWithKid } = await prompt<{ didWithKid: string }>({
+			type: "input",
+			name: "didWithKid",
+			message: "Enter your DID (format: did:web:example.com#kid):",
+			required: true,
+			result: (value) => value.trim(),
+		});
 
-		// ステップ2: 秘密鍵の取得または生成
-		const sk = await getOrCreatePrivateKey(did, domain);
+		const { password } = await prompt<{ password: string }>({
+			type: "password",
+			name: "password",
+			message: "Enter vault password:",
+			required: true,
+		});
 
-		// ステップ3: Gitリポジトリのセットアップ
+		const { did, kid } = parseDidWithKid(didWithKid);
+		const vaultKeys = await decryptVault(password);
+		const key = findKeyByKid(vaultKeys, kid);
+
+		if (!key) {
+			console.error(`Key with kid "${kid}" not found in vault`);
+			process.exit(1);
+		}
+
+		const skBytes = base58btc.decode(key.sk);
+		const sk = bytesToHex(skBytes);
+
 		const git = await setupGitRepository();
 
-		// ステップ4: DBの初期化
 		const db = await init(sk, did);
 		console.log("Repo initialized successfully!");
 
-		// ステップ5: プロフィールのセットアップ
 		await setupProfile(db);
-
-		// ステップ6: ビルドとコミット
 		await db.build(POLKA_DIST_PATH);
 
 		try {
@@ -54,154 +68,11 @@ async function main() {
 		}
 
 		console.log("\nSetup complete!");
+		console.log(db.commit);
 		console.log(await db.all());
 	} catch (e) {
 		console.error(e);
 		process.exit(1);
-	}
-}
-
-async function getDomain(): Promise<string> {
-	let domain = process.env.POLKA_DOMAIN;
-	if (!domain) {
-		const result = await prompt<{ domain: string }>({
-			type: "input",
-			name: "domain",
-			message: "Enter your domain:",
-			required: true,
-			result: (value) => value.trim(),
-		});
-		domain = result.domain;
-	}
-	return domain;
-}
-
-async function getOrCreatePrivateKey(
-	did: string,
-	domain: string,
-): Promise<string> {
-	// まずOSキーチェーンから秘密鍵を取得
-	let sk = await keytar.getPassword("polka", "user");
-
-	if (sk) {
-		console.log("Private key found in OS Keyring");
-
-		// 念のため、保存されている鍵が正しいか確認
-		const doc = await resolve(did);
-
-		if (doc) {
-			const keypair = await Secp256k1Keypair.import(sk);
-			if (doc.didKey !== keypair.did()) {
-				throw new Error(
-					"Warning: Saved private key doesn't match did:web document!",
-				);
-			} else {
-				return sk;
-			}
-		}
-
-		// 鍵はあるが、did:webが解決できない場合
-		console.log("Private key found in OS Keyring, but did:web is not resolved");
-
-		// ローカルの鍵を優先し、解決できるようになるまで待つ
-		await waitForDidResolution(did);
-
-		const d = await resolve(did);
-
-		if (d) {
-			// 鍵が正しいか検証して返す
-			const keypair = await Secp256k1Keypair.import(sk);
-			if (d.didKey !== keypair.did()) {
-				throw new Error(
-					"Warning: Saved private key doesn't match did:web document!",
-				);
-			} else {
-				return sk;
-			}
-		} else {
-			// さっきは解決できたのに急に解決できなくなったとき
-			throw new Error(
-				"The did:web issue was resolved before, but it could not be resolved this time.",
-			);
-		}
-	}
-
-	// 秘密鍵がない場合、did:webの解決を試みる
-	const doc = await resolve(did);
-
-	if (doc) {
-		// did:webは存在するが秘密鍵がない
-		console.log(`did:web resolved for ${domain}`);
-		console.log("Private key not found in OS Keyring");
-		console.log("\nYou need to import your existing private key.");
-
-		sk = await importPrivateKey();
-
-		// インポートした鍵が正しいか検証
-		const keypair = await Secp256k1Keypair.import(sk);
-		if (doc.didKey !== keypair.did()) {
-			throw new Error("Imported private key doesn't match did:web document!");
-		}
-
-		console.log("Private key verified and saved");
-	} else {
-		// did:webもなく秘密鍵もない -> 新規生成
-		console.log(`did:web cannot be resolved for ${domain}`);
-		console.log("Private key not found in OS Keyring");
-		console.log("\nGenerating new keypair...");
-
-		const keyPair = await generate();
-		sk = keyPair.sk;
-
-		await keytar.setPassword("polka", "user", sk);
-
-		const didDoc = generateDidDocument(domain, keyPair.did);
-		console.log("\nPlease upload the following DID document to:");
-		console.log(`https://${domain}/.well-known/did.json\n`);
-		console.log(JSON.stringify(didDoc, null, 2));
-
-		// アップロード確認
-		await waitForDidResolution(did);
-		console.log("did:web verified");
-	}
-
-	return sk;
-}
-
-async function importPrivateKey(): Promise<string> {
-	const { sk } = await prompt<{ sk: string }>({
-		type: "password",
-		name: "sk",
-		message: "Enter your private key:",
-		required: true,
-		result: (value) => value.trim(),
-	});
-
-	// 秘密鍵の形式を検証
-	try {
-		await Secp256k1Keypair.import(sk);
-	} catch {
-		throw new Error("Invalid private key format");
-	}
-
-	await keytar.setPassword("polka", "user", sk);
-	return sk;
-}
-
-async function waitForDidResolution(did: string): Promise<void> {
-	while (true) {
-		await prompt({
-			type: "input",
-			name: "continue",
-			message: "Press Enter to check (or Ctrl+C to exit)...",
-		});
-
-		const doc = await resolve(did);
-		if (doc) {
-			return;
-		} else {
-			console.log("Still not resolved. Please check the file upload.");
-		}
 	}
 }
 

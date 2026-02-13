@@ -3,7 +3,6 @@ import { Secp256k1Keypair } from "@atproto/crypto";
 import { DB } from "@polka/db";
 import { resolve } from "@polka/db/identity";
 import { config } from "dotenv";
-import keytar from "keytar";
 import { type SimpleGit, simpleGit } from "simple-git";
 import {
 	commitAndPush,
@@ -19,12 +18,10 @@ config();
 export class polkaRepo {
 	db: DB;
 	git: SimpleGit;
-	domain: string;
 
-	constructor(db: DB, git: SimpleGit, domain: string) {
+	constructor(db: DB, git: SimpleGit) {
 		this.db = db;
 		this.git = git;
-		this.domain = domain;
 	}
 
 	async commit() {
@@ -62,15 +59,10 @@ export class polkaRepo {
 		return this.db.commit;
 	}
 
-	static async start(domain: string) {
-		const did = `did:web:${domain}`;
+	static async start(did: string, sk: string) {
 		const doc = await resolve(did);
 		if (!doc) {
-			throw new Error("Please initialize repository first.");
-		}
-		const sk = await keytar.getPassword("polka", "user");
-		if (!sk) {
-			throw new Error("Please initialize private key first.");
+			throw new Error("Failed to resolve did:web.");
 		}
 		if (!existsRepository()) {
 			throw new Error("Please initialize Git remote first.");
@@ -85,7 +77,7 @@ export class polkaRepo {
 		console.log("Repo initialized successfully!");
 
 		const db = await init(sk, did);
-		return new polkaRepo(db, git, domain);
+		return new polkaRepo(db, git);
 	}
 }
 

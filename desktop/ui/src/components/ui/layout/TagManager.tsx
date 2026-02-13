@@ -1,7 +1,7 @@
 import { createResource, createSignal, For, Show } from "solid-js";
 import { useDialog } from "../../../hooks/useDialog";
 import { useIPC } from "../../../hooks/useIPC";
-import { getRecords } from "../../../lib/client";
+import { getRecords } from "../../../lib/reader";
 import {
 	type Edge,
 	type EdgeData,

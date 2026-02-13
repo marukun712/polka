@@ -4,12 +4,12 @@ import { contextBridge, ipcRenderer } from "electron";
 export type PolkaAPI = {
 	parseMd(md: string): Promise<string>;
 
-	setDomain(domain: string): Promise<boolean>;
-	getDomain(): Promise<string | null>;
+	setDidWithKid(didWithKid: string): Promise<boolean>;
+	getDidWithKid(): Promise<string | null>;
 
 	ad(tags: string[]): Promise<boolean>;
 
-	init(): Promise<boolean>;
+	init(password: string): Promise<boolean>;
 
 	create(rpath: string, data: Record<string, unknown>): Promise<boolean>;
 	update(rpath: string, data: Record<string, unknown>): Promise<boolean>;
@@ -38,12 +38,13 @@ export type PolkaAPI = {
 contextBridge.exposeInMainWorld("polka", {
 	parseMd: (md: string) => ipcRenderer.invoke("parseMd", md),
 
-	setDomain: (domain: string) => ipcRenderer.invoke("setDomain", domain),
-	getDomain: () => ipcRenderer.invoke("getDomain"),
+	setDidWithKid: (didWithKid: string) =>
+		ipcRenderer.invoke("setDidWithKid", didWithKid),
+	getDidWithKid: () => ipcRenderer.invoke("getDidWithKid"),
 
 	ad: (tags: string[]) => ipcRenderer.invoke("ad", tags),
 
-	init: () => ipcRenderer.invoke("init"),
+	init: (password: string) => ipcRenderer.invoke("init", password),
 
 	create: (rpath: string, data: Record<string, unknown>) =>
 		ipcRenderer.invoke("create", rpath, data),

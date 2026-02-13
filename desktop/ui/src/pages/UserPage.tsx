@@ -11,8 +11,8 @@ import PostCard from "../components/ui/card/PostCard";
 import Loading from "../components/ui/Loading";
 import { ProfileHeader } from "../components/ui/layout/ProfileHeader";
 import { useIPC } from "../hooks/useIPC";
-import { getRecord, getRecords } from "../lib/client";
 import { createGraphElements } from "../lib/graph";
+import { getRecord, getRecords } from "../lib/reader";
 import { edgeSchema, followSchema, profileSchema, type Ref } from "../types";
 import { validateRecord, validateRecords } from "../utils/validation";
 
