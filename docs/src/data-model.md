@@ -2,14 +2,16 @@
 
 polkaは、ATProtocolのリポジトリ形式を採用しています。このページでは、polkaで使用されるデータモデルの構造を説明します。
 
-## collection/rkey形式
+## collection/rkey
 
 polkaのすべてのデータは、`collection/rkey` という形式のパスで管理されます。このパスを **rpath**と呼びます。
 
 **collection**
+
 データの種類を示す名前空間です。たとえば、`polka.profile` はプロフィールデータ、`polka.post` は投稿データを示します。
 
 **rkey**
+
 collection内でレコードを一意に識別するidです。TIDが使われます。TIDは、タイムスタンプをベースにした識別子で、作成順にソートされます。
 
 ## 標準collection
@@ -26,8 +28,6 @@ polkaで使用される主なcollectionを説明します。
 - `icon`: アイコンのURL
 - `banner` (オプション): バナー画像のURL
 - `updatedAt`: 最終更新日時
-
-プロフィールは、ユーザーのアイデンティティを表現する基本的な情報です。
 
 ### polka.post/{tid}
 
@@ -58,7 +58,7 @@ polkaで使用される主なcollectionを説明します。
 他のユーザーの投稿やデータへのリンクを表します。
 
 **含まれるフィールド**:
-- `ref`: 参照先（`did` と `rpath` を含むオブジェクト）
+- `ref`: 参照先(`did` と `rpath` を含むオブジェクト)
 - `parents`: このリンクが属するタグの配列
 - `updatedAt`: 最終更新日時
 
