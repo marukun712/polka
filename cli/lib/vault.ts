@@ -9,7 +9,7 @@ export interface VaultKey {
 	id: string;
 	pk: string;
 	sk: string;
-	type: "Ed25519VerificationKey2020" | "X25519KeyAgreementKey2019";
+	type: "EcdsaSecp256k1VerificationKey2019";
 }
 
 export async function decryptVault(password: string): Promise<VaultKey[]> {
@@ -31,7 +31,11 @@ export async function decryptVault(password: string): Promise<VaultKey[]> {
 }
 
 export function findKeyByKid(keys: VaultKey[], kid: string): VaultKey | null {
-	return keys.find((k) => k.id === kid) || null;
+	return (
+		keys.find(
+			(k) => k.id === kid && k.type === "EcdsaSecp256k1VerificationKey2019",
+		) || null
+	);
 }
 
 export function parseDidWithKid(didString: string): {
