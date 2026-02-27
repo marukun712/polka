@@ -1,18 +1,14 @@
 import { now } from "@atcute/tid";
-import { createSignal, Show } from "solid-js";
-import z from "zod";
 import { useIPC } from "../../hooks/useIPC";
 import { type FollowData, followDataSchema } from "../../types";
 
 export default function FollowForm() {
 	const ipc = useIPC();
-	const [error, setError] = createSignal<string | null>(null);
 
 	return (
 		<form
 			onSubmit={async (e) => {
 				e.preventDefault();
-				setError(null);
 				const form = e.currentTarget;
 				const formData = new FormData(form);
 				const did = formData.get("did") as string;
@@ -28,7 +24,7 @@ export default function FollowForm() {
 
 				const parsed = followDataSchema.safeParse(raw);
 				if (!parsed.success) {
-					setError(z.treeifyError(parsed.error).errors.join(","));
+					console.error(parsed.error);
 					return;
 				}
 
@@ -55,11 +51,6 @@ export default function FollowForm() {
 				placeholder="technology, programming"
 				required
 			/>
-			<Show when={error()}>
-				<p role="alert" style="color: red;">
-					{error()}
-				</p>
-			</Show>
 			<button type="submit">Follow</button>
 		</form>
 	);

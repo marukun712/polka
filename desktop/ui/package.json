@@ -19,15 +19,17 @@
 	"dependencies": {
 		"@atcute/tid": "^1.0.3",
 		"@atproto/crypto": "^0.4.4",
+		"@polka/db": "workspace:*",
 		"@solidjs/router": "^0.15.4",
 		"@types/cytoscape-dagre": "^2.3.4",
+		"@xstate/solid": "^2.0.0",
 		"cytoscape": "^3.33.1",
 		"cytoscape-dagre": "^2.5.0",
 		"multiformats": "^13.4.1",
 		"solid-icons": "^1.1.0",
 		"solid-js": "^1.9.9",
 		"web-did-resolver": "^2.0.31",
-		"zod": "^4.1.13",
-		"@polka/db": "workspace:*"
+		"xstate": "^5.28.0",
+		"zod": "^4.1.13"
 	}
 }

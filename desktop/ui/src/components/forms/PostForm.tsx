@@ -1,19 +1,16 @@
 import { now } from "@atcute/tid";
-import { createSignal, For, Show } from "solid-js";
-import z from "zod";
+import { createSignal, For } from "solid-js";
 import { useIPC } from "../../hooks/useIPC";
 import { type PostData, postDataSchema } from "../../types";
 
 export default function PostForm(props: { availableTags: string[] }) {
 	const [text, setText] = createSignal("");
-	const [error, setError] = createSignal<string | null>(null);
 	const ipc = useIPC();
 
 	return (
 		<form
 			onSubmit={async (e) => {
 				e.preventDefault();
-				setError(null);
 
 				const rpath = `polka.post/${now()}`;
 				const formData = new FormData(e.currentTarget);
@@ -28,7 +25,7 @@ export default function PostForm(props: { availableTags: string[] }) {
 
 				const parsed = postDataSchema.safeParse(data);
 				if (!parsed.success) {
-					setError(z.treeifyError(parsed.error).errors.join(","));
+					console.error(parsed.error);
 					return;
 				}
 
@@ -54,11 +51,6 @@ export default function PostForm(props: { availableTags: string[] }) {
 					{(tag) => <option value={tag}>{tag}</option>}
 				</For>
 			</select>
-			<Show when={error()}>
-				<p role="alert" style="color: red;">
-					{error()}
-				</p>
-			</Show>
 			<button type="submit">Post</button>
 		</form>
 	);
