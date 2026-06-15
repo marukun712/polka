@@ -4,10 +4,9 @@
 	"type": "module",
 	"private": true,
 	"workspaces": [
-		"desktop",
-		"desktop/ui",
 		"db",
-		"cli"
+		"cli",
+		"viewer"
 	],
 	"devDependencies": {
 		"@biomejs/biome": "2.3.10"

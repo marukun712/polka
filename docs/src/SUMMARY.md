@@ -9,6 +9,3 @@
 - [データモデル](./data-model.md)
 - [アイデンティティと検証](./identity.md)
 - [ネットワークとユーザー発見](./network.md)
-
-# polkaをつかう
-- [セルフホストガイド](./self-host.md)

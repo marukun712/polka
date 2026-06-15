@@ -1,50 +1,23 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { Decrypter } from "age-encryption";
+import { Decrypter, Encrypter } from "age-encryption";
 
-const VAULT_PATH = join(homedir(), ".dmail", "vault.json");
+const KEY_PATH = join(homedir(), ".polka", "key.age");
 
-export interface VaultKey {
-	id: string;
-	pk: string;
-	sk: string;
-	type: "EcdsaSecp256k1VerificationKey2019";
+export async function saveKey(password: string, sk: string): Promise<void> {
+	const encrypter = new Encrypter();
+	encrypter.setPassphrase(password);
+	const encrypted = await encrypter.encrypt(sk);
+	writeFileSync(KEY_PATH, encrypted);
 }
 
-export async function decryptVault(password: string): Promise<VaultKey[]> {
-	if (!existsSync(VAULT_PATH)) {
-		throw new Error("Vault not found at ~/.dmail/vault.json");
+export async function loadKey(password: string): Promise<string> {
+	if (!existsSync(KEY_PATH)) {
+		throw new Error("Key not found at ~/.polka/key.age. Run: polka keys init");
 	}
-
-	const encryptedData = readFileSync(VAULT_PATH);
+	const encrypted = readFileSync(KEY_PATH);
 	const decrypter = new Decrypter();
 	decrypter.addPassphrase(password);
-	const decrypted = await decrypter.decrypt(encryptedData, "text");
-	const keys = JSON.parse(decrypted);
-
-	if (!Array.isArray(keys)) {
-		throw new Error("Invalid vault format: expected array");
-	}
-
-	return keys;
-}
-
-export function findKeyByKid(keys: VaultKey[], kid: string): VaultKey | null {
-	return (
-		keys.find(
-			(k) => k.id === kid && k.type === "EcdsaSecp256k1VerificationKey2019",
-		) || null
-	);
-}
-
-export function parseDidWithKid(didString: string): {
-	did: string;
-	kid: string;
-} {
-	const parts = didString.split("#");
-	if (parts.length !== 2 || !parts[0] || !parts[1]) {
-		throw new Error("Invalid DID format. Expected: did:web:example.com#kid");
-	}
-	return { did: parts[0], kid: parts[1] };
+	return decrypter.decrypt(encrypted, "text");
 }
